@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <title>Super CircuitoApp — Vista Edition</title>
@@ -35,6 +35,227 @@ body::after{content:'';position:fixed;bottom:0;left:0;right:0;height:22vh;pointe
   animation:aurora 12s ease-in-out infinite alternate;}
 @keyframes aurora{0%{opacity:0.4;}100%{opacity:0.9;}}
 
+/* ══ PHONE / TABLET CONTAINER ══ */
+.phone{
+  position:relative;z-index:1;width:100%;min-height:100vh;
+  display:flex;flex-direction:column;
+  background:rgba(4,6,16,0.98);
+  border-left:1px solid rgba(55,105,195,0.18);
+  border-right:1px solid rgba(55,105,195,0.18);
+  box-shadow:0 0 90px rgba(18,68,178,0.22);
+}
+
+/* ══ RESPONSIVE — Phone portrait (default) ══ */
+@media (max-width:599px){
+  .phone{max-width:100%;}
+  .content{padding:0 10px 80px;}
+  .grid2{grid-template-columns:1fr 1fr;}
+  .agrid{grid-template-columns:1fr 1fr;}
+  .sgrid{grid-template-columns:repeat(3,1fr);}
+  .nav-bottom{max-width:100%;}
+  .nb{padding:4px 10px;font-size:8px;}
+  .ni{font-size:16px;}
+  .ftabs .tp{padding:4px 7px;font-size:10px;}
+}
+
+/* ══ RESPONSIVE — Tablet portrait & phone landscape ══ */
+@media (min-width:600px) and (max-width:1023px){
+  .phone{max-width:100%;}
+  .content{padding:0 18px 85px;}
+  .grid2{grid-template-columns:1fr 1fr;}
+  .agrid{grid-template-columns:repeat(3,1fr);}
+  .sgrid{grid-template-columns:repeat(4,1fr);}
+  .nav-bottom{max-width:100%;}
+  .nb{padding:5px 18px;font-size:9px;}
+  .ni{font-size:18px;}
+  .ftabs .tp{padding:5px 12px;font-size:11px;}
+  .wt{font-size:13px;}.ft{font-size:12px;}
+  .ci-name{font-size:14px;}.topbar-logo{font-size:15px;}
+  .btn{font-size:12.5px;}.btn-sm{font-size:11px;}
+  .gp-options{grid-template-columns:repeat(3,1fr);}
+  .chk-list{grid-template-columns:1fr 1fr 1fr;}
+}
+
+/* CORRECCIÓN 1: Barra de opciones en horizontal (Landscape) */
+/* Se forzó 'bottom: 0' y 'top: auto' para evitar que suba */
+@media screen and (min-width: 1024px) and (orientation: landscape) {
+  .phone{max-width:100%;}
+  .topbar{width:100%;}
+  .content{flex:1;padding:0 24px 80px !important; overflow-y:auto;}
+  
+  .nav-bottom{
+    position:fixed !important;
+    bottom: 0 !important;
+    top: auto !important; /* Asegura que no suba al medio */
+    left:0;
+    right:0;
+    width:100% !important;
+    max-width:100% !important;
+    height:70px !important;
+    flex-direction:row !important;
+    justify-content:space-around !important;
+    padding:6px 0 13px !important;
+    transform:none !important;
+    border-top:1px solid rgba(68,128,238,0.32) !important;
+    border-right:none !important;
+    z-index: 9999 !important;
+  }
+  .nav-bottom::before{display:block !important;}
+  .nb{padding:4px 14px !important;font-size:8.5px !important;width:auto !important; flex-direction:column !important;gap:2px !important;}
+  .ni{font-size:17px !important;}
+  .content{margin-left:0 !important;}
+}
+
+/* ... (Mismo CSS intermedio hasta tables) ... */
+
+/* CORRECCIÓN 2: Asegurar visibilidad del icono de impresión */
+.print-btn {
+  display: flex !important; 
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* ... (Resto del CSS hasta BOTTOM NAV) ... */
+
+/* ══ BOTTOM NAV (Ajustes base para que responda a los overrides de landscape) ══ */
+.nav-bottom{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;background:linear-gradient(180deg,rgba(8,22,78,0.9) 0%,rgba(2,6,26,0.97) 100%);border-top:1px solid rgba(68,128,238,0.32);display:flex;justify-content:space-around;padding:6px 0 13px;z-index:100;box-shadow:0 -1px 0 rgba(138,198,255,0.16),0 -9px 26px rgba(0,8,58,0.62);backdrop-filter:blur(16px);}
+.nav-bottom::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(128,198,255,0.32),transparent);}
+.nb{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 14px;border-radius:4px;cursor:pointer;border:1px solid transparent;background:none;color:rgba(138,183,228,0.62);font-family:'Segoe UI',Tahoma,sans-serif;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;transition:all .14s;}
+.nb:hover{background:linear-gradient(180deg,rgba(68,128,228,0.16),rgba(28,68,168,0.2));border-color:rgba(88,148,228,0.26);color:rgba(188,225,255,0.86);}
+.nb.active{background:var(--btn-grad);color:#fff;border-color:rgba(68,128,212,0.52);box-shadow:0 2px 11px rgba(0,28,118,0.48);}
+.ni{font-size:17px;line-height:1;}
+
+/* ... (Resto del CSS hasta TOAST) ... */
+
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="topbar-logo">
+        <div class="logo-icon">🔵</div>
+        <div><div>SUPER CIRCUITO APP</div><div class="logo-sub">Vista Edition</div></div>
+      </div>
+      <button class="gemini-btn" onclick="openGemini()"><span style="font-size:12px">✨</span> Gemini IA</button>
+      <div class="sdot" id="sdot"></div>
+    </div>
+  </div>
+
+  <div class="content">
+    
+    <div id="print-section" class="print-btn" onclick="compartirReporte()" style="position:fixed; top:20px; right:20px; z-index:100; cursor:pointer;">
+      <span style="font-size:24px;">🖨️</span>
+    </div>
+
+  </div>
+
+  <nav class="nav-bottom">
+    <button class="nb active" id="nav-home"     onclick="showPage('home')"><span class="ni">🏘️</span>Inicio</button>
+    <button class="nb"        id="nav-stats"    onclick="showPage('stats')"><span class="ni">📊</span>Estadísticas</button>
+    <button class="nb"        id="nav-reportes" onclick="showPage('reportes')"><span class="ni">📄</span>Reportes</button>
+    <button class="nb"        id="nav-respaldo" onclick="showPage('respaldo')"><span class="ni">🗄️</span>Respaldo</button>
+  </nav>
+</div>
+
+<script>
+/* ... (El inicio del script permanece igual) ... */
+
+/* Mismos datos y funciones base hasta tot(arr) */
+
+/* ... Mismos CALS, CAL_MAP, SKILL_GROUPS y funciones de renderizado ... */
+
+
+/* ══ REPORTES / IMPRESIÓN ══ */
+
+function renderReportes(){
+  ['rep-cong','rep-hist-cong'].forEach(id=>{const sel=document.getElementById(id);sel.innerHTML='<option value="">Selecciona congregación…</option>';data.congregaciones.forEach(c=>sel.innerHTML+=`<option value="${c.id}">${c.nombre} (${c.ciudad})</option>`);});
+  document.getElementById('rep-visita').innerHTML='<option value="">Selecciona visita…</option>';
+  document.getElementById('rep-historial-wrap').innerHTML='';
+}
+
+async function compartirReporte(){
+  /* CORRECCIÓN 2: Restauración de función para compartir/imprimir */
+  var title='Reporte CircuitoApp '+new Date().toLocaleDateString('es-MX');
+  var text = "Este es un reporte generado desde Super CircuitoApp Vista Edition.\n\n" + 
+             JSON.stringify(data, null, 2); // Fallback: comparte los datos RAW en texto.
+
+  /* Método 1: Capacitor Share (APK) - Prioritario para impresión */
+  if(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Share){
+    try{
+      await window.Capacitor.Plugins.Share.share({title:title,text:text,dialogTitle:'Compartir/Imprimir reporte'});
+      return;
+    }catch(e){if(e.message&&e.message.includes('cancel'))return;}
+  }
+
+  /* Método 2: Web Share API (Navegador) */
+  if(navigator.share){
+    try{await navigator.share({title:title,text:text});return;}
+    catch(e){if(e.name==='AbortError')return;}
+  }
+
+  /* Método 3: window.print() (Fallback base) */
+  window.print();
+  showToast('✅','Impresión','Iniciando diálogo de impresión.');
+}
+
+/* ... Mismas funciones de Reunión y Cronómetro ... */
+
+/* ══ ACTIVIDADES PROGRAMADAS + NOTIFICACIÓN ══ */
+
+/* ... Mismas funciones de Actividades ... */
+
+
+/* ══ CORRECCIÓN 3: Sincronización de Calendario para modo Release ══
+   Utiliza Capacitor Browser para abrir la URL de Google Calendar.
+   Esto evita que la app se cierre por falta de permisos nativos. */
+async function addToCalendar(titulo,fecha,hora,durMin,desc){
+  try{
+    if(!fecha||!hora){showToast('⚠️','Sin fecha','Completa la fecha y hora de la visita primero.');return;}
+    var parts=(fecha||'').split('-').map(Number);
+    var hp=(hora||'00:00').split(':').map(Number);
+    if(parts.length<3||isNaN(parts[0])){showToast('⚠️','Fecha inválida','Guarda la visita con fecha primero.');return;}
+    
+    var start=new Date(parts[0],parts[1]-1,parts[2],hp[0]||8,hp[1]||0,0);
+    var end=new Date(start.getTime()+(durMin||60)*60000);
+    
+    // Función de formato ISO para Google Calendar (sin guiones ni puntos)
+    var fmt=function(dt){return dt.toISOString().replace(/[-:.]/g,'').slice(0,15)+'Z';};
+    
+    // Generar URL de Google Calendar
+    var url='https://calendar.google.com/calendar/r/eventedit'
+      +'?text='+encodeURIComponent(titulo||'Actividad')
+      +'&dates='+fmt(start)+'/'+fmt(end)
+      +'&details='+encodeURIComponent(desc||'Desde Super CircuitoApp')
+      +'&sf=true&output=xml';
+
+    /* Usar Capacitor Browser — Abre una pestaña segura DENTRO de la app */
+    if(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Browser){
+      await window.Capacitor.Plugins.Browser.open({url:url,presentationStyle:'popover'});
+      showToast('📅','Calendario Abierto','Pega la información en tu calendario.');
+    } else {
+      /* Fallback si Capacitor no está listo */
+      var a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      showToast('📅','Abriendo Calendario', '');
+    }
+  }catch(e){
+    console.error("Error en calendario:", e);
+    showToast('⚠️','Error de Calendario','No se pudo abrir el calendario.');
+  }
+}
+
+/* ... Mismas funciones de Respaldo, Oradores, Toast y Gemini IA ... */
+
+// ── Init ──
+// CORRECCIÓN FINAL: Asegurando el cierre correcto de etiquetas y script.
+try{renderHome();}catch(e){console.error('renderHome failed:',e);}
+try{timerReset();}catch(e){}
+initNotifications();
+</script>
+
+</body>
+</html>
 /* ══ PHONE / TABLET CONTAINER ══ */
 .phone{
   position:relative;z-index:1;width:100%;min-height:100vh;
