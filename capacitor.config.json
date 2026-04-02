@@ -1,18 +1,12 @@
 {
-  "appId": "com.supercircuito.app",
-  "appName": "Super CircuitoApp",
+  "appId": "com.superasistente.pro",
+  "appName": "Super Asistente PRO",
   "webDir": "www",
   "android": {
-    "allowMixedContent": false,
     "backgroundColor": "#000000",
-    "appendUserAgent": "SuperCircuitoApp"
+    "fullscreen": true
   },
   "plugins": {
-    "LocalNotifications": {
-      "smallIcon": "ic_stat_notify",
-      "iconColor": "#1E5FA8",
-      "sound": "default"
-    },
     "SplashScreen": {
       "launchShowDuration": 1500,
       "backgroundColor": "#000000",
