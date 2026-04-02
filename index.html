@@ -1,40 +1,174 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<title>Super CircuitoApp — Vista Edition</title>
-<link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-:root{
-  --aero-blue:#1e5fa8;--aero-light:#4da3e8;--aero-glow:#7ec8f5;--aero-bright:#a8d8f8;
-  --glass-border:rgba(130,190,255,0.30);
-  --title-bar:linear-gradient(180deg,rgba(55,115,215,0.95) 0%,rgba(22,75,155,0.97) 40%,rgba(10,45,115,1) 100%);
-  --btn-grad:linear-gradient(180deg,rgba(115,185,255,0.92) 0%,rgba(58,125,218,0.88) 45%,rgba(28,88,178,0.92) 50%,rgba(18,68,158,0.97) 100%);
-  --btn-hover:linear-gradient(180deg,rgba(148,208,255,0.96) 0%,rgba(88,158,238,0.92) 45%,rgba(48,118,208,0.96) 50%,rgba(33,98,188,1) 100%);
-  --btn-active:linear-gradient(180deg,rgba(18,68,158,0.97) 0%,rgba(28,88,178,0.92) 50%,rgba(58,125,218,0.88) 100%);
-  --text:#e8f2ff;--text-dim:#7a9cbd;
-  --gold:#ffd060;--green:#5ce875;--danger:#ff6060;--purple:#c084fc;--r:8px;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Super Asistente 360</title>
+    <style>
+        /* Reset y Base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-/* ══ BASE ══ */
-html,body{min-height:100vh;font-family:'Segoe UI',Tahoma,Geneva,sans-serif;background:#000;overflow-x:hidden;}
-body{display:flex;justify-content:center;}
-body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:
-    radial-gradient(1px 1px at 12% 22%,rgba(120,190,255,0.5) 0%,transparent 100%),
-    radial-gradient(1px 1px at 73% 8%,rgba(140,210,255,0.35) 0%,transparent 100%),
-    radial-gradient(1px 1px at 38% 58%,rgba(90,170,255,0.3) 0%,transparent 100%),
-    radial-gradient(1px 1px at 88% 42%,rgba(110,190,255,0.4) 0%,transparent 100%),
-    radial-gradient(ellipse 60% 25% at 50% 100%,rgba(15,55,160,0.15) 0%,transparent 70%);}
-body::after{content:'';position:fixed;bottom:0;left:0;right:0;height:22vh;pointer-events:none;z-index:0;
-  background:linear-gradient(0deg,rgba(15,55,160,0.08) 0%,transparent 100%);
-  animation:aurora 12s ease-in-out infinite alternate;}
-@keyframes aurora{0%{opacity:0.4;}100%{opacity:0.9;}}
+        body {
+            background-color: #000; /* Fondo negro para evitar destellos blancos */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: white;
+            overflow: hidden; /* Evita scrolls innecesarios */
+        }
 
+        /* Contenedor Principal: Corregido para ocupar toda la pantalla */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #000c24 0%, #001a4d 100%);
+            position: relative;
+        }
+
+        /* Header / Banner Superior */
+        .header-banner {
+            display: flex;
+            justify-content: flex-end;
+            padding: 15px;
+            width: 100%;
+        }
+
+        .logo-container {
+            background: rgba(0, 102, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-text {
+            font-weight: bold;
+            font-size: 14px;
+            line-height: 1.2;
+            text-align: left;
+        }
+
+        /* Área de Contenido Central */
+        .main-content {
+            flex: 1; /* Esto empuja el menú hacia abajo y ocupa todo el espacio */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Menú Inferior Estilo Tablet/S24 (Imagen 1000493075) */
+        .bottom-nav {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: rgba(0, 20, 60, 0.9);
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 0;
+            padding-bottom: env(safe-area-inset-bottom); /* Soporte para S24 Ultra */
+            width: 100%;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .nav-icon-box {
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .nav-item:active .nav-icon-box {
+            background: #0066ff;
+        }
+
+        .nav-text {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        /* Adaptación para Modo Horizontal (Imagen 1000493074) */
+        @media (orientation: landscape) {
+            .app-container {
+                flex-direction: row;
+            }
+            
+            .bottom-nav {
+                width: 120px;
+                height: 100vh;
+                flex-direction: column;
+                border-top: none;
+                border-right: 1px solid rgba(255, 255, 255, 0.2);
+            }
+
+            .header-banner {
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="header-banner">
+            <div class="logo-container">
+                <div class="logo-text">
+                    SUPER<br>CIRCUITO<br>APP<br>
+                    <span style="font-size: 8px; color: #aaa;">VISTA EDITION</span>
+                </div>
+                <div style="font-size: 12px;">✨ Gemini IA</div>
+                <div style="font-size: 20px;">🖨️</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            </div>
+
+        <nav class="bottom-nav">
+            <div class="nav-item">
+                <div class="nav-icon-box" style="background: #0033cc; border: 1px solid cyan;">🏠</div>
+                <span class="nav-text">Inicio</span>
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon-box">📊</div>
+                <span class="nav-text">Estadísticas</span>
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon-box">📄</div>
+                <span class="nav-text">Reportes</span>
+            </div>
+            <div class="nav-item">
+                <div class="nav-icon-box">💾</div>
+                <span class="nav-text">Respaldo</span>
+            </div>
+        </nav>
+    </div>
+
+</body>
+</html>
 /* ══ PHONE / TABLET CONTAINER ══ */
 .phone{
   position:relative;z-index:1;width:100%;min-height:100vh;
