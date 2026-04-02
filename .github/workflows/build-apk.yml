@@ -1,61 +1,53 @@
-name: Build APK RELEASE
+name: Build APK Release
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Java 17
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          distribution: temurin
+          java-version: 17
 
-      - name: Node 20
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
 
-      - name: Instalar dependencias
-        run: npm install
+      - run: npm install
 
-      - name: Crear www
-        run: |
+      - run: |
           mkdir -p www
           cp index.html www/index.html
           cp manifest.json www/manifest.json || true
           cp service-worker.js www/service-worker.js || true
 
-      - name: Capacitor
-        run: |
-          npx cap add android
-          npx cap sync android
+      - run: npx cap add android
 
-      # 🔐 Crear keystore automáticamente
+      - run: npx cap sync android
+
       - name: Generar keystore
         run: |
           keytool -genkey -v \
-            -keystore release.keystore \
-            -alias release \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass 123456 \
-            -keypass 123456 \
-            -dname "CN=App,O=App,L=App,ST=App,C=MX"
+          -keystore release.keystore \
+          -alias release \
+          -keyalg RSA \
+          -keysize 2048 \
+          -validity 10000 \
+          -storepass 123456 \
+          -keypass 123456 \
+          -dname "CN=App,O=App,C=MX"
 
-      # ⚙️ Configurar firma RELEASE
-      - name: Configurar signing
+      - name: Configurar firma
         run: |
-          echo "
-          android {
+          echo "android {
             signingConfigs {
               release {
                 storeFile file('../../release.keystore')
@@ -67,38 +59,18 @@ jobs:
             buildTypes {
               release {
                 signingConfig signingConfigs.release
-                minifyEnabled false
-                shrinkResources false
               }
             }
-          }
-          " >> android/app/build.gradle
+          }" >> android/app/build.gradle
 
-      # 🚀 Build RELEASE
-      - name: Build APK RELEASE
-        run: |
+      - run: |
           cd android
           ./gradlew assembleRelease --no-daemon
 
-      # 📦 Subir APK
-      - name: Subir APK
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: super-app-release
-          path: android/app/build/outputs/apk/release/app-release.apk      # ─────────────────────────────────────────────────────────────
-      # 11. Permisos Gradle
-      # ─────────────────────────────────────────────────────────────
-      - name: Gradle permissions
-        run: chmod +x android/gradlew
-
-      # ─────────────────────────────────────────────────────────────
-      # 12. Cache Gradle
-      # ─────────────────────────────────────────────────────────────
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
+          name: apk-release
+          path: android/app/build/outputs/apk/release/app-release.apk            ~/.gradle/caches
             ~/.gradle/wrapper
           key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/**/gradle-wrapper.properties') }}
           restore-keys: gradle-
