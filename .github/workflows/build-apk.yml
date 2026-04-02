@@ -1,4 +1,4 @@
-name: Build PRO APK
+name: Build APK RELEASE
 
 on:
   push:
@@ -9,96 +9,83 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Java 17
+        uses: actions/setup-java@v4
         with:
-          node-version: 20
+          java-version: '17'
+          distribution: 'temurin'
 
-      - run: npm install
+      - name: Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-      - run: |
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Crear www
+        run: |
           mkdir -p www
           cp index.html www/index.html
-          cp manifest.json www/manifest.json
-          cp service-worker.js www/service-worker.js
+          cp manifest.json www/manifest.json || true
+          cp service-worker.js www/service-worker.js || true
 
-      - run: |
+      - name: Capacitor
+        run: |
           npx cap add android
-          npx cap sync
+          npx cap sync android
 
-      - run: |
+      # 🔐 Crear keystore automáticamente
+      - name: Generar keystore
+        run: |
+          keytool -genkey -v \
+            -keystore release.keystore \
+            -alias release \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass 123456 \
+            -keypass 123456 \
+            -dname "CN=App,O=App,L=App,ST=App,C=MX"
+
+      # ⚙️ Configurar firma RELEASE
+      - name: Configurar signing
+        run: |
+          echo "
+          android {
+            signingConfigs {
+              release {
+                storeFile file('../../release.keystore')
+                storePassword '123456'
+                keyAlias 'release'
+                keyPassword '123456'
+              }
+            }
+            buildTypes {
+              release {
+                signingConfig signingConfigs.release
+                minifyEnabled false
+                shrinkResources false
+              }
+            }
+          }
+          " >> android/app/build.gradle
+
+      # 🚀 Build RELEASE
+      - name: Build APK RELEASE
+        run: |
           cd android
-          ./gradlew assembleDebug
+          ./gradlew assembleRelease --no-daemon
 
-      - uses: actions/upload-artifact@v4
+      # 📦 Subir APK
+      - name: Subir APK
+        uses: actions/upload-artifact@v4
         with:
-          name: super-app-pro
-          path: android/app/build/outputs/apk/debug/app-debug.apk            img.save(f'{dst}/ic_launcher.png', 'PNG')
-            img.save(f'{dst}/ic_launcher_round.png', 'PNG')
-            print(f'OK {name}: {size}x{size}px')
-
-          # Foreground adaptive icon (192px)
-          big = src.resize((192,192), Image.LANCZOS)
-          for name in sizes:
-            big.save(f'android/app/src/main/res/mipmap-{name}/ic_launcher_foreground.png','PNG')
-          print('OK foreground adaptive')
-          PYEOF
-
-      # ─────────────────────────────────────────────────────────────
-      # 7. Ícono de notificación (vector blanco)
-      # ─────────────────────────────────────────────────────────────
-      - name: Notification icon
-        run: |
-          mkdir -p android/app/src/main/res/drawable
-          cat > android/app/src/main/res/drawable/ic_stat_notify.xml << 'XMLEOF'
-          <vector xmlns:android="http://schemas.android.com/apk/res/android"
-              android:width="24dp" android:height="24dp"
-              android:viewportWidth="24" android:viewportHeight="24">
-            <path android:fillColor="#FFFFFF"
-              android:pathData="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,7V13L15.5,15.5L16.5,13.8L13,12V7H11Z"/>
-          </vector>
-          XMLEOF
-          echo "OK notification icon"
-
-      # ─────────────────────────────────────────────────────────────
-      # 8. Permisos en AndroidManifest
-      # ─────────────────────────────────────────────────────────────
-      - name: Permisos AndroidManifest
-        run: |
-          M="android/app/src/main/AndroidManifest.xml"
-          sed -i 's|<uses-permission android:name="android.permission.INTERNET"/>|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <uses-permission android:name="android.permission.VIBRATE"/>\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>|' "$M"
-          echo "OK permisos"
-
-      # ─────────────────────────────────────────────────────────────
-      # 9. build.gradle — SDK y versión
-      # ─────────────────────────────────────────────────────────────
-      - name: Configurar build.gradle
-        run: |
-          G="android/app/build.gradle"
-          sed -i 's/compileSdk .*/compileSdk 35/' "$G"
-          sed -i 's/targetSdk .*/targetSdk 35/' "$G"
-          sed -i 's/versionCode [0-9]*/versionCode 1/' "$G"
-          sed -i "s/versionName \"[^\"]*\"/versionName \"1.0.0\"/" "$G"
-          echo "OK build.gradle"
-          grep -E "compileSdk|targetSdk|versionCode|versionName" "$G"
-
-      # ─────────────────────────────────────────────────────────────
-      # 10. Registrar plugins Capacitor en MainActivity.java
-      # ─────────────────────────────────────────────────────────────
-      - name: Registrar plugins en MainActivity
-        run: |
-          MAIN=$(find android -name "MainActivity.java" 2>/dev/null | head -1)
-          echo "Encontrado: $MAIN"
-          if [ -z "$MAIN" ]; then echo "ERROR: no se encontró MainActivity.java"; exit 1; fi
-          # Imports
-          sed -i '/import com.getcapacitor.BridgeActivity;/a import com.capacitorjs.plugins.localnotifications.LocalNotificationsPlugin;\nimport com.capacitorjs.plugins.filesystem.FilesystemPlugin;\nimport com.capacitorjs.plugins.browser.BrowserPlugin;\nimport com.capacitorjs.plugins.share.SharePlugin;' "$MAIN"
-          # registerPlugin antes de super.onCreate
-          sed -i 's/super.onCreate(savedInstanceState);/registerPlugin(LocalNotificationsPlugin.class);\n    registerPlugin(FilesystemPlugin.class);\n    registerPlugin(BrowserPlugin.class);\n    registerPlugin(SharePlugin.class);\n    super.onCreate(savedInstanceState);/' "$MAIN"
-          echo "OK plugins"
-          cat "$MAIN"
-
-      # ─────────────────────────────────────────────────────────────
+          name: super-app-release
+          path: android/app/build/outputs/apk/release/app-release.apk      # ─────────────────────────────────────────────────────────────
       # 11. Permisos Gradle
       # ─────────────────────────────────────────────────────────────
       - name: Gradle permissions
