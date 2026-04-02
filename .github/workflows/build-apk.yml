@@ -1,41 +1,220 @@
-name: Build APK
+name: Super CircuitoApp — Build Release
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      # ─────────────────────────────────────────────────────────────
+      # 1. Código fuente
+      # ─────────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ─────────────────────────────────────────────────────────────
+      # 2. Entorno
+      # ─────────────────────────────────────────────────────────────
+      - name: Java 17
+        uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: 17
+          java-version: '17'
+          distribution: 'temurin'
 
-      - uses: actions/setup-node@v4
+      - name: Node 20
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
 
-      - run: npm install
+      # ─────────────────────────────────────────────────────────────
+      # 3. Dependencias npm
+      # ─────────────────────────────────────────────────────────────
+      - name: npm install
+        run: npm install
 
-      - run: |
+      # ─────────────────────────────────────────────────────────────
+      # 4. Copiar app a www/
+      # ─────────────────────────────────────────────────────────────
+      - name: Preparar www/
+        run: |
           mkdir -p www
           cp index.html www/index.html
+          SIZE=$(wc -c < www/index.html)
+          echo "index.html: $SIZE bytes"
+          if [ "$SIZE" -lt 50000 ]; then
+            echo "ERROR: index.html demasiado pequeño ($SIZE bytes)"
+            exit 1
+          fi
 
-      - run: npx cap add android
+      # ─────────────────────────────────────────────────────────────
+      # 5. Capacitor
+      # ─────────────────────────────────────────────────────────────
+      - name: Cap add android
+        run: npx cap add android
 
-      - run: npx cap sync android
+      - name: Cap sync
+        run: npx cap sync android
 
-      - run: |
-          cd android
-          ./gradlew assembleRelease
+      # ─────────────────────────────────────────────────────────────
+      # 6. Redimensionar y copiar íconos con Python + Pillow
+      #    (garantiza los 5 tamaños correctos desde cualquier PNG)
+      # ─────────────────────────────────────────────────────────────
+      - name: Instalar Pillow
+        run: pip install Pillow --quiet
 
-      - uses: actions/upload-artifact@v4
+      - name: Generar e instalar íconos
+        run: |
+          python3 << 'PYEOF'
+          from PIL import Image
+          import os, sys
+
+          # Buscar el ícono fuente (primero xxxhdpi, luego cualquier png en icons/)
+          candidates = [
+            'icons/ic_launcher_xxxhdpi.png',
+            'icons/ic_launcher_xxhdpi.png',
+            'icons/ic_launcher_xhdpi.png',
+          ]
+          src_path = None
+          for c in candidates:
+            if os.path.exists(c):
+              src_path = c
+              break
+          if not src_path:
+            pngs = [f for f in os.listdir('icons') if f.endswith('.png')] if os.path.isdir('icons') else []
+            if pngs:
+              src_path = 'icons/' + pngs[0]
+          if not src_path:
+            print('ERROR: No se encontró ningún PNG en icons/')
+            sys.exit(1)
+
+          print(f'Usando fuente: {src_path}')
+          src = Image.open(src_path).convert('RGBA')
+
+          sizes = {'mdpi':48,'hdpi':72,'xhdpi':96,'xxhdpi':144,'xxxhdpi':192}
+          for name, size in sizes.items():
+            dst = f'android/app/src/main/res/mipmap-{name}'
+            os.makedirs(dst, exist_ok=True)
+            img = src.resize((size,size), Image.LANCZOS)
+            img.save(f'{dst}/ic_launcher.png', 'PNG')
+            img.save(f'{dst}/ic_launcher_round.png', 'PNG')
+            print(f'OK {name}: {size}x{size}px')
+
+          # Foreground adaptive icon (192px)
+          big = src.resize((192,192), Image.LANCZOS)
+          for name in sizes:
+            big.save(f'android/app/src/main/res/mipmap-{name}/ic_launcher_foreground.png','PNG')
+          print('OK foreground adaptive')
+          PYEOF
+
+      # ─────────────────────────────────────────────────────────────
+      # 7. Ícono de notificación (vector blanco)
+      # ─────────────────────────────────────────────────────────────
+      - name: Notification icon
+        run: |
+          mkdir -p android/app/src/main/res/drawable
+          cat > android/app/src/main/res/drawable/ic_stat_notify.xml << 'XMLEOF'
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="24dp" android:height="24dp"
+              android:viewportWidth="24" android:viewportHeight="24">
+            <path android:fillColor="#FFFFFF"
+              android:pathData="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,7V13L15.5,15.5L16.5,13.8L13,12V7H11Z"/>
+          </vector>
+          XMLEOF
+          echo "OK notification icon"
+
+      # ─────────────────────────────────────────────────────────────
+      # 8. Permisos en AndroidManifest
+      # ─────────────────────────────────────────────────────────────
+      - name: Permisos AndroidManifest
+        run: |
+          M="android/app/src/main/AndroidManifest.xml"
+          sed -i 's|<uses-permission android:name="android.permission.INTERNET"/>|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <uses-permission android:name="android.permission.VIBRATE"/>\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>\n    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>|' "$M"
+          echo "OK permisos"
+
+      # ─────────────────────────────────────────────────────────────
+      # 9. build.gradle — SDK y versión
+      # ─────────────────────────────────────────────────────────────
+      - name: Configurar build.gradle
+        run: |
+          G="android/app/build.gradle"
+          sed -i 's/compileSdk .*/compileSdk 35/' "$G"
+          sed -i 's/targetSdk .*/targetSdk 35/' "$G"
+          sed -i 's/versionCode [0-9]*/versionCode 1/' "$G"
+          sed -i "s/versionName \"[^\"]*\"/versionName \"1.0.0\"/" "$G"
+          echo "OK build.gradle"
+          grep -E "compileSdk|targetSdk|versionCode|versionName" "$G"
+
+      # ─────────────────────────────────────────────────────────────
+      # 10. Registrar plugins Capacitor en MainActivity.java
+      # ─────────────────────────────────────────────────────────────
+      - name: Registrar plugins en MainActivity
+        run: |
+          MAIN=$(find android -name "MainActivity.java" 2>/dev/null | head -1)
+          echo "Encontrado: $MAIN"
+          if [ -z "$MAIN" ]; then echo "ERROR: no se encontró MainActivity.java"; exit 1; fi
+          # Imports
+          sed -i '/import com.getcapacitor.BridgeActivity;/a import com.capacitorjs.plugins.localnotifications.LocalNotificationsPlugin;\nimport com.capacitorjs.plugins.filesystem.FilesystemPlugin;\nimport com.capacitorjs.plugins.browser.BrowserPlugin;\nimport com.capacitorjs.plugins.share.SharePlugin;' "$MAIN"
+          # registerPlugin antes de super.onCreate
+          sed -i 's/super.onCreate(savedInstanceState);/registerPlugin(LocalNotificationsPlugin.class);\n    registerPlugin(FilesystemPlugin.class);\n    registerPlugin(BrowserPlugin.class);\n    registerPlugin(SharePlugin.class);\n    super.onCreate(savedInstanceState);/' "$MAIN"
+          echo "OK plugins"
+          cat "$MAIN"
+
+      # ─────────────────────────────────────────────────────────────
+      # 11. Permisos Gradle
+      # ─────────────────────────────────────────────────────────────
+      - name: Gradle permissions
+        run: chmod +x android/gradlew
+
+      # ─────────────────────────────────────────────────────────────
+      # 12. Cache Gradle
+      # ─────────────────────────────────────────────────────────────
+      - name: Cache Gradle
+        uses: actions/cache@v4
         with:
-          name: app-release
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/**/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+
+      # ─────────────────────────────────────────────────────────────
+      # 13. Build APK (debug — funciona sin keystore, se instala igual)
+      # ─────────────────────────────────────────────────────────────
+      - name: Build APK
+        run: |
+          cd android
+          ./gradlew assembleDebug \
+            --no-daemon \
+            --stacktrace \
+            -Dorg.gradle.jvmargs="-Xmx2g -XX:MaxMetaspaceSize=512m"
+
+      # ─────────────────────────────────────────────────────────────
+      # 14. Verificar y renombrar APK
+      # ─────────────────────────────────────────────────────────────
+      - name: Verificar APK
+        run: |
+          APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          if [ ! -f "$APK" ]; then
+            echo "ERROR: APK no encontrado"
+            find android/app/build -name "*.apk" 2>/dev/null
+            exit 1
+          fi
+          ls -lh "$APK"
+          cp "$APK" "android/app/build/outputs/apk/debug/SuperCircuitoApp-v1.0.0.apk"
+          echo "APK listo: SuperCircuitoApp-v1.0.0.apk"
+
+      # ─────────────────────────────────────────────────────────────
+      # 15. Subir APK como artifact
+      # ─────────────────────────────────────────────────────────────
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SuperCircuitoApp-v1.0.0
+          path: android/app/build/outputs/apk/debug/SuperCircuitoApp-v1.0.0.apk
+          retention-days: 90
+          if-no-files-found: error
