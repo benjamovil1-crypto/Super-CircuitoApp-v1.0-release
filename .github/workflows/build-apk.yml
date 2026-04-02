@@ -32,6 +32,13 @@ jobs:
       - run: npx cap add android
 
       - run: npx cap sync android
+      - name: Registrar plugin Calendar
+        run: |
+          MAIN=$(find android -name "MainActivity.java" | head -1)
+
+          sed -i '/BridgeActivity/a import com.getcapacitor.community.calendar.CalendarPlugin;' $MAIN
+
+          sed -i 's/super.onCreate(savedInstanceState);/registerPlugin(CalendarPlugin.class);\n    super.onCreate(savedInstanceState);/' $MAIN
 
       - name: Generar keystore
         run: |
