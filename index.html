@@ -1,106 +1,85 @@
 <!DOCTYPE html>
-
 <html lang="es">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
-<meta name="mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-capable" content="yes"/>
-<title>Super CircuitoApp — Vista Edition</title>
-<link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<title>Super Asistente 360</title>
+
+<link rel="manifest" href="manifest.json">
+
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-:root{
-  --aero-blue:#1e5fa8;--aero-light:#4da3e8;--aero-glow:#7ec8f5;--aero-bright:#a8d8f8;
-  --glass-border:rgba(130,190,255,0.30);
-  --title-bar:linear-gradient(180deg,rgba(55,115,215,0.95) 0%,rgba(22,75,155,0.97) 40%,rgba(10,45,115,1) 100%);
-  --btn-grad:linear-gradient(180deg,rgba(115,185,255,0.92) 0%,rgba(58,125,218,0.88) 45%,rgba(28,88,178,0.92) 50%,rgba(18,68,158,0.97) 100%);
-  --btn-hover:linear-gradient(180deg,rgba(148,208,255,0.96) 0%,rgba(88,158,238,0.92) 45%,rgba(48,118,208,0.96) 50%,rgba(33,98,188,1) 100%);
-  --btn-active:linear-gradient(180deg,rgba(18,68,158,0.97) 0%,rgba(28,88,178,0.92) 50%,rgba(58,125,218,0.88) 100%);
-  --text:#e8f2ff;--text-dim:#7a9cbd;
-  --gold:#ffd060;--green:#5ce875;--danger:#ff6060;--purple:#c084fc;--r:8px;
+body {
+  margin: 0;
+  font-family: Arial;
+  text-align: center;
+  background: #000;
+  color: #fff;
 }
 
-html,body{min-height:100vh;font-family:‘Segoe UI’,Tahoma,Geneva,sans-serif;background:#000;overflow-x:hidden;}
-body{display:flex;justify-content:center;}
-body::before{content:’’;position:fixed;inset:0;pointer-events:none;z-index:0;
-background:
-radial-gradient(1px 1px at 12% 22%,rgba(120,190,255,0.5) 0%,transparent 100%),
-radial-gradient(1px 1px at 73% 8%,rgba(140,210,255,0.35) 0%,transparent 100%),
-radial-gradient(1px 1px at 38% 58%,rgba(90,170,255,0.3) 0%,transparent 100%),
-radial-gradient(1px 1px at 88% 42%,rgba(110,190,255,0.4) 0%,transparent 100%),
-radial-gradient(ellipse 60% 25% at 50% 100%,rgba(15,55,160,0.15) 0%,transparent 70%);}
-body::after{content:’’;position:fixed;bottom:0;left:0;right:0;height:22vh;pointer-events:none;z-index:0;
-background:linear-gradient(0deg,rgba(15,55,160,0.08) 0%,transparent 100%);
-animation:aurora 12s ease-in-out infinite alternate;}
-@keyframes aurora{0%{opacity:0.4;}100%{opacity:0.9;}}
-
-.phone{
-position:relative;z-index:1;width:100%;min-height:100vh;
-display:flex;flex-direction:column;
-background:rgba(4,6,16,0.98);
-border-left:1px solid rgba(55,105,195,0.18);
-border-right:1px solid rgba(55,105,195,0.18);
-box-shadow:0 0 90px rgba(18,68,178,0.22);
+button {
+  padding: 15px;
+  font-size: 18px;
+  margin: 10px;
+  border-radius: 10px;
 }
 
-@media (max-width:599px){
-.phone{max-width:100%;}
-.content{padding:0 10px 80px;}
-.grid2{grid-template-columns:1fr 1fr;}
-.agrid{grid-template-columns:1fr 1fr;}
-.sgrid{grid-template-columns:repeat(3,1fr);}
-.nav-bottom{max-width:100%;}
-.nb{padding:4px 10px;font-size:8px;}
-.ni{font-size:16px;}
-.ftabs .tp{padding:4px 7px;font-size:10px;}
+/* Samsung fix */
+body {
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
-@media (min-width:600px) and (max-width:1023px){
-.phone{max-width:100%;}
-.content{padding:0 18px 85px;}
-.grid2{grid-template-columns:1fr 1fr;}
-.agrid{grid-template-columns:repeat(3,1fr);}
-.sgrid{grid-template-columns:repeat(4,1fr);}
-.nav-bottom{max-width:100%;}
-.nb{padding:5px 18px;font-size:9px;}
-.ni{font-size:18px;}
-.ftabs .tp{padding:5px 12px;font-size:11px;}
-.wt{font-size:13px;}.ft{font-size:12px;}
-.ci-name{font-size:14px;}.topbar-logo{font-size:15px;}
-.btn{font-size:12.5px;}.btn-sm{font-size:11px;}
-.gp-options{grid-template-columns:repeat(3,1fr);}
-.chk-list{grid-template-columns:1fr 1fr 1fr;}
+@media (orientation: landscape) {
+  body {
+    padding-bottom: 48px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<h1>Super Asistente 360</h1>
+
+<button onclick="compartirPDF()">Compartir / Imprimir</button>
+<button onclick="crearEvento()">Agregar al Calendario</button>
+
+<script>
+function compartirPDF() {
+  if (window.Capacitor) {
+    Capacitor.Plugins.Share.share({
+      title: "Super App",
+      text: "Contenido para compartir",
+      dialogTitle: "Compartir"
+    });
+  } else {
+    window.print();
+  }
 }
 
-@media (min-width:600px) and (orientation:landscape){
-.phone{max-width:100%;flex-direction:row;flex-wrap:wrap;}
-.topbar{width:100%;order:-1;}
-.content{flex:1;padding:0 24px 20px;overflow-y:auto;height:calc(100vh - 58px);margin-left:110px;}
-.nav-bottom{position:fixed;left:0;top:58px;bottom:0;right:auto;width:110px;max-width:110px;flex-direction:column;justify-content:flex-start;padding:14px 0;transform:none;border-top:none;border-right:1px solid rgba(68,128,238,0.32);box-shadow:none;}
-.nav-bottom::before{display:none;}
-.nb{padding:10px 8px;font-size:8.5px;width:100%;border-radius:0;flex-direction:column;gap:3px;}
-.ni{font-size:20px;}
-.grid2{grid-template-columns:1fr 1fr;}.agrid{grid-template-columns:repeat(4,1fr);}.sgrid{grid-template-columns:repeat(5,1fr);}
-.gp-options{grid-template-columns:repeat(3,1fr);}.chk-list{grid-template-columns:repeat(4,1fr);}
-.cong-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.ftabs .tp{padding:5px 12px;font-size:11px;}.wt{font-size:13px;}.ft{font-size:12px;}
-.btn{font-size:12.5px;}.btn-sm{font-size:11px;}.card{padding:15px;}
-.asig-row{grid-template-columns:1fr 1fr 90px auto;}
-}
-@media (min-width:600px) and (orientation:portrait){
-.nav-bottom{position:fixed;bottom:0;left:0;right:0;top:auto;width:100%;max-width:100%;flex-direction:row;justify-content:space-around;padding:6px 0 14px;transform:none;border-top:1px solid rgba(68,128,238,0.32);border-right:none;box-shadow:0 -1px 0 rgba(138,198,255,0.16);}
-.nav-bottom::before{display:block;}
-.nb{padding:5px 20px;font-size:9px;width:auto;flex-direction:column;gap:2px;}
-.ni{font-size:20px;}.content{margin-left:0;padding-bottom:85px;}
+async function crearEvento() {
+  const { Calendar } = Capacitor.Plugins;
+
+  await Calendar.requestPermissions();
+
+  await Calendar.createEvent({
+    title: "Evento Super App",
+    startDate: new Date().toISOString(),
+    endDate: new Date().toISOString()
+  });
+
+  alert("Evento creado");
 }
 
-::-webkit-scrollbar{width:5px;}
-::-webkit-scrollbar-track{background:rgba(0,0,0,0.9);}
-::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(75,145,238,0.5),rgba(38,88,178,0.5));border-radius:3px;}
+// OFFLINE
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js');
+}
+</script>
 
-/* TOPBAR */
-.topbar{position:sticky;top:0;z-index:100;background:var(–title-bar);border-bottom:1px solid rgba(78,142,252,0.42);
+</body>
+</html>.topbar{position:sticky;top:0;z-index:100;background:var(–title-bar);border-bottom:1px solid rgba(78,142,252,0.42);
 box-shadow:0 1px 0 rgba(158,212,255,0.22),0 5px 28px rgba(0,18,78,0.95),inset 0 1px 0 rgba(178,222,255,0.18);}
 .topbar-inner{display:flex;align-items:center;gap:9px;padding:8px 13px;background:linear-gradient(180deg,rgba(255,255,255,0.065) 0%,transparent 100%);}
 .topbar-logo{flex:1;font-size:13.5px;font-weight:700;letter-spacing:0.4px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.95),0 0 15px rgba(78,155,255,0.65);display:flex;align-items:center;gap:8px;}
