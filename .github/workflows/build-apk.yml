@@ -1,4 +1,4 @@
-name: Build APK Release
+name: Build APK
 
 on:
   push:
@@ -26,95 +26,16 @@ jobs:
       - run: |
           mkdir -p www
           cp index.html www/index.html
-          cp manifest.json www/manifest.json || true
-          cp service-worker.js www/service-worker.js || true
 
       - run: npx cap add android
 
       - run: npx cap sync android
-      - name: Registrar plugin Calendar
-        run: |
-          MAIN=$(find android -name "MainActivity.java" | head -1)
-
-          sed -i '/BridgeActivity/a import com.getcapacitor.community.calendar.CalendarPlugin;' $MAIN
-
-          sed -i 's/super.onCreate(savedInstanceState);/registerPlugin(CalendarPlugin.class);\n    super.onCreate(savedInstanceState);/' $MAIN
-
-      - name: Generar keystore
-        run: |
-          keytool -genkey -v \
-          -keystore release.keystore \
-          -alias release \
-          -keyalg RSA \
-          -keysize 2048 \
-          -validity 10000 \
-          -storepass 123456 \
-          -keypass 123456 \
-          -dname "CN=App,O=App,C=MX"
-
-      - name: Configurar firma
-        run: |
-          echo "android {
-            signingConfigs {
-              release {
-                storeFile file('../../release.keystore')
-                storePassword '123456'
-                keyAlias 'release'
-                keyPassword '123456'
-              }
-            }
-            buildTypes {
-              release {
-                signingConfig signingConfigs.release
-              }
-            }
-          }" >> android/app/build.gradle
 
       - run: |
           cd android
-          ./gradlew assembleRelease --no-daemon
+          ./gradlew assembleRelease
 
       - uses: actions/upload-artifact@v4
         with:
-          name: apk-release
-          path: android/app/build/outputs/apk/release/app-release.apk            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/**/gradle-wrapper.properties') }}
-          restore-keys: gradle-
-
-      # ─────────────────────────────────────────────────────────────
-      # 13. Build APK (debug — funciona sin keystore, se instala igual)
-      # ─────────────────────────────────────────────────────────────
-      - name: Build APK
-        run: |
-          cd android
-          ./gradlew assembleDebug \
-            --no-daemon \
-            --stacktrace \
-            -Dorg.gradle.jvmargs="-Xmx2g -XX:MaxMetaspaceSize=512m"
-
-      # ─────────────────────────────────────────────────────────────
-      # 14. Verificar y renombrar APK
-      # ─────────────────────────────────────────────────────────────
-      - name: Verificar APK
-        run: |
-          APK="android/app/build/outputs/apk/debug/app-debug.apk"
-          if [ ! -f "$APK" ]; then
-            echo "ERROR: APK no encontrado"
-            find android/app/build -name "*.apk" 2>/dev/null
-            exit 1
-          fi
-          ls -lh "$APK"
-          cp "$APK" "android/app/build/outputs/apk/debug/SuperCircuitoApp-v1.0.0.apk"
-          echo "APK listo: SuperCircuitoApp-v1.0.0.apk"
-
-      # ─────────────────────────────────────────────────────────────
-      # 15. Subir APK como artifact
-      # ─────────────────────────────────────────────────────────────
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: SuperCircuitoApp-v1.0.0
-          path: android/app/build/outputs/apk/debug/SuperCircuitoApp-v1.0.0.apk
-          retention-days: 90
-          if-no-files-found: error
+          name: app-release
+          path: android/app/build/outputs/apk/release/app-release.apk
