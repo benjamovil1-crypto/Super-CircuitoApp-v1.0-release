@@ -10,17 +10,23 @@
 <style>
 body {
   margin: 0;
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   text-align: center;
   background: #000;
   color: #fff;
 }
 
+h1 {
+  margin-top: 30px;
+}
+
 button {
-  padding: 15px;
+  padding: 15px 20px;
   font-size: 18px;
   margin: 10px;
   border-radius: 10px;
+  border: none;
+  cursor: pointer;
 }
 
 /* FIX SAMSUNG */
@@ -40,15 +46,18 @@ body {
 
 <h1>Super Asistente 360</h1>
 
-<button onclick="compartirPDF()">Compartir / Imprimir</button>
-<button onclick="crearEvento()">Agregar al Calendario</button>
+<button onclick="compartir()">Compartir / Imprimir</button>
+
+<button onclick="alert('Calendario desactivado para evitar errores')">
+Agregar al Calendario
+</button>
 
 <script>
-function compartirPDF() {
-  if (window.Capacitor) {
+function compartir() {
+  if (window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.Share) {
     Capacitor.Plugins.Share.share({
-      title: "Super App",
-      text: "Contenido para compartir",
+      title: "Super Asistente 360",
+      text: "Contenido de la app",
       dialogTitle: "Compartir"
     });
   } else {
@@ -56,47 +65,14 @@ function compartirPDF() {
   }
 }
 
-async function crearEvento() {
-  try {
-    const Calendar = Capacitor.Plugins.Calendar;
-
-    await Calendar.requestPermissions();
-
-    await Calendar.createEvent({
-      title: "Evento Super App",
-      location: "App",
-      startDate: new Date().toISOString(),
-      endDate: new Date().toISOString()
-    });
-
-    alert("Evento creado");
-  } catch (e) {
-    alert("Error calendario: " + e);
-  }
-}
-
-// OFFLINE
+// OFFLINE (opcional, no rompe nada)
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js');
+  navigator.serviceWorker.register('service-worker.js').catch(() => {});
 }
 </script>
 
 </body>
-</html>.card{background:linear-gradient(135deg,rgba(255,255,255,0.045) 0%,rgba(78,138,238,0.025) 50%,rgba(12,48,128,0.055) 100%),rgba(6,12,42,0.78);border:1px solid var(–glass-border);border-radius:var(–r);padding:13px;margin-bottom:10px;position:relative;overflow:hidden;box-shadow:0 4px 22px rgba(0,8,48,0.75),inset 0 1px 0 rgba(158,212,255,0.1);backdrop-filter:blur(18px);}
-.card::before{content:’’;position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(158,212,255,0.32),transparent);}
-.ct{font-size:9.5px;text-transform:uppercase;letter-spacing:2px;font-weight:700;color:var(–aero-glow);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
-.ct::before{content:’’;display:block;width:3px;height:10px;background:linear-gradient(180deg,var(–aero-bright),var(–aero-blue));border-radius:2px;box-shadow:0 0 5px rgba(98,178,255,0.48);}
-
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:5px;border:1px solid rgba(78,138,218,0.52);font-family:‘Segoe UI’,Tahoma,sans-serif;font-weight:700;font-size:11.5px;cursor:pointer;transition:all .11s;position:relative;overflow:hidden;text-shadow:0 1px 2px rgba(0,0,0,0.75);}
-.btn::after{content:’’;position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.15),transparent);border-radius:4px 4px 0 0;pointer-events:none;}
-.btn-p{background:var(–btn-grad);color:#fff;border-color:rgba(58,118,218,0.72);box-shadow:0 2px 9px rgba(0,28,98,0.62),inset 0 1px 0 rgba(198,232,255,0.22);}
-.btn-p:hover{background:var(–btn-hover);}
-.btn-o{background:linear-gradient(180deg,rgba(48,88,168,0.26),rgba(13,38,108,0.36));color:var(–aero-bright);border-color:rgba(88,148,208,0.32);}
-.btn-o:hover{background:linear-gradient(180deg,rgba(68,118,192,0.36),rgba(28,68,148,0.46));border-color:rgba(118,178,255,0.52);}
-.btn-d{background:linear-gradient(180deg,rgba(178,48,48,0.28),rgba(118,12,12,0.40));color:#ffaaaa;border-color:rgba(188,68,68,0.32);}
-.btn-d:hover{background:linear-gradient(180deg,rgba(208,68,68,0.40),rgba(148,22,22,0.50));}
-.btn-s{background:linear-gradient(180deg,rgba(33,148,68,0.30),rgba(13,88,38,0.40));color:#80ffb0;border-color:rgba(48,168,88,0.36);}
+</html>.btn-s{background:linear-gradient(180deg,rgba(33,148,68,0.30),rgba(13,88,38,0.40));color:#80ffb0;border-color:rgba(48,168,88,0.36);}
 .btn-s:hover{background:linear-gradient(180deg,rgba(53,168,88,0.40),rgba(23,108,53,0.50));}
 .btn-warn{background:linear-gradient(180deg,rgba(200,140,0,0.30),rgba(140,90,0,0.40));color:var(–gold);border-color:rgba(200,150,0,0.38);}
 .btn-sm{padding:4px 9px;font-size:10.5px;border-radius:4px;}
