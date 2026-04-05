@@ -76,24 +76,59 @@ body::after{content:'';position:fixed;bottom:0;left:0;right:0;height:22vh;pointe
   .chk-list{grid-template-columns:1fr 1fr 1fr;}
 }
 
-/* ══ RESPONSIVE — Tablet landscape (Tab S8+ horizontal) ══ */
-@media (min-width:1024px){
-  .phone{max-width:100%;flex-direction:row;flex-wrap:wrap;}
-  .topbar{width:100%;order:-1;}
-  .content{flex:1;padding:0 24px 20px;overflow-y:auto;height:calc(100vh - 58px);}
-  .nav-bottom{
-    position:fixed;left:0;top:58px;bottom:0;right:auto;
-    width:110px;max-width:110px;height:auto;
-    flex-direction:column;justify-content:flex-start;
-    padding:14px 0;transform:none;
-    border-top:none;border-right:1px solid rgba(68,128,238,0.32);
-    box-shadow:none;
+/* ══ RESPONSIVE — Tablet landscape (Tab S8+ horizontal) CORREGIDO ══ */
+@media (min-width:1024px) {
+  .phone { 
+    max-width: 100%; 
+    flex-direction: column; /* Volvemos a columna para que la nav quede abajo */
   }
-  .nav-bottom::before{display:none;}
-  .nb{padding:10px 8px;font-size:8.5px;width:100%;border-radius:0;flex-direction:column;gap:3px;}
-  .ni{font-size:20px;}
-  .content{margin-left:110px;}
+  
+  .topbar { width: 100%; }
+
+  .content { 
+    flex: 1; 
+    padding: 0 24px 100px; /* Aumentamos padding inferior para no tapar contenido */
+    overflow-y: auto; 
+    height: auto; 
+    margin-left: 0 !important; /* Quitamos el margen lateral que empujaba el contenido */
+  }
+
+  .nav-bottom {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    top: auto !important; /* Cancelamos el 'top: 58px' que tenías antes */
+    right: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 70px !important;
+    flex-direction: row !important; /* Forzamos horizontal */
+    justify-content: space-around !important;
+    padding: 6px 0 14px !important;
+    border-right: none !important;
+    border-top: 1px solid rgba(68, 128, 238, 0.32) !important;
+    box-shadow: 0 -5px 25px rgba(0,0,0,0.5) !important;
+  }
+
+  .nav-bottom::before { display: block !important; }
+
+  .nb { 
+    padding: 5px 20px !important; 
+    font-size: 10px !important; 
+    width: auto !important; 
+    flex-direction: column !important; 
+    gap: 2px !important; 
+  }
+
+  /* Aprovechamos el ancho de la tablet para poner las congregaciones en 2 columnas */
+  .cong-list {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+  }
 }
+
 /* ══ Tablet portrait (600-1023px) — nav abajo centrada ══ */
 @media (min-width:600px) and (max-width:1023px) and (orientation:portrait){
   .nav-bottom{
