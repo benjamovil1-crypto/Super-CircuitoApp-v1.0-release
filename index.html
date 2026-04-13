@@ -814,7 +814,10 @@ function renderHome(){
     const div=document.createElement('div');div.className='ci';div.id='ci-'+c.id;
     const vs=[...c.visitas].reverse().map(v=>`<div class="vi"><div class="vd">${v.fecha}</div><div class="vm">EB: ${avg(v.eb)} · RP: ${avg(v.rp)}</div><button class="btn btn-o btn-sm" onclick="event.stopPropagation();openVisita(${c.id},${v.id})">Abrir</button><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delVisita(${c.id},${v.id})">✕</button></div>`).join('')||'<div style="font-size:10.5px;color:var(--text-dim);padding:5px 0">Sin visitas registradas.</div>';
     const no=c.oradores?.length||0;
-    div.innerHTML=`<div class="ch" onclick="toggleC(${c.id})"><div class="cb2">${c.nombre.slice(0,2).toUpperCase()}</div><div class="ci-info"><div class="ci-name">${c.nombre}</div><div class="ci-meta">${c.ciudad}${c.fecha?' · '+c.fecha:''}</div></div><span class="ci-cnt">${c.visitas.length} visita${c.visitas.length!==1?'s':''}</span><span class="ci-arr">▼</span></div><div class="cbody"><div style="display:flex;gap:5px;margin:10px 0 8px;flex-wrap:wrap"><button class="btn btn-p btn-sm" onclick="event.stopPropagation();newVisita(${c.id})">＋ Nueva visita</button><button class="btn btn-warn btn-sm" onclick="event.stopPropagation();openOradores(${c.id})">🎤 Oradores (${no})</button><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delCong(${c.id})">Eliminar</button></div><div class="abox"><div class="blbl">📋 Puntos para la agenda</div><textarea rows="3" placeholder="Temas a tratar…" onchange="updCong(${c.id},'puntosAgenda',this.value)">${c.puntosAgenda||''}</textarea></div><div class="obox"><div class="blbl">📝 Observaciones</div><textarea rows="3" placeholder="Notas generales…" onchange="updCong(${c.id},'observaciones',this.value)">${c.observaciones||''}</textarea></div><div class="slbl">Historial de visitas</div>${vs}</div>`;
+    const rem=c.reminder;
+    const remLbl=rem===undefined||rem===null?'🔕 Recordatorio':rem===0?'🔔 Día de visita':rem===7?'🔔 1 semana antes':`🔔 ${rem} día${rem>1?'s':''} antes`;
+    const remStyle=rem!==undefined&&rem!==null?'background:linear-gradient(180deg,rgba(30,95,168,0.45),rgba(20,60,120,0.55));color:#7abaff;border-color:rgba(100,170,255,0.4);':'';
+    div.innerHTML=`<div class="ch" onclick="toggleC(${c.id})"><div class="cb2">${c.nombre.slice(0,2).toUpperCase()}</div><div class="ci-info"><div class="ci-name">${c.nombre}</div><div class="ci-meta">${c.ciudad}${c.fecha?' · '+c.fecha:''}</div></div><span class="ci-cnt">${c.visitas.length} visita${c.visitas.length!==1?'s':''}</span><span class="ci-arr">▼</span></div><div class="cbody"><div style="display:flex;gap:5px;margin:10px 0 8px;flex-wrap:wrap"><button class="btn btn-p btn-sm" onclick="event.stopPropagation();newVisita(${c.id})">＋ Nueva visita</button><button class="btn btn-warn btn-sm" onclick="event.stopPropagation();openOradores(${c.id})">🎤 Oradores (${no})</button><button class="btn btn-sm" style="${remStyle}border:1px solid rgba(100,150,255,0.3);border-radius:6px;padding:4px 9px;font-size:10px;cursor:pointer;" onclick="cycleReminder(${c.id})">${remLbl}</button><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delCong(${c.id})">Eliminar</button></div><div class="abox"><div class="blbl">📋 Puntos para la agenda</div><textarea rows="3" placeholder="Temas a tratar…" onchange="updCong(${c.id},'puntosAgenda',this.value)">${c.puntosAgenda||''}</textarea></div><div class="obox"><div class="blbl">📝 Observaciones</div><textarea rows="3" placeholder="Notas generales…" onchange="updCong(${c.id},'observaciones',this.value)">${c.observaciones||''}</textarea></div><div class="slbl">Historial de visitas</div>${vs}</div>`;
     list.appendChild(div);
   });
 }
@@ -1239,6 +1242,50 @@ async function sendNotif(title,body){
   showToast('\uD83D\uDD14',title,body);
 }
 function toggleTimerNotif(){}
+
+/* ══ RECORDATORIOS DE VISITA (notificaciones futuras) ══ */
+async function scheduleVisitaReminder(congId,daysBefore){
+  event.stopPropagation();
+  const c=data.congregaciones.find(x=>x.id===congId);
+  if(!c)return;
+  if(!c.fecha){showToast('⚠️','Sin fecha','Agrega primero la fecha de visita próxima');return;}
+  // Cancelar recordatorio anterior si existe
+  if(_notifPlugin){try{await _notifPlugin.cancel({notifications:[{id:congId%2000000000}]});}catch(e){}}
+  // Si daysBefore===null → solo cancelar
+  if(daysBefore===null){c.reminder=null;save();renderHome();showToast('🔕','Recordatorio','Cancelado');return;}
+  // Inicializar notificaciones si aún no se ha hecho
+  const ok=await initNotifications();
+  if(!ok){showToast('❌','Sin permiso','Ve a Ajustes del teléfono y activa notificaciones para esta app');return;}
+  // Calcular fecha/hora del recordatorio
+  const visitDate=new Date(c.fecha+'T09:00:00');
+  const remDate=new Date(visitDate);
+  remDate.setDate(remDate.getDate()-daysBefore);
+  if(remDate<=new Date()){showToast('⚠️','Fecha pasada','La fecha de visita ya pasó o es muy pronto');return;}
+  const labels=['día de la visita','día antes','2 días antes','semana antes'];
+  const lbl=daysBefore===0?'el día de la visita':daysBefore===7?'1 semana antes':`${daysBefore} día${daysBefore>1?'s':''} antes`;
+  const body=daysBefore===0?`Hoy visitas ${c.nombre} — ${c.ciudad}`:`Visita a ${c.nombre} (${c.ciudad}) en ${daysBefore} día${daysBefore>1?'s':''}`;
+  try{
+    await _notifPlugin.schedule({notifications:[{
+      id:congId%2000000000,
+      title:'🏛️ Visita programada',
+      body:body,
+      schedule:{at:remDate},
+      sound:'default',
+      smallIcon:'ic_stat_notify'
+    }]});
+    c.reminder=daysBefore;save();renderHome();
+    showToast('🔔','Recordatorio',`Programado para ${remDate.toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'})} — ${lbl}`);
+  }catch(e){showToast('❌','Error al programar','No se pudo guardar el recordatorio');}
+}
+function cycleReminder(congId){
+  event.stopPropagation();
+  const c=data.congregaciones.find(x=>x.id===congId);if(!c)return;
+  const opts=[null,0,1,2,7];// null=off, 0=día de, 1=1 día antes, 2=2 días antes, 7=semana antes
+  const cur=c.reminder===undefined?null:c.reminder;
+  const idx=opts.indexOf(cur);
+  const next=opts[(idx+1)%opts.length];
+  scheduleVisitaReminder(congId,next);
+}
 
 /* ══ CALENDARIO deshabilitado ══ */
 function addToCalendar(){/* eliminado */}
