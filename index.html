@@ -585,7 +585,10 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
         <div class="card">
           <div class="ct" style="color:var(--gold)">🔔 Actividades programadas</div>
           <div id="act-prog-list"></div>
-          <button class="btn btn-o btn-sm" style="width:100%;justify-content:center;border-style:dashed;margin-top:4px" onclick="addActProg()">＋ Agregar actividad</button>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+            <button class="btn btn-o btn-sm" style="flex:1;justify-content:center;border-style:dashed" onclick="addActProg()">＋ Agregar actividad</button>
+            <button class="btn btn-sm" style="border:1px solid rgba(68,128,212,0.35);font-size:10px;color:var(--text-dim)" onclick="testNotif()">🧪 Probar notificación</button>
+          </div>
         </div>
         <div class="card"><div class="ct" style="color:var(--gold)">🍽 Alimentos</div><div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap"><div class="vista-toggle" onclick="toggleAlim('des')"><div class="toggle-dot" id="tog-des-dot"><div class="toggle-knob" id="tog-des-knob"></div></div><span style="font-size:10.5px;font-weight:700;color:#5ce875">☀️ Desayunos</span></div><div class="vista-toggle" onclick="toggleAlim('cen')"><div class="toggle-dot" id="tog-cen-dot"><div class="toggle-knob" id="tog-cen-knob"></div></div><span style="font-size:10.5px;font-weight:700;color:var(--purple)">🌙 Cenas</span></div></div><div style="overflow-x:auto"><table class="ft"><thead id="alim-thead"><tr></tr></thead><tbody id="alim-tbody"></tbody></table></div><button class="btn btn-o btn-sm" style="margin-top:6px;border-style:dashed" onclick="addAlimDay()">＋ Agregar día</button></div>
         <div class="card"><div class="ct" style="color:var(--aero-glow)">🚶 Servicio del Campo</div><div style="overflow-x:auto"><table class="ft"><thead><tr><th>Día</th><th>Lugar</th><th>Hora</th><th>Publicador</th><th>Actividad</th><th></th></tr></thead><tbody id="campo-tbody"></tbody></table></div><button class="btn btn-o btn-sm" style="margin-top:6px" onclick="addCampoRow()">＋ Agregar día</button></div>
@@ -815,9 +818,28 @@ function renderHome(){
     const vs=[...c.visitas].reverse().map(v=>`<div class="vi"><div class="vd">${v.fecha}</div><div class="vm">EB: ${avg(v.eb)} · RP: ${avg(v.rp)}</div><button class="btn btn-o btn-sm" onclick="event.stopPropagation();openVisita(${c.id},${v.id})">Abrir</button><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delVisita(${c.id},${v.id})">✕</button></div>`).join('')||'<div style="font-size:10.5px;color:var(--text-dim);padding:5px 0">Sin visitas registradas.</div>';
     const no=c.oradores?.length||0;
     const rem=c.reminder;
-    const remLbl=rem===undefined||rem===null?'🔕 Recordatorio':rem===0?'🔔 Día de visita':rem===7?'🔔 1 semana antes':`🔔 ${rem} día${rem>1?'s':''} antes`;
-    const remStyle=rem!==undefined&&rem!==null?'background:linear-gradient(180deg,rgba(30,95,168,0.45),rgba(20,60,120,0.55));color:#7abaff;border-color:rgba(100,170,255,0.4);':'';
-    div.innerHTML=`<div class="ch" onclick="toggleC(${c.id})"><div class="cb2">${c.nombre.slice(0,2).toUpperCase()}</div><div class="ci-info"><div class="ci-name">${c.nombre}</div><div class="ci-meta">${c.ciudad}${c.fecha?' · '+c.fecha:''}</div></div><span class="ci-cnt">${c.visitas.length} visita${c.visitas.length!==1?'s':''}</span><span class="ci-arr">▼</span></div><div class="cbody"><div style="display:flex;gap:5px;margin:10px 0 8px;flex-wrap:wrap"><button class="btn btn-p btn-sm" onclick="event.stopPropagation();newVisita(${c.id})">＋ Nueva visita</button><button class="btn btn-warn btn-sm" onclick="event.stopPropagation();openOradores(${c.id})">🎤 Oradores (${no})</button><button class="btn btn-sm" style="${remStyle}border:1px solid rgba(100,150,255,0.3);border-radius:6px;padding:4px 9px;font-size:10px;cursor:pointer;" onclick="cycleReminder(${c.id})">${remLbl}</button><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delCong(${c.id})">Eliminar</button></div><div class="abox"><div class="blbl">📋 Puntos para la agenda</div><textarea rows="3" placeholder="Temas a tratar…" onchange="updCong(${c.id},'puntosAgenda',this.value)">${c.puntosAgenda||''}</textarea></div><div class="obox"><div class="blbl">📝 Observaciones</div><textarea rows="3" placeholder="Notas generales…" onchange="updCong(${c.id},'observaciones',this.value)">${c.observaciones||''}</textarea></div><div class="slbl">Historial de visitas</div>${vs}</div>`;
+    const remActivo=rem!==undefined&&rem!==null;
+    const remResumen=!remActivo?'Sin recordatorio activo':rem===0?`🔔 El día de la visita · ${c.reminderHora||'09:00'}`:rem===7?`🔔 1 semana antes · ${c.reminderHora||'09:00'}`:`🔔 ${rem} día${rem>1?'s':''} antes · ${c.reminderHora||'09:00'}`;
+    div.innerHTML=`<div class="ch" onclick="toggleC(${c.id})"><div class="cb2">${c.nombre.slice(0,2).toUpperCase()}</div><div class="ci-info"><div class="ci-name">${c.nombre}</div><div class="ci-meta">${c.ciudad}${c.fecha?' · '+c.fecha:''}</div></div><span class="ci-cnt">${c.visitas.length} visita${c.visitas.length!==1?'s':''}</span><span class="ci-arr">▼</span></div><div class="cbody"><div style="display:flex;gap:5px;margin:10px 0 8px;flex-wrap:wrap"><button class="btn btn-p btn-sm" onclick="event.stopPropagation();newVisita(${c.id})">＋ Nueva visita</button><button class="btn btn-warn btn-sm" onclick="event.stopPropagation();openOradores(${c.id})">🎤 Oradores (${no})</button><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delCong(${c.id})">Eliminar</button></div>
+    <div style="background:rgba(10,28,68,0.5);border:1px solid rgba(68,118,212,0.25);border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="font-size:10px;font-weight:700;color:var(--gold);letter-spacing:1px;margin-bottom:7px">🔔 RECORDATORIO DE VISITA</div>
+      <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+        <select id="rdias-${c.id}" style="flex:1;min-width:115px;font-size:11px" onclick="event.stopPropagation()">
+          <option value="0">El día de la visita</option>
+          <option value="1"${rem===1?' selected':''}>1 día antes</option>
+          <option value="2"${rem===2?' selected':''}>2 días antes</option>
+          <option value="7"${rem===7?' selected':''}>1 semana antes</option>
+        </select>
+        <input type="time" id="rhora-${c.id}" value="${c.reminderHora||'09:00'}" onclick="event.stopPropagation()" style="width:88px;font-size:11px"/>
+        <button class="btn btn-p btn-sm" onclick="event.stopPropagation();scheduleVR(${c.id})">✅ Activar</button>
+        ${remActivo?`<button class="btn btn-d btn-sm" onclick="event.stopPropagation();cancelVR(${c.id})">🔕 Quitar</button>`:''}
+      </div>
+      <div style="font-size:10px;padding:4px 7px;border-radius:5px;background:${remActivo?'rgba(30,95,168,0.3)':'rgba(0,0,0,0.2)'};color:${remActivo?'#7abaff':'var(--text-dim)'}">
+        ${remResumen}
+      </div>
+      ${!c.fecha?'<div style="font-size:9.5px;color:var(--danger);margin-top:4px">⚠️ Primero configura la fecha de próxima visita en el campo de arriba</div>':''}
+    </div>
+    <div class="abox"><div class="blbl">📋 Puntos para la agenda</div><textarea rows="3" placeholder="Temas a tratar…" onchange="updCong(${c.id},'puntosAgenda',this.value)">${c.puntosAgenda||''}</textarea></div><div class="obox"><div class="blbl">📝 Observaciones</div><textarea rows="3" placeholder="Notas generales…" onchange="updCong(${c.id},'observaciones',this.value)">${c.observaciones||''}</textarea></div><div class="slbl">Historial de visitas</div>${vs}</div>`;
     list.appendChild(div);
   });
 }
@@ -1221,74 +1243,112 @@ function timerPause(){
   _cronoPausedMs=Date.now()-_cronoStartTs;
 }
 
-let _notifPlugin=null,_notifReady=false,_notifId=1;
+/* ══ NOTIFICACIONES ══ */
+let _notifPlugin=null,_notifReady=false,_notifId=100;
+
 async function initNotifications(){
+  // Intento 1: Capacitor LocalNotifications
   try{
-    if(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.LocalNotifications){
+    if(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()&&window.Capacitor.Plugins&&window.Capacitor.Plugins.LocalNotifications){
       _notifPlugin=window.Capacitor.Plugins.LocalNotifications;
       const perm=await _notifPlugin.requestPermissions();
-      _notifReady=(perm&&(perm.display==='granted'||perm.display==='prompt-with-rationale'));
-      return _notifReady;
+      if(perm&&(perm.display==='granted'||perm.display==='prompt-with-rationale')){
+        _notifReady=true;return true;
+      } else {
+        showToast('❌','Permiso denegado','Ve a Ajustes del teléfono → Apps → Super CircuitoApp → Notificaciones → Activa el permiso');
+        return false;
+      }
+    }
+  }catch(e){console.warn('LocalNotif error:',e);}
+  // Intento 2: Web Notifications API (solo en navegador, no en APK)
+  try{
+    if('Notification' in window&&Notification.permission!=='denied'){
+      const p=await Notification.requestPermission();
+      if(p==='granted'){_notifReady=true;return true;}
     }
   }catch(e){}
-  try{if('Notification' in window&&Notification.permission!=='denied'){const p=await Notification.requestPermission();_notifReady=(p==='granted');return _notifReady;}}catch(e){}
+  showToast('⚠️','Notificaciones no disponibles','Esta función requiere el APK instalado en el teléfono');
   return false;
 }
-async function sendNotif(title,body){
-  if(_notifPlugin&&_notifReady){
-    try{await _notifPlugin.schedule({notifications:[{id:_notifId++,title:title,body:body,schedule:{at:new Date(Date.now()+100)},sound:'default',smallIcon:'ic_stat_notify'}]});return;}catch(e){}
-  }
-  try{if('Notification' in window&&Notification.permission==='granted'){new Notification(title,{body:body});}}catch(e){}
-  showToast('\uD83D\uDD14',title,body);
-}
-function toggleTimerNotif(){}
 
-/* ══ RECORDATORIOS DE VISITA (notificaciones futuras) ══ */
-async function scheduleVisitaReminder(congId,daysBefore){
-  event.stopPropagation();
+async function testNotif(){
+  const ok=await initNotifications();
+  if(!ok)return;
+  if(_notifPlugin&&_notifReady){
+    try{
+      await _notifPlugin.schedule({notifications:[{
+        id:999,title:'✅ Super CircuitoApp',
+        body:'¡Las notificaciones funcionan correctamente!',
+        schedule:{at:new Date(Date.now()+3000)},
+        sound:'default',smallIcon:'ic_stat_notify'
+      }]});
+      showToast('✅','Prueba enviada','Recibirás una notificación en 3 segundos');
+      return;
+    }catch(e){showToast('❌','Error: '+e.message,'');}
+  }
+  showToast('⚠️','Solo disponible en APK','Las notificaciones nativas requieren el APK instalado');
+}
+
+/* ══ RECORDATORIO DE VISITA A CONGREGACIÓN ══ */
+async function scheduleVR(congId){
   const c=data.congregaciones.find(x=>x.id===congId);
   if(!c)return;
-  if(!c.fecha){showToast('⚠️','Sin fecha','Agrega primero la fecha de visita próxima');return;}
-  // Cancelar recordatorio anterior si existe
-  if(_notifPlugin){try{await _notifPlugin.cancel({notifications:[{id:congId%2000000000}]});}catch(e){}}
-  // Si daysBefore===null → solo cancelar
-  if(daysBefore===null){c.reminder=null;save();renderHome();showToast('🔕','Recordatorio','Cancelado');return;}
-  // Inicializar notificaciones si aún no se ha hecho
-  const ok=await initNotifications();
-  if(!ok){showToast('❌','Sin permiso','Ve a Ajustes del teléfono y activa notificaciones para esta app');return;}
-  // Calcular fecha/hora del recordatorio
-  const visitDate=new Date(c.fecha+'T09:00:00');
+  if(!c.fecha){showToast('⚠️','Sin fecha de visita','Abre la tarjeta y escribe la fecha de próxima visita primero');return;}
+  const diasEl=document.getElementById('rdias-'+congId);
+  const horaEl=document.getElementById('rhora-'+congId);
+  const dias=diasEl?parseInt(diasEl.value):1;
+  const hora=horaEl&&horaEl.value?horaEl.value:'09:00';
+  const [hh,mm]=hora.split(':').map(Number);
+  // Construir fecha del recordatorio
+  const partes=c.fecha.split('-');// yyyy-mm-dd
+  const visitDate=new Date(parseInt(partes[0]),parseInt(partes[1])-1,parseInt(partes[2]),hh,mm,0);
   const remDate=new Date(visitDate);
-  remDate.setDate(remDate.getDate()-daysBefore);
-  if(remDate<=new Date()){showToast('⚠️','Fecha pasada','La fecha de visita ya pasó o es muy pronto');return;}
-  const labels=['día de la visita','día antes','2 días antes','semana antes'];
-  const lbl=daysBefore===0?'el día de la visita':daysBefore===7?'1 semana antes':`${daysBefore} día${daysBefore>1?'s':''} antes`;
-  const body=daysBefore===0?`Hoy visitas ${c.nombre} — ${c.ciudad}`:`Visita a ${c.nombre} (${c.ciudad}) en ${daysBefore} día${daysBefore>1?'s':''}`;
+  remDate.setDate(remDate.getDate()-dias);
+  const ahora=new Date();
+  if(remDate<=ahora){
+    const diff=Math.ceil((visitDate-ahora)/(1000*60*60*24));
+    if(diff<0){showToast('⚠️','Fecha pasada','La fecha de visita ya pasó. Actualiza la fecha de visita.');return;}
+    showToast('⚠️','Muy pronto','La fecha de recordatorio ya pasó. Elige menos días de anticipación o ajusta la hora.');return;
+  }
+  const ok=await initNotifications();
+  if(!ok)return;
+  // Cancelar recordatorio anterior
+  try{await _notifPlugin.cancel({notifications:[{id:congId%2000000000}]});}catch(e){}
+  const diasTxt=dias===0?'el día de la visita':dias===7?'1 semana antes':`${dias} día${dias>1?'s':''} antes`;
+  const body=dias===0?`Hoy visitas ${c.nombre} — ${c.ciudad}`:`Visita a ${c.nombre} (${c.ciudad}) en ${dias===7?'7 días':dias+' día'+(dias>1?'s':'')}`;
   try{
     await _notifPlugin.schedule({notifications:[{
       id:congId%2000000000,
-      title:'🏛️ Visita programada',
+      title:'🏛️ Recordatorio de visita',
       body:body,
       schedule:{at:remDate},
       sound:'default',
       smallIcon:'ic_stat_notify'
     }]});
-    c.reminder=daysBefore;save();renderHome();
-    showToast('🔔','Recordatorio',`Programado para ${remDate.toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'})} — ${lbl}`);
-  }catch(e){showToast('❌','Error al programar','No se pudo guardar el recordatorio');}
+    c.reminder=dias;c.reminderHora=hora;save();renderHome();
+    const fechaStr=remDate.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+    showToast('🔔','Recordatorio programado',`${fechaStr} a las ${hora} (${diasTxt})`);
+  }catch(e){
+    showToast('❌','No se pudo programar',e.message||'Error desconocido. Verifica que el APK esté instalado correctamente.');
+  }
 }
-function cycleReminder(congId){
-  event.stopPropagation();
+
+async function cancelVR(congId){
   const c=data.congregaciones.find(x=>x.id===congId);if(!c)return;
-  const opts=[null,0,1,2,7];// null=off, 0=día de, 1=1 día antes, 2=2 días antes, 7=semana antes
-  const cur=c.reminder===undefined?null:c.reminder;
-  const idx=opts.indexOf(cur);
-  const next=opts[(idx+1)%opts.length];
-  scheduleVisitaReminder(congId,next);
+  if(_notifPlugin){try{await _notifPlugin.cancel({notifications:[{id:congId%2000000000}]});}catch(e){}}
+  c.reminder=null;c.reminderHora=null;save();renderHome();
+  showToast('🔕','Recordatorio cancelado','');
 }
+
+function toggleTimerNotif(){}
 
 /* ══ CALENDARIO deshabilitado ══ */
 function addToCalendar(){/* eliminado */}
+
+function sendNotif(title,body){
+  try{if('Notification' in window&&Notification.permission==='granted'){new Notification(title,{body:body});}}catch(e){}
+  showToast('🔔',title,body);
+}
 
 /* ══ ACTIVIDADES PROGRAMADAS + NOTIFICACIÓN ══ */
 let actProgChecker=null;
@@ -1310,34 +1370,70 @@ function checkActProg(){
 function renderActProg(){
   const v=gv();if(!v)return;if(!v.act_prog)v.act_prog=[];
   const wrap=document.getElementById('act-prog-list');wrap.innerHTML='';
-  if(!v.act_prog.length){wrap.innerHTML='<div style="font-size:10.5px;color:var(--text-dim);text-align:center;padding:8px">Sin actividades programadas</div>';return;}
+  if(!v.act_prog.length){wrap.innerHTML='<div style="font-size:10.5px;color:var(--text-dim);text-align:center;padding:8px">Sin actividades programadas. Toca ＋ para agregar.</div>';return;}
   v.act_prog.forEach((a,i)=>{
+    const prog=a.fecha&&a.hora;
+    const estado=!prog?'<span style="color:var(--text-dim);font-size:9.5px">⚪ Sin fecha/hora</span>':a.notifId?'<span style="color:#5ce875;font-size:9.5px">🔔 Notificación programada</span>':'<span style="color:var(--gold);font-size:9.5px">⏳ Sin notificación activa</span>';
     const d=document.createElement('div');d.className='act-prog';
     d.innerHTML=`<div class="act-prog-head">
       <span class="act-prog-bell">📅</span>
-      <span class="act-prog-time">${a.hora||'--:--'}</span>
       <span class="act-prog-label"><input type="text" value="${a.nombre||''}" placeholder="Nombre de la actividad…" onchange="setActProg(${i},'nombre',this.value)" style="border:none;background:transparent;color:var(--text);font-size:11px;padding:0;width:100%"/></span>
-
       <button class="btn btn-d btn-sm" onclick="delActProg(${i})" style="padding:2px 6px">✕</button>
     </div>
-    <div class="grid2" style="gap:6px">
-      <div class="field" style="margin:0"><label>Hora</label><input type="time" value="${a.hora||''}" onchange="setActProg(${i},'hora',this.value)"/></div>
-      <div class="field" style="margin:0"><label>Lugar (opcional)</label><input type="text" value="${a.lugar||''}" placeholder="Lugar…" onchange="setActProg(${i},'lugar',this.value)"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">
+      <div class="field" style="margin:0"><label>📅 Fecha</label><input type="date" value="${a.fecha||''}" onchange="setActProg(${i},'fecha',this.value)"/></div>
+      <div class="field" style="margin:0"><label>🕐 Hora</label><input type="time" value="${a.hora||''}" onchange="setActProg(${i},'hora',this.value)"/></div>
     </div>
-    <div class="timer-notif" onclick="toggleActNotif(${i})" style="margin-top:6px">
-      <input type="checkbox" id="an-${i}" ${a.notif?'checked':''}/>
-      <label for="an-${i}">🔔 Notificar a la hora programada</label>
-    </div>`;
+    <div class="field" style="margin:0 0 6px"><label>📍 Lugar (opcional)</label><input type="text" value="${a.lugar||''}" placeholder="Lugar…" onchange="setActProg(${i},'lugar',this.value)"/></div>
+    <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+      <button class="btn btn-p btn-sm" onclick="scheduleActNotif(${i})">🔔 Programar notificación</button>
+      ${a.notifId?`<button class="btn btn-d btn-sm" onclick="cancelActNotif(${i})">🔕 Cancelar</button>`:''}
+    </div>
+    <div style="margin-top:5px">${estado}</div>`;
     wrap.appendChild(d);
   });
 }
-function addActProg(){const v=gv();if(!v)return;if(!v.act_prog)v.act_prog=[];v.act_prog.push({nombre:'',hora:'',lugar:'',notif:true,fired:false});save();renderActProg();}
-function delActProg(i){const v=gv();if(!v)return;v.act_prog.splice(i,1);save();renderActProg();}
-function setActProg(i,f,val){const v=gv();if(!v)return;v.act_prog[i][f]=val;if(f==='hora')v.act_prog[i].fired=false;save();}
-function toggleActNotif(i){
-  const v=gv();if(!v)return;v.act_prog[i].notif=!v.act_prog[i].notif;save();renderActProg();
-  if(v.act_prog[i].notif){initNotifications();}
+function addActProg(){const v=gv();if(!v)return;if(!v.act_prog)v.act_prog=[];v.act_prog.push({nombre:'',fecha:'',hora:'',lugar:'',notifId:null});save();renderActProg();}
+function delActProg(i){const v=gv();if(!v)return;
+  const a=v.act_prog[i];
+  if(a&&a.notifId&&_notifPlugin){try{_notifPlugin.cancel({notifications:[{id:a.notifId}]});}catch(e){}}
+  v.act_prog.splice(i,1);save();renderActProg();}
+function setActProg(i,f,val){const v=gv();if(!v)return;v.act_prog[i][f]=val;save();}
+async function scheduleActNotif(i){
+  const v=gv();if(!v||!v.act_prog[i])return;
+  const a=v.act_prog[i];
+  if(!a.fecha){showToast('⚠️','Falta la fecha','Selecciona una fecha para esta actividad');return;}
+  if(!a.hora){showToast('⚠️','Falta la hora','Selecciona una hora para esta actividad');return;}
+  const ok=await initNotifications();
+  if(!ok)return;
+  const partes=a.fecha.split('-');
+  const [hh,mm]=a.hora.split(':').map(Number);
+  const remDate=new Date(parseInt(partes[0]),parseInt(partes[1])-1,parseInt(partes[2]),hh,mm,0);
+  if(remDate<=new Date()){showToast('⚠️','Fecha pasada','La fecha y hora de esta actividad ya pasó');return;}
+  // Cancelar anterior si existe
+  if(a.notifId&&_notifPlugin){try{await _notifPlugin.cancel({notifications:[{id:a.notifId}]});}catch(e){}}
+  const nid=Date.now()%2000000000;
+  const body=(a.nombre||'Actividad programada')+(a.lugar?' · '+a.lugar:'');
+  try{
+    await _notifPlugin.schedule({notifications:[{
+      id:nid,title:'🔔 '+(a.nombre||'Actividad'),
+      body:body,
+      schedule:{at:remDate},
+      sound:'default',smallIcon:'ic_stat_notify'
+    }]});
+    v.act_prog[i].notifId=nid;save();renderActProg();
+    const fechaStr=remDate.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'});
+    showToast('🔔','Notificación programada',`${fechaStr} a las ${a.hora}`);
+  }catch(e){showToast('❌','Error',e.message||'No se pudo programar');}
 }
+async function cancelActNotif(i){
+  const v=gv();if(!v||!v.act_prog[i])return;
+  const a=v.act_prog[i];
+  if(a.notifId&&_notifPlugin){try{await _notifPlugin.cancel({notifications:[{id:a.notifId}]});}catch(e){}}
+  v.act_prog[i].notifId=null;save();renderActProg();
+  showToast('🔕','Notificación cancelada','');
+}
+function toggleActNotif(i){}
 
 /* ══ ACTIVIDADES ══ */
 function renderActividades(v){
