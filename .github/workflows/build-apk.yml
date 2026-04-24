@@ -59,7 +59,7 @@ jobs:
 
       - name: Cap sync
         run: npx cap sync android
-      - run: Patch AndroidManifest permissions
+      - run: patch AndroidManifest permissions
       - run: MANIFEST="android/app/src/main/AndroidManifest.xml"
              sed -i 's|</manifest>|<uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>\n    <uses-permission android:name="android.permission.WAKE_LOCK"/>\n    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>\n</manifest>|' $MANIFEST
 
