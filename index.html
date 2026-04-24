@@ -732,6 +732,24 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
 </div>
 
 <script>
+  // Solicitar exención de optimización de batería (Samsung/Android)
+async function solicitarBateriaExenta() {
+  if (window.Capacitor && Capacitor.isNativePlatform()) {
+    try {
+      await LocalNotifications.requestPermissions();
+    } catch(e) {}
+    // Mostrar aviso para Samsung
+    const ya = localStorage.getItem('bateria_aviso');
+    if (!ya) {
+      localStorage.setItem('bateria_aviso', '1');
+      setTimeout(() => {
+        alert('⚠️ Para que las notificaciones funcionen con pantalla apagada:\n\nVe a Ajustes → Batería → Optimización de batería → busca "Super CircuitoApp" → selecciona "No optimizar".');
+      }, 2000);
+    }
+  }
+}
+solicitarBateriaExenta();
+  
 /* ════════════════════════════════════════
    SUPER CIRCUITO APP — Vista Edition v4
    S24 Ultra + Tab S8+ · Horizontal + Vertical
