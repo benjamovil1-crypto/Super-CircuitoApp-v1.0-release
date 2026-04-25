@@ -1278,9 +1278,17 @@ async function initNotifications(){
       _notifPlugin=window.Capacitor.Plugins.LocalNotifications;
       const perm=await _notifPlugin.requestPermissions();
       if(perm&&(perm.display==='granted'||perm.display==='prompt-with-rationale')){
-        _notifReady=true;return true;
+        _notifReady=true;
+        // Aviso batería Samsung — solo una vez
+        if(!localStorage.getItem('sca_bateria_aviso')){
+          localStorage.setItem('sca_bateria_aviso','1');
+          setTimeout(function(){
+            alert('⚠️ Para que las notificaciones lleguen a tiempo (incluso con pantalla apagada):\n\nVe a Ajustes → Batería → Optimización de batería → busca "Super CircuitoApp" → selecciona "No optimizar".\n\nEsto es necesario en Samsung Galaxy.');
+          },1500);
+        }
+        return true;
       } else {
-        showToast('❌','Permiso denegado','Ve a Ajustes del teléfono → Apps → Super CircuitoApp → Notificaciones → Activa el permiso');
+        showToast('❌','Permiso denegado','Ve a Ajustes → Apps → Super CircuitoApp → Notificaciones → Activa el permiso');
         return false;
       }
     }
@@ -1304,7 +1312,7 @@ async function testNotif(){
       await _notifPlugin.schedule({notifications:[{
         id:999,title:'✅ Super CircuitoApp',
         body:'¡Las notificaciones funcionan correctamente!',
-        schedule:{at:new Date(Date.now()+3000)},
+        schedule:{at:new Date(Date.now()+3000),allowWhileIdle:true},
         sound:'default',smallIcon:'ic_stat_notify'
       }]});
       showToast('✅','Prueba enviada','Recibirás una notificación en 3 segundos');
@@ -1346,7 +1354,7 @@ async function scheduleVR(congId){
       id:congId%2000000000,
       title:'🏛️ Recordatorio de visita',
       body:body,
-      schedule:{at:remDate},
+      schedule:{at:remDate,allowWhileIdle:true},
       sound:'default',
       smallIcon:'ic_stat_notify'
     }]});
@@ -1443,7 +1451,7 @@ async function scheduleActNotif(i){
     await _notifPlugin.schedule({notifications:[{
       id:nid,title:'🔔 '+(a.nombre||'Actividad'),
       body:body,
-      schedule:{at:remDate},
+      schedule:{at:remDate,allowWhileIdle:true},
       sound:'default',smallIcon:'ic_stat_notify'
     }]});
     v.act_prog[i].notifId=nid;save();renderActProg();
