@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>CircuitoWatch · Celular</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0a0f1a;--surface:#111827;--border:#1e2d45;
+  --blue:#4da8f8;--blue2:#7ec8ff;--green:#5ce875;
+  --gold:#ffd060;--red:#ff6060;--purple:#c084fc;
+  --text:#e8f4ff;--dim:#6a8fb8;
+}
+body{font-family:'Segoe UI',Tahoma,Geneva,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:0 0 40px;}
+
+/* ── HEADER ── */
+.header{
+background:linear-gradient(135deg,#0a1a3e,#061028);
+border-bottom:1px solid var(–border);
+padding:20px 20px 16px;
+text-align:center;
+}
+.header-icon{font-size:36px;margin-bottom:8px;}
+.header-title{font-size:20px;font-weight:700;color:#fff;letter-spacing:0.5px;}
+.header-sub{font-size:11px;color:var(–dim);letter-spacing:2px;text-transform:uppercase;margin-top:3px;}
+
+/* ── CONTENT ── */
+.content{max-width:480px;margin:0 auto;padding:16px;}
+
+/* ── CARD ── */
+.card{
+background:var(–surface);
+border:1px solid var(–border);
+border-radius:14px;
+padding:18px;
+margin-bottom:14px;
+position:relative;overflow:hidden;
+}
+.card::before{content:’’;position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(77,168,248,0.25),transparent);}
+.card-title{
+font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+color:var(–blue);margin-bottom:14px;display:flex;align-items:center;gap:8px;
+}
+.card-title::after{content:’’;flex:1;height:1px;background:var(–border);}
+
+/* ── INPUTS ── */
+.field{margin-bottom:12px;}
+.field label{display:block;font-size:11px;color:var(–dim);margin-bottom:5px;letter-spacing:0.5px;}
+.field input{
+width:100%;background:var(–bg);border:1px solid var(–border);
+border-radius:9px;padding:10px 12px;color:var(–text);
+font-size:13px;font-family:monospace;
+transition:border-color .2s;
+}
+.field input:focus{outline:none;border-color:var(–blue);}
+
+/* ── BUTTONS ── */
+.btn{
+display:flex;align-items:center;justify-content:center;gap:8px;
+width:100%;padding:12px;border:none;border-radius:10px;
+font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;
+letter-spacing:0.5px;
+}
+.btn:active{transform:scale(0.97);}
+.btn-primary{background:linear-gradient(135deg,#1e5fa8,#0d3a78);color:#fff;border:1px solid rgba(77,168,248,0.3);}
+.btn-primary:hover{background:linear-gradient(135deg,#2a72c0,#1448a0);}
+.btn-green{background:linear-gradient(135deg,#1a6a30,#0d3e18);color:#fff;border:1px solid rgba(92,232,117,0.3);}
+.btn-green:hover{background:linear-gradient(135deg,#22843c,#0f4d1e);}
+.btn-ghost{background:transparent;color:var(–blue);border:1px solid rgba(77,168,248,0.3);margin-top:8px;}
+.btn-ghost:hover{background:rgba(77,168,248,0.08);}
+
+/* ── UPLOAD ZONE ── */
+.upload-zone{
+border:2px dashed var(–border);border-radius:12px;
+padding:28px 20px;text-align:center;cursor:pointer;
+transition:all .2s;margin-bottom:12px;
+}
+.upload-zone:hover,.upload-zone.drag{border-color:var(–blue);background:rgba(77,168,248,0.05);}
+.upload-zone input{display:none;}
+.upload-icon{font-size:36px;margin-bottom:10px;}
+.upload-label{font-size:14px;font-weight:600;margin-bottom:4px;}
+.upload-hint{font-size:11px;color:var(–dim);}
+
+/* ── STATUS ── */
+.status-box{
+border-radius:10px;padding:12px 14px;font-size:12px;line-height:1.6;
+margin-top:10px;display:none;
+}
+.status-box.show{display:block;}
+.status-box.info{background:rgba(77,168,248,0.08);border:1px solid rgba(77,168,248,0.2);color:var(–blue2);}
+.status-box.ok{background:rgba(92,232,117,0.08);border:1px solid rgba(92,232,117,0.2);color:var(–green);}
+.status-box.err{background:rgba(255,96,96,0.08);border:1px solid rgba(255,96,96,0.2);color:var(–red);}
+
+/* ── PREVIEW ── */
+.preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.prev-item{
+background:rgba(255,255,255,0.03);border:1px solid var(–border);
+border-radius:8px;padding:10px;text-align:center;
+}
+.prev-val{font-size:20px;font-weight:700;font-family:monospace;color:var(–blue);}
+.prev-label{font-size:9px;color:var(–dim);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+
+/* ── STEPS ── */
+.step{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(–border);}
+.step:last-child{border-bottom:none;}
+.step-n{
+width:24px;height:24px;border-radius:50%;flex-shrink:0;
+background:rgba(77,168,248,0.15);border:1px solid rgba(77,168,248,0.3);
+display:flex;align-items:center;justify-content:center;
+font-size:11px;font-weight:700;color:var(–blue);margin-top:1px;
+}
+.step-body{}
+.step-title{font-size:13px;font-weight:600;margin-bottom:2px;}
+.step-desc{font-size:11px;color:var(–dim);line-height:1.5;}
+.step-desc a{color:var(–blue2);}
+.step-code{
+display:inline-block;background:rgba(0,0,0,0.3);border:1px solid var(–border);
+border-radius:5px;padding:1px 6px;font-family:monospace;font-size:11px;color:var(–blue2);
+margin-top:3px;
+}
+</style>
+
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">📱</div>
+  <div class="header-title">CircuitoWatch · Celular</div>
+  <div class="header-sub">Cargador de datos para el reloj</div>
+</div>
+
+<div class="content">
+
+  <!-- CONFIG -->
+
+  <div class="card">
+    <div class="card-title">⚙ Configuración Firebase</div>
+    <div class="field">
+      <label>URL Realtime Database</label>
+      <input id="fb-url" type="url" placeholder="https://mi-proyecto-default-rtdb.firebaseio.com" autocomplete="off"/>
+    </div>
+    <div class="field">
+      <label>Token de acceso (opcional — solo si está en modo bloqueado)</label>
+      <input id="fb-token" type="password" placeholder="Dejar vacío si está en modo prueba"/>
+    </div>
+    <button class="btn btn-primary" onclick="saveConfig()">💾 Guardar configuración</button>
+    <div class="status-box" id="cfg-status"></div>
+  </div>
+
+  <!-- SUBIR JSON -->
+
+  <div class="card">
+    <div class="card-title">📤 Subir respaldo JSON</div>
+    <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-in').click()">
+      <input type="file" id="file-in" accept=".json" onchange="onFileSelect(this)"/>
+      <div class="upload-icon">📂</div>
+      <div class="upload-label">Seleccionar archivo JSON</div>
+      <div class="upload-hint">Respaldo de SuperCircuitoApp Vista Edition</div>
+    </div>
+
+```
+<div id="preview-area" style="display:none">
+  <div class="preview-grid">
+    <div class="prev-item"><div class="prev-val" id="pr-cong">—</div><div class="prev-label">Congregación</div></div>
+    <div class="prev-item"><div class="prev-val" id="pr-fecha" style="font-size:13px">—</div><div class="prev-label">Fecha visita</div></div>
+    <div class="prev-item"><div class="prev-val" id="pr-act" style="color:var(--gold)">—</div><div class="prev-label">Actividades</div></div>
+    <div class="prev-item"><div class="prev-val" id="pr-campo" style="color:var(--green)">—</div><div class="prev-label">Campo</div></div>
+  </div>
+  <button class="btn btn-green" style="margin-top:12px" onclick="uploadToFirebase()">⬆ Subir a Firebase</button>
+  <button class="btn btn-ghost" onclick="clearFile()">✕ Cancelar</button>
+</div>
+
+<div class="status-box" id="up-status"></div>
+```
+
+  </div>
+
+  <!-- GUÍA RÁPIDA -->
+
+  <div class="card">
+    <div class="card-title">📖 Guía de configuración</div>
+    <div class="step">
+      <div class="step-n">1</div>
+      <div class="step-body">
+        <div class="step-title">Crear proyecto Firebase</div>
+        <div class="step-desc">Ve a <a href="https://firebase.google.com" target="_blank">firebase.google.com</a> → Ir a la consola → Agregar proyecto → ponle nombre → continuar hasta crear.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">2</div>
+      <div class="step-body">
+        <div class="step-title">Activar Realtime Database</div>
+        <div class="step-desc">En el menú izquierdo: Compilación → Realtime Database → Crear base de datos → Ubicación: us-central1 → Modo de prueba → Habilitar.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">3</div>
+      <div class="step-body">
+        <div class="step-title">Copiar la URL</div>
+        <div class="step-desc">Verás algo como: <span class="step-code">https://mi-proyecto-rtdb.firebaseio.com</span><br/>Copia esa URL y pégala arriba en "Configuración".</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">4</div>
+      <div class="step-body">
+        <div class="step-title">Subir el JSON</div>
+        <div class="step-desc">Selecciona el archivo de respaldo de SuperCircuitoApp, verifica el preview y toca "Subir a Firebase".</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">5</div>
+      <div class="step-body">
+        <div class="step-title">Sincronizar en el reloj</div>
+        <div class="step-desc">Abre Samsung Internet en el Galaxy Watch 7 → navega a la URL de GitHub Pages → toca el botón <strong>↻ SYNC</strong> en la esquina superior izquierda.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-n">6</div>
+      <div class="step-body">
+        <div class="step-title">Para la próxima visita</div>
+        <div class="step-desc">Exporta nuevo JSON desde CircuitoApp → abre esta página en el celular → sube el nuevo archivo → toca SYNC en el reloj. ¡Listo!</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let _payload = null;
+
+/* ── CONFIG ── */
+function saveConfig() {
+  const url = document.getElementById('fb-url').value.trim().replace(/\/$/, '');
+  const token = document.getElementById('fb-token').value.trim();
+  if (!url) { showStatus('cfg-status', 'err', '⚠ Ingresa la URL de Firebase'); return; }
+  try { new URL(url); } catch { showStatus('cfg-status', 'err', '⚠ URL inválida'); return; }
+  localStorage.setItem('fb_url', url);
+  if (token) localStorage.setItem('fb_token', token); else localStorage.removeItem('fb_token');
+  showStatus('cfg-status', 'ok', '✓ Configuración guardada correctamente');
+}
+
+function getURL(path) {
+  const base = localStorage.getItem('fb_url');
+  if (!base) return null;
+  const token = localStorage.getItem('fb_token');
+  return base + '/' + path + '.json' + (token ? '?auth=' + token : '');
+}
+
+/* ── FILE ── */
+function onFileSelect(inp) {
+  const f = inp.files[0]; if (!f) return;
+  const fr = new FileReader();
+  fr.onload = e => {
+    try {
+      const raw = JSON.parse(e.target.result);
+      _payload = buildPayload(raw);
+      showPreview(_payload);
+      showStatus('up-status', '', '');
+    } catch (err) {
+      showStatus('up-status', 'err', '❌ Error al leer: ' + err.message);
+    }
+  };
+  fr.readAsText(f);
+}
+
+function buildPayload(raw) {
+  const db = raw.data || raw;
+  if (!db.congregaciones || !db.congregaciones.length) throw new Error('No se encontraron congregaciones');
+  // Congregacion con visita más reciente
+  let bestC = null, bestV = null, bestDate = '';
+  db.congregaciones.forEach(c => {
+    (c.visitas || []).forEach(v => {
+      if (v.fecha > bestDate) { bestDate = v.fecha; bestC = c; bestV = v; }
+    });
+  });
+  if (!bestC) throw new Error('Sin visitas en el JSON');
+  return {
+    congregacion: {
+      nombre: bestC.nombre || '',
+      ciudad: bestC.ciudad || '',
+      fecha: bestV.fecha || '',
+      puntosAgenda: bestC.puntosAgenda || '',
+      observaciones: bestC.observaciones || ''
+    },
+    visita: {
+      semanas: bestV.semanas || 0,
+      eb: bestV.eb || [], rp: bestV.rp || [],
+      act: bestV.act || [],
+      reu_vm_dia: bestV.reu_vm_dia || '',
+      reu_vm_hora: bestV.reu_vm_hora || '',
+      reu_vm_pres: bestV.reu_vm_pres || '',
+      reu_vm_can1: bestV.reu_vm_can1 || '',
+      reu_vm_can2: bestV.reu_vm_can2 || '',
+      reu_vm_can3: bestV.reu_vm_can3 || '',
+      reu_vm_oracion: bestV.reu_vm_oracion || '',
+      reu_rp_dia: bestV.reu_rp_dia || '',
+      reu_rp_hora: bestV.reu_rp_hora || '',
+      reu_rp_pres: bestV.reu_rp_pres || '',
+      reu_rp_can: bestV.reu_rp_can || '',
+      reu_rp_oracion: bestV.reu_rp_oracion || '',
+      asig_vm: bestV.asig_vm || [],
+      asig_rp: bestV.asig_rp || [],
+      act_prog: bestV.act_prog || [],
+      info_diahora: bestV.info_diahora || '',
+      info_lugar: bestV.info_lugar || '',
+      info_precursores: bestV.info_precursores || '',
+      info_ancianos: bestV.info_ancianos || '',
+      campo: bestV.campo || [],
+      alimentos: bestV.alimentos || [],
+      hosp_nombre: bestV.hosp_nombre || '',
+      hosp_dir: bestV.hosp_dir || '',
+      hosp_tel: bestV.hosp_tel || ''
+    },
+    ts: new Date().toISOString()
+  };
+}
+
+function showPreview(p) {
+  const c = p.congregacion, v = p.visita;
+  document.getElementById('pr-cong').textContent = c.nombre.slice(0, 8) || '—';
+  document.getElementById('pr-fecha').textContent = c.fecha ? c.fecha.slice(5) : '—';
+  document.getElementById('pr-act').textContent = (v.act_prog || []).length;
+  document.getElementById('pr-campo').textContent = (v.campo || []).filter(f => f.publicador || f.lugar).length;
+  document.getElementById('preview-area').style.display = 'block';
+}
+
+function clearFile() {
+  _payload = null;
+  document.getElementById('preview-area').style.display = 'none';
+  document.getElementById('file-in').value = '';
+  showStatus('up-status', '', '');
+}
+
+/* ── UPLOAD ── */
+async function uploadToFirebase() {
+  if (!_payload) return;
+  const url = getURL('circuito');
+  if (!url) { showStatus('up-status', 'err', '⚠ Configura Firebase primero'); return; }
+  showStatus('up-status', 'info', '⏳ Subiendo datos…');
+  try {
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(_payload)
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error('HTTP ' + res.status + ': ' + txt.slice(0, 80));
+    }
+    showStatus('up-status', 'ok',
+      '✓ Datos subidos correctamente\n' +
+      '📍 Congregación: ' + _payload.congregacion.nombre + '\n' +
+      '📅 Fecha visita: ' + _payload.congregacion.fecha + '\n' +
+      '🕒 Subido: ' + new Date().toLocaleTimeString('es')
+    );
+  } catch (err) {
+    showStatus('up-status', 'err', '❌ Error al subir: ' + err.message + '\n\nVerifica que la URL sea correcta y que el DB esté en modo prueba.');
+  }
+}
+
+/* ── HELPERS ── */
+function showStatus(id, type, msg) {
+  const el = document.getElementById(id);
+  if (!msg) { el.className = 'status-box'; return; }
+  el.className = 'status-box show ' + type;
+  el.style.whiteSpace = 'pre-line';
+  el.textContent = msg;
+}
+
+/* ── DRAG & DROP ── */
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f && f.name.endsWith('.json')) {
+    const fi = document.getElementById('file-in');
+    const dt = new DataTransfer(); dt.items.add(f); fi.files = dt.files;
+    onFileSelect(fi);
+  }
+});
+
+/* ── INIT ── */
+(function() {
+  const url = localStorage.getItem('fb_url');
+  const token = localStorage.getItem('fb_token');
+  if (url) document.getElementById('fb-url').value = url;
+  if (token) document.getElementById('fb-token').value = token;
+})();
+</script>
+
+</body>
+</html>
