@@ -1343,10 +1343,73 @@ async function copyPrompt(){
     setTimeout(()=>{btn.classList.remove('copy-success');btn.textContent='📋 Copiar prompt al portapapeles';},2200);
   }catch(e){showToast('❌','Error','No se pudo copiar. Selecciona el texto manualmente.');}
 }
-
 /* ══ INICIO ══ */
 loadSortPref();
 renderHome();
+</script>
+<script type="module">
+  // 1. IMPORTACIONES CORRECTAS (Firestore Modular v10.8.1)
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+  import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+  // 2. TUS CREDENCIALES EXACTAS
+  const firebaseConfig = {
+    apiKey: "AIzaSyDPsEWTrCBw5MVn4ms3iP9b71XKWH-V0nl",
+    authDomain: "super-asistente-360.firebaseapp.com",
+    projectId: "super-asistente-360",
+    storageBucket: "super-asistente-360.firebasestorage.app",
+    messagingSenderId: "925129508519",
+    appId: "1:925129508519:web:c03ed972334da1046afd82"
+  };
+
+  // 3. INICIALIZAR LA APP Y LA BASE DE DATOS
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  window.db = db;
+
+  // 4. REFERENCIA EXCLUSIVA PARA ESTA APP
+  const appConfigRef = doc(db, "super_circuito_app", "sincronizacion_dispositivos");
+
+  // 5. FILTRO INTELIGENTE (Para no crear ciclos infinitos)
+  let miIdDeSesion = sessionStorage.getItem("mi_id_sincronizacion");
+  if (!miIdDeSesion) {
+    miIdDeSesion = Math.random().toString(36);
+    sessionStorage.setItem("mi_id_sincronizacion", miIdDeSesion);
+  }
+
+  // 6. ESCUCHA EN TIEMPO REAL
+  onSnapshot(appConfigRef, (docSnap) => {
+    if (docSnap.exists()) {
+      const datosEnLaNube = docSnap.data();
+      
+      // Si el cambio lo hizo este mismo dispositivo, se ignora
+      if (datosEnLaNube.remitente === miIdDeSesion) {
+        return; 
+      }
+
+      console.log("¡Nuevos datos recibidos de la nube!", datosEnLaNube);
+      
+      // Conexión visual si estás usando tu visor de prueba
+      const pantalla = document.getElementById("pantallaPrueba");
+      if (pantalla && datosEnLaNube.mensaje_prueba) {
+          pantalla.innerText = datosEnLaNube.mensaje_prueba;
+          pantalla.style.color = "#008000";
+      }
+    }
+  });
+
+  // 7. FUNCIÓN PARA ENVIAR A LA NUBE
+  window.guardarEnLaNube = function(datosParaGuardar) {
+    datosParaGuardar.remitente = miIdDeSesion;
+    
+    setDoc(appConfigRef, datosParaGuardar, { merge: true })
+      .then(() => {
+        console.log("¡Datos subidos con éxito a SuperCircuitoApp!");
+      })
+      .catch((error) => {
+        console.error("Error al subir:", error);
+      });
+  };
 </script>
 </body>
 </html>
