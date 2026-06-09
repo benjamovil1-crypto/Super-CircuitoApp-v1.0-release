@@ -1099,32 +1099,67 @@ function renderBackupInfo(){
   document.getElementById('bk-resumen').textContent=`${n} congregaciones · ${tV} visitas`;
   document.getElementById('bk-fecha').textContent='Última actualización: '+new Date().toLocaleString('es-MX');
 }
-function exportBackup(){
-  const json=JSON.stringify(data,null,2);
-  const blob=new Blob([json],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download='CircuitoApp_backup_'+new Date().toISOString().slice(0,10)+'.json';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
-  const msg=document.getElementById('export-msg');msg.style.display='block';msg.style.color='var(--green)';msg.textContent='✅ Respaldo descargado correctamente.';
-  setTimeout(()=>{msg.style.display='none';},3500);
-}
-function importBackup(input){
-  const file=input.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    try{
-      const p=JSON.parse(e.target.result);const imp=p&&p.data?p.data:p;
-      if(!imp||!imp.congregaciones)throw new Error('Formato inválido');
-      imp.congregaciones.forEach(c=>{if(!c.oradores)c.oradores=[];});
-      data=imp;save();renderHome();
-      const msg=document.getElementById('import-msg');msg.style.display='block';msg.style.color='var(--green)';msg.textContent='✅ Datos importados correctamente.';
-      setTimeout(()=>{msg.style.display='none';},3500);
-    }catch(ex){
-      const msg=document.getElementById('import-msg');msg.style.display='block';msg.style.color='var(--danger)';msg.textContent='❌ Error al importar: archivo inválido.';
-    }
-  };reader.readAsText(file);input.value='';
+function exportBackup() {
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  
+  // Nombre limpio sin la palabra backup
+  a.download = 'SuperCircuitoApp_' + new Date().toISOString().slice(0, 10) + '.json';
+  
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  const msg = document.getElementById('export-msg');
+  if (msg) {
+    msg.style.display = 'block';
+    msg.style.color = 'var(--green)';
+    msg.textContent = '✅ Respaldo descargado correctamente.';
+    setTimeout(() => { msg.style.display = 'none'; }, 3500);
+  }
 }
 
+function importBackup(input) {
+  const file = input.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const p = JSON.parse(e.target.result);
+      const imp = p && p.data ? p.data : p;
+      
+      // Asignación directa sin bloqueos ni candados estrictos
+      data = imp; 
+      save();
+      renderHome();
+      
+      const msg = document.getElementById('import-msg');
+      if (msg) {
+        msg.style.display = 'block';
+        msg.style.color = 'var(--green)';
+        msg.textContent = '✅ Datos importados correctamente.';
+        setTimeout(() => { msg.style.display = 'none'; }, 3500);
+      }
+    } catch (ex) {
+      console.error(ex);
+      const msg = document.getElementById('import-msg');
+      if (msg) {
+        msg.style.display = 'block';
+        msg.style.color = 'var(--danger)';
+        msg.textContent = '❌ Error al importar el archivo.';
+        setTimeout(() => { msg.style.display = 'none'; }, 3500);
+      }
+    }
+  };
+
+  reader.readAsText(file);
+  input.value = '';
+}
 /* ══ REUNIÓN ══ */
 function renderReunion(v){
   if(!v)return;
@@ -1409,6 +1444,10 @@ renderHome();
       .catch((error) => {
         console.error("Error al subir:", error);
       });
+  };
+</script>
+</body>
+</html>      });
   };
 </script>
 </body>
