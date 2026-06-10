@@ -575,6 +575,7 @@ let data={congregaciones:[
 function save(){
   try{localStorage.setItem(SK,JSON.stringify(data));}catch(e){}
   const d=document.getElementById('sdot');d.classList.add('on');setTimeout(()=>d.classList.remove('on'),1200);
+  if(window.guardarEnLaNube){window.guardarEnLaNube({congregaciones:data.congregaciones});}
 }
 
 const nv=v=>parseFloat(v)||0;
@@ -1101,27 +1102,68 @@ function renderBackupInfo(){
 }
 function exportBackup() {
   const json = JSON.stringify(data, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  
-  const a = document.createElement('a');
-  a.href = url;
-  
-  // El nombre exacto y limpio que necesitas
   const fecha = new Date().toISOString().split('T')[0];
-  a.download = 'SuperCircuitoApp_' + fecha + '.json';
-  
-  document.body.appendChild(a);
-  a.click(); // Descarga directa, sin pausas
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  
+  const fileName = 'SuperCircuitoApp_' + fecha + '.json';
   const msg = document.getElementById('export-msg');
-  if (msg) {
-    msg.style.display = 'block';
-    msg.style.color = 'var(--green)';
-    msg.textContent = '✅ Respaldo descargado correctamente.';
-    setTimeout(() => { msg.style.display = 'none'; }, 3500);
+
+  // ── Método 1: Capacitor Filesystem + Share (Android nativo) ──
+  if (window.Capacitor && window.Capacitor.isNativePlatform &&
+      window.Capacitor.isNativePlatform() &&
+      window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem) {
+    const { Filesystem, Share, Directory } = window.Capacitor.Plugins;
+    Filesystem.writeFile({
+      path: fileName,
+      data: btoa(unescape(encodeURIComponent(json))),
+      directory: Directory.Cache,
+      encoding: 'base64'
+    }).then(result => {
+      return Share.share({
+        title: 'Respaldo SuperCircuitoApp',
+        url: result.uri,
+        dialogTitle: 'Guardar o compartir respaldo'
+      });
+    }).then(() => {
+      if (msg) { msg.style.display='block'; msg.style.color='var(--green)'; msg.textContent='✅ Respaldo listo para guardar.'; setTimeout(()=>msg.style.display='none',3500); }
+    }).catch(e => {
+      if (!e.message?.includes('cancel')) console.error('Capacitor export:', e);
+    });
+    return;
+  }
+
+  // ── Método 2: Web Share API con archivo (Chrome/Android moderno) ──
+  if (navigator.canShare) {
+    const file = new File([json], fileName, { type: 'application/json' });
+    if (navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], title: 'Respaldo SuperCircuitoApp' })
+        .then(() => {
+          if (msg) { msg.style.display='block'; msg.style.color='var(--green)'; msg.textContent='✅ Respaldo compartido correctamente.'; setTimeout(()=>msg.style.display='none',3500); }
+        })
+        .catch(e => { if (e.name !== 'AbortError') tryBlobDownload(json, fileName, msg); });
+      return;
+    }
+  }
+
+  // ── Método 3: Blob URL (navegador web puro) ──
+  tryBlobDownload(json, fileName, msg);
+}
+
+function tryBlobDownload(json, fileName, msg) {
+  try {
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fileName;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    if (msg) { msg.style.display='block'; msg.style.color='var(--green)'; msg.textContent='✅ Respaldo descargado correctamente.'; setTimeout(()=>msg.style.display='none',3500); }
+  } catch(e) {
+    // ── Fallback final: copiar JSON al portapapeles ──
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(json).then(() => {
+        if (msg) { msg.style.display='block'; msg.style.color='var(--gold)'; msg.textContent='⚠️ No se pudo descargar. JSON copiado al portapapeles — pégalo en un .txt.'; setTimeout(()=>msg.style.display='none',5000); }
+      });
+    }
   }
 }
 function importBackup(input) {
@@ -1430,6 +1472,16 @@ renderHome();
       if (pantalla && datosEnLaNube.mensaje_prueba) {
           pantalla.innerText = datosEnLaNube.mensaje_prueba;
           pantalla.style.color = "#008000";
+      }
+
+      // Aplicar datos recibidos al estado local
+      if (datosEnLaNube.congregaciones) {
+        data.congregaciones = datosEnLaNube.congregaciones;
+        try { localStorage.setItem(SK, JSON.stringify(data)); } catch(e) {}
+        renderHome();
+        if (typeof showToast === 'function') {
+          showToast('☁️', 'Sincronizado', 'Datos actualizados desde otro dispositivo.');
+        }
       }
     }
   });
