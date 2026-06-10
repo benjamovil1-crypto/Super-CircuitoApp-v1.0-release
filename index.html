@@ -1100,38 +1100,28 @@ function renderBackupInfo(){
   document.getElementById('bk-fecha').textContent='Última actualización: '+new Date().toLocaleString('es-MX');
 }
 function exportBackup() {
-  try {
-    const json = JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    
-    // Crucial: ocultamos el enlace para que no empuje tu diseño hacia la izquierda
-    a.style.display = 'none'; 
-    a.href = url;
-    
-    // Generamos la fecha limpia sin la palabra BACKUP
-    const fecha = new Date().toISOString().split('T')[0];
-    a.download = 'SuperCircuitoApp_' + fecha + '.json';
-    
-    document.body.appendChild(a);
-    a.click();
-    
-    // Le damos un respiro de medio segundo al celular antes de borrar el enlace
-    setTimeout(() => {
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    }, 500);
-    
-    const msg = document.getElementById('export-msg');
-    if (msg) {
-      msg.style.display = 'block';
-      msg.style.color = 'var(--green)';
-      msg.textContent = '✅ Respaldo descargado correctamente.';
-      setTimeout(() => { msg.style.display = 'none'; }, 3500);
-    }
-  } catch (error) {
-    alert("Error al exportar: " + error.message);
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  
+  // El nombre exacto y limpio que necesitas
+  const fecha = new Date().toISOString().split('T')[0];
+  a.download = 'SuperCircuitoApp_' + fecha + '.json';
+  
+  document.body.appendChild(a);
+  a.click(); // Descarga directa, sin pausas
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  const msg = document.getElementById('export-msg');
+  if (msg) {
+    msg.style.display = 'block';
+    msg.style.color = 'var(--green)';
+    msg.textContent = '✅ Respaldo descargado correctamente.';
+    setTimeout(() => { msg.style.display = 'none'; }, 3500);
   }
 }
 function importBackup(input) {
@@ -1458,4 +1448,4 @@ renderHome();
   };
 </script>
 </body>
-</html>
+        </html>
