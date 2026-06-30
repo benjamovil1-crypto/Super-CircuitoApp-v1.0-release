@@ -531,9 +531,13 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
 const isCapacitor = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
 
 async function scheduleNativeNotification(id, title, body, triggerDate) {
-    if (isCapacitor && window.Capacitor.Plugins.LocalNotifications) {
+    if (isCapacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
         try {
-            await window.Capacitor.Plugins.LocalNotifications.requestPermissions();
+            const perm = await window.Capacitor.Plugins.LocalNotifications.requestPermissions();
+            if (perm && perm.display === 'denied') {
+                showToast('🔕','Permiso denegado','Activa las notificaciones en Ajustes del sistema.');
+                return false;
+            }
             await window.Capacitor.Plugins.LocalNotifications.schedule({
                 notifications: [{
                     id: id || Math.floor(Math.random() * 1000000),
@@ -545,9 +549,42 @@ async function scheduleNativeNotification(id, title, body, triggerDate) {
             return true;
         } catch (e) {
             console.error("Error en Capacitor Notifications:", e);
+            showToast('❌','Error de notificación', e.message || 'No se pudo programar.');
         }
+    } else {
+        // Fuera del APK nativo: usar la Notifications API del navegador como fallback
+        if (!("Notification" in window)) {
+            showToast('⚠️','No disponible','Las notificaciones solo funcionan en el APK nativo.');
+            return false;
+        }
+        const permiso = await Notification.requestPermission();
+        if (permiso !== 'granted') {
+            showToast('🔕','Permiso denegado','Activa las notificaciones en el navegador.');
+            return false;
+        }
+        const msHasta = triggerDate.getTime() - Date.now();
+        if (msHasta > 0) {
+            setTimeout(() => {
+                new Notification(title, { body: body, icon: '' });
+            }, msHasta);
+        }
+        return true;
     }
     return false;
+}
+
+/* testNotif: botón "🧪 Probar notificación" */
+async function testNotif() {
+    const ahora = new Date(Date.now() + 5000); // 5 segundos desde ahora
+    const ok = await scheduleNativeNotification(
+        999999,
+        '🔔 Super CircuitoApp',
+        'Las notificaciones funcionan correctamente.',
+        ahora
+    );
+    if (ok) {
+        showToast('✅','Prueba programada','Recibirás una notificación en 5 segundos.');
+    }
 }
 
 /* ══ VARIABLES DEL CRONÓMETRO ══ */
@@ -560,11 +597,28 @@ let data={congregaciones:[]};
   try{const s=localStorage.getItem(SK);if(s){const p=JSON.parse(s);if(p&&p.congregaciones){data=p;data.congregaciones.forEach(c=>{if(!c.oradores)c.oradores=[];});return;}}}catch(e){}
 })();
 
+/* Cola para sincronizar con Firebase aunque el módulo aún no haya cargado */
+let _firebaseReady = false;
+let _pendienteNube = null;
+window._onFirebaseReady = function() {
+  _firebaseReady = true;
+  if (_pendienteNube && window.guardarEnLaNube) {
+    window.guardarEnLaNube(_pendienteNube);
+    _pendienteNube = null;
+  }
+};
+
 function save(){
   data.lastUpdated = new Date().toISOString(); 
   try{localStorage.setItem(SK,JSON.stringify(data));}catch(e){}
   const d=document.getElementById('sdot');if(d){d.classList.add('on');setTimeout(()=>d.classList.remove('on'),1200);}
-  if(window.guardarEnLaNube){window.guardarEnLaNube({congregaciones:data.congregaciones, lastUpdated: data.lastUpdated});}
+  const payload = {congregaciones: data.congregaciones, lastUpdated: data.lastUpdated};
+  if(_firebaseReady && window.guardarEnLaNube){
+    window.guardarEnLaNube(payload);
+  } else {
+    // Firebase aún no cargó — guardar en cola, se enviará en cuanto esté listo
+    _pendienteNube = payload;
+  }
 }
 
 const nv=v=>parseFloat(v)||0;
@@ -905,45 +959,40 @@ function renderBackupInfo(){
   document.getElementById('bk-fecha').textContent='Última actualización: '+new Date().toLocaleString('es-MX');
 }
 
-// ESTA FUNCIÓN SOLUCIONA EL PROBLEMA DEL RESPALDO ABRIENDO EL MENÚ NATIVO DEL CELULAR
+// RESPALDO: descarga archivo .json real via Blob (funciona en WebView y browser)
 async function exportBackup() {
   const json = JSON.stringify(data, null, 2);
-  
-  if (navigator.share) {
-    try {
-      await navigator.share({
-        title: 'Respaldo SuperCircuitoApp',
-        text: json
-      });
-      showToast('✅', 'Abriendo menú', 'Selecciona dónde guardar (WhatsApp, Drive, etc).');
-      return;
-    } catch(e) {
-      console.error("Error al usar Share:", e);
+  const fecha = new Date().toISOString().slice(0,10);
+  const filename = 'SuperCircuitoApp_' + fecha + '.json';
+  const msg = document.getElementById('export-msg');
+
+  try {
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a); }, 1500);
+    showToast('✅', 'Respaldo descargado', filename);
+    if(msg) { msg.style.display = 'none'; }
+  } catch(e) {
+    // Fallback: compartir como texto si Blob falla (ej. iOS WebView muy restringido)
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Respaldo SuperCircuitoApp', text: json });
+        showToast('✅', 'Abriendo menú', 'Selecciona dónde guardar.');
+        return;
+      } catch(e2) { console.error("Share también falló:", e2); }
+    }
+    if(msg) {
+      msg.style.display = 'block';
+      msg.style.color = 'var(--danger)';
+      msg.textContent = '❌ No se pudo exportar. Intenta desde otro navegador.';
+      setTimeout(() => { msg.style.display = 'none'; }, 6000);
     }
   }
-
-  // Fallback si la API nativa no responde
-  const msg = document.getElementById('export-msg');
-  const textarea = document.createElement('textarea');
-  textarea.value = json;
-  document.body.appendChild(textarea);
-  textarea.select();
-  try {
-      document.execCommand('copy');
-      if(msg) {
-          msg.style.display = 'block';
-          msg.style.color = 'var(--green)';
-          msg.textContent = '✅ ¡Datos copiados al portapapeles! Abre una nota y pégalos.';
-      }
-  } catch(err) {
-      if(msg) {
-          msg.style.display = 'block';
-          msg.style.color = 'var(--danger)';
-          msg.textContent = '❌ Error al copiar.';
-      }
-  }
-  document.body.removeChild(textarea);
-  setTimeout(() => { if(msg) msg.style.display = 'none'; }, 7000);
 }
 
 function importBackup(input) {
@@ -1151,8 +1200,19 @@ renderHome();
 
   window.guardarEnLaNube = function(datosParaGuardar) {
     datosParaGuardar.remitente = miIdDeSesion;
-    setDoc(appConfigRef, datosParaGuardar, { merge: true }).catch((error) => console.error("Error al subir:", error));
+    setDoc(appConfigRef, datosParaGuardar, { merge: true })
+      .then(() => {
+        const d = document.getElementById('sdot');
+        if(d){ d.classList.add('on'); setTimeout(()=>d.classList.remove('on'),1200); }
+      })
+      .catch((error) => {
+        console.error("Error al subir:", error);
+        if(typeof showToast === 'function') showToast('⚠️','Sin conexión','No se pudo sincronizar con la nube.');
+      });
   };
+
+  // Señalizar que Firebase está listo; envía cualquier guardado pendiente
+  if(window._onFirebaseReady) window._onFirebaseReady();
 </script>
 </body>
 </html>
