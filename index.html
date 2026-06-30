@@ -541,7 +541,7 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
 <div id="print-area"></div>
 
 <script>
-/* ══ VARIABLES DEL CRONÓMETRO (CORREGIDAS) ══ */
+/* ══ VARIABLES DEL CRONÓMETRO ══ */
 let timerRunning = false, timerPaused = 0, timerStart2 = null, timerInt = null;
 
 /* ══ INIT ══ */
@@ -636,36 +636,40 @@ async function scheduleNativeNotification(id, title, body, triggerDate) {
     } catch (e) { console.error("Error al programar notificación nativa:", e); }
 }
 
-/* ══ RECORDATORIOS ══ */
+/* ══ RECORDATORIOS EXACTOS DE VISITA (INICIO) ══ */
 function scheduleVR(congId){
   const c = data.congregaciones.find(x => x.id === congId);
-  if(!c || !c.fecha) { showToast('⚠️','Sin fecha','Configura primero la fecha de visita en la parte superior.'); return; }
+  if(!c) return;
   
-  const dias = parseInt(document.getElementById('rdias-'+congId).value);
-  const hora = document.getElementById('rhora-'+congId).value || '09:00';
+  const diaInput = document.getElementById('rdia-' + congId).value;
+  const horaInput = document.getElementById('rhora-' + congId).value || '09:00';
   
-  c.reminder = dias;
-  c.reminderHora = hora;
-  save();
-  renderHome();
+  if(!diaInput) {
+      showToast('⚠️', 'Falta fecha', 'Elige un día exacto para la alarma.');
+      return;
+  }
 
-  // Calcular la fecha exacta de la alerta
-  const [y, m, d] = c.fecha.split('-').map(Number);
-  const [hh, mm] = hora.split(':').map(Number);
+  const [y, m, d] = diaInput.split('-').map(Number);
+  const [hh, mm] = horaInput.split(':').map(Number);
   const targetDate = new Date(y, m-1, d, hh, mm, 0);
-  targetDate.setDate(targetDate.getDate() - dias);
 
   if (targetDate > new Date()) {
-      scheduleNativeNotification(congId * 10000, `Visita a ${c.nombre}`, `Recordatorio de visita programada para el ${c.fecha}`, targetDate);
-      showToast('✅', 'Recordatorio programado', `${dias === 0 ? 'El día de la visita' : dias === 7 ? '1 semana antes' : dias + ' día(s) antes'} a las ${hora}`);
+      c.reminderDate = diaInput;
+      c.reminderTime = horaInput;
+      c.reminderActive = true;
+      save();
+      renderHome();
+      scheduleNativeNotification(congId * 10000, `Visita a ${c.nombre}`, `Recordatorio de visita programada.`, targetDate);
+      showToast('✅', 'Alarma programada', `Sonará el ${diaInput} a las ${horaInput}`);
   } else {
-      showToast('⚠️', 'Fecha pasada', 'El recordatorio se guardó, pero la fecha configurada ya pasó.');
+      showToast('⚠️', 'Fecha pasada', 'Esa fecha y hora ya pasaron. Elige una fecha futura.');
   }
 }
+
 function cancelVR(congId){
   const c = data.congregaciones.find(x => x.id === congId);
   if(!c) return;
-  c.reminder = null; c.reminderHora = null;
+  c.reminderActive = false;
   save();
   renderHome();
   showToast('🔕','Recordatorio eliminado','Ya no recibirás avisos para esta congregación.');
@@ -739,9 +743,12 @@ function renderHome(){
     const div=document.createElement('div');div.className='ci';div.id='ci-'+c.id;
     const vs=[...c.visitas].reverse().map(v=>`<div class="vi"><div class="vd">${v.fecha}</div><div class="vm">EB: ${avg(v.eb)} · RP: ${avg(v.rp)}</div><button class="btn btn-o btn-sm" onclick="event.stopPropagation();openVisita(${c.id},${v.id})">Abrir</button><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delVisita(${c.id},${v.id})">✕</button></div>`).join('')||'<div style="font-size:10.5px;color:var(--text-dim);padding:5px 0">Sin visitas registradas.</div>';
     const no=c.oradores?.length||0;
-    const rem=c.reminder;
-    const remActivo=rem!==undefined&&rem!==null;
-    const remResumen=!remActivo?'Sin recordatorio activo':rem===0?`🔔 El día de la visita · ${c.reminderHora||'09:00'}`:rem===7?`🔔 1 semana antes · ${c.reminderHora||'09:00'}`:`🔔 ${rem} día${rem>1?'s':''} antes · ${c.reminderHora||'09:00'}`;
+    
+    // UI Recordatorio Exacto
+    const rDate = c.reminderDate || '';
+    const rTime = c.reminderTime || '09:00';
+    const remActivo = c.reminderActive;
+    const remResumen = !remActivo ? 'Sin recordatorio activo' : `🔔 Programado: ${rDate} a las ${rTime}`;
 
     let badgeHtml='';
     if(c.fecha&&sortBy==='en-curso'){
@@ -753,24 +760,18 @@ function renderHome(){
       else if(diff>0&&diff<=7)badgeHtml=`<span style="font-size:9px;background:rgba(100,180,255,0.18);color:var(--aero-bright);border:1px solid rgba(100,180,255,0.3);border-radius:8px;padding:1px 6px;margin-left:4px">en ${diff}d</span>`;
     }
 
-    div.innerHTML=`<div class="ch" onclick="toggleC(${c.id})"><div class="cb2">${c.nombre.slice(0,2).toUpperCase()}</div><div class="ci-info"><div class="ci-name">${c.nombre}${badgeHtml}</div><div class="ci-meta">${c.ciudad}${c.fecha?' · '+c.fecha:''}</div></div><span class="ci-cnt">${c.visitas.length} visita${c.visitas.length!==1?'s':''}</span><span class="ci-arr">▼</span></div><div class="cbody"><div style="display:flex;gap:5px;margin:10px 0 8px;flex-wrap:wrap"><button class="btn btn-p btn-sm" onclick="event.stopPropagation();newVisita(${c.id})">＋ Nueva visita</button><button class="btn btn-warn btn-sm" onclick="event.stopPropagation();openOradores(${c.id})">🎤 Oradores (${no})</button><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delCong(${c.id})">Eliminar</button></div>
+    div.innerHTML=`<div class="ch" onclick="toggleC(${c.id})"><div class="cb2">${c.nombre.slice(0,2).toUpperCase()}</div><div class="ci-info"><div class="ci-name">${c.nombre}${badgeHtml}</div><div class="ci-meta">${c.ciudad}${c.fecha?' · Creada: '+c.fecha:''}</div></div><span class="ci-cnt">${c.visitas.length} visita${c.visitas.length!==1?'s':''}</span><span class="ci-arr">▼</span></div><div class="cbody"><div style="display:flex;gap:5px;margin:10px 0 8px;flex-wrap:wrap"><button class="btn btn-p btn-sm" onclick="event.stopPropagation();newVisita(${c.id})">＋ Nueva visita</button><button class="btn btn-warn btn-sm" onclick="event.stopPropagation();openOradores(${c.id})">🎤 Oradores (${no})</button><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delCong(${c.id})">Eliminar</button></div>
     <div style="background:rgba(10,28,68,0.5);border:1px solid rgba(68,118,212,0.25);border-radius:8px;padding:10px;margin-bottom:8px">
-      <div style="font-size:10px;font-weight:700;color:var(--gold);letter-spacing:1px;margin-bottom:7px">🔔 RECORDATORIO DE VISITA</div>
+      <div style="font-size:10px;font-weight:700;color:var(--gold);letter-spacing:1px;margin-bottom:7px">🔔 PROGRAMAR ALARMA EXACTA</div>
       <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
-        <select id="rdias-${c.id}" style="flex:1;min-width:115px;font-size:11px" onclick="event.stopPropagation()">
-          <option value="0">El día de la visita</option>
-          <option value="1"${rem===1?' selected':''}>1 día antes</option>
-          <option value="2"${rem===2?' selected':''}>2 días antes</option>
-          <option value="7"${rem===7?' selected':''}>1 semana antes</option>
-        </select>
-        <input type="time" id="rhora-${c.id}" value="${c.reminderHora||'09:00'}" onclick="event.stopPropagation()" style="width:88px;font-size:11px"/>
-        <button class="btn btn-p btn-sm" onclick="event.stopPropagation();scheduleVR(${c.id})">✅ Activar</button>
+        <input type="date" id="rdia-${c.id}" value="${rDate}" onclick="event.stopPropagation()" style="flex:1;min-width:115px;font-size:11px"/>
+        <input type="time" id="rhora-${c.id}" value="${rTime}" onclick="event.stopPropagation()" style="width:88px;font-size:11px"/>
+        <button class="btn btn-p btn-sm" onclick="event.stopPropagation();scheduleVR(${c.id})">✅ Programar</button>
         ${remActivo?`<button class="btn btn-d btn-sm" onclick="event.stopPropagation();cancelVR(${c.id})">🔕 Quitar</button>`:''}
       </div>
       <div style="font-size:10px;padding:4px 7px;border-radius:5px;background:${remActivo?'rgba(30,95,168,0.3)':'rgba(0,0,0,0.2)'};color:${remActivo?'#7abaff':'var(--text-dim)'}">
         ${remResumen}
       </div>
-      ${!c.fecha?'<div style="font-size:9.5px;color:var(--danger);margin-top:4px">⚠️ Primero configura la fecha de próxima visita en el campo de arriba (dentro de "Nueva Visita")</div>':''}
     </div>
     <div class="abox"><div class="blbl">📋 Puntos para la agenda</div><textarea rows="3" placeholder="Temas a tratar…" onchange="updCong(${c.id},'puntosAgenda',this.value)">${c.puntosAgenda||''}</textarea></div><div class="obox"><div class="blbl">📝 Observaciones</div><textarea rows="3" placeholder="Notas generales…" onchange="updCong(${c.id},'observaciones',this.value)">${c.observaciones||''}</textarea></div><div class="slbl">Historial de visitas</div>${vs}</div>`;
     list.appendChild(div);
@@ -814,11 +815,6 @@ function setVF(f,val){
   if(v){
     v[f]=val;
     save();
-    // Si cambió la fecha de visita, actualizar el recordatorio en inicio
-    if (f === 'fecha') {
-      const c = data.congregaciones.find(x => x.id === cCid);
-      if (c) c.fecha = val; save();
-    }
   }
 }
 function saveVisita(){save();goHome();renderHome();}
@@ -831,7 +827,7 @@ function stab(name,el){
   if(name==='reunion')renderReunion(gv());if(name==='actividades')renderActividades(gv());
 }
 
-/* ══ TEMPORIZADOR (CRONÓMETRO) CORREGIDO ══ */
+/* ══ TEMPORIZADOR (CRONÓMETRO) ══ */
 function timerStart(){
   if(timerRunning)return;
   timerRunning = true;
@@ -1006,7 +1002,7 @@ function renderTimeline(){
 }
 function renderInforme(v){if(!v)return;const inf=document.getElementById('v-informe'),adi=document.getElementById('v-adicionales');if(inf)inf.value=v.informe||'';if(adi)adi.value=v.adicionales||'';}
 
-/* ══ REPORTES / IMPRESIÓN CORREGIDA ══ */
+/* ══ REPORTES / IMPRESIÓN ══ */
 function renderReportes(){
   ['rep-cong','rep-hist-cong'].forEach(id=>{const sel=document.getElementById(id);sel.innerHTML='<option value="">Selecciona congregación…</option>';data.congregaciones.forEach(c=>sel.innerHTML+=`<option value="${c.id}">${c.nombre} (${c.ciudad})</option>`);});
   document.getElementById('rep-visita').innerHTML='<option value="">Selecciona visita…</option>';
@@ -1091,13 +1087,12 @@ function imprimirReporte(){
   }
 }
 
-// CORRECCIÓN: Copia el texto limpio al portapapeles (100% compatible con WebView y WhatsApp)
 function compartirReporte() {
   const body = document.getElementById('print-overlay-body');
   if(!body) return;
   
   let text = body.innerText || body.textContent;
-  text = text.replace(/\n\s*\n/g, '\n\n'); // Limpiar espacios extras
+  text = text.replace(/\n\s*\n/g, '\n\n');
   
   const textarea = document.createElement('textarea');
   textarea.value = text;
@@ -1144,7 +1139,7 @@ function printHistorial(){
   doPrint();
 }
 
-/* ══ RESPALDO CORREGIDO ANTI-FALLOS WEBVIEW ══ */
+/* ══ RESPALDO ══ */
 function renderBackupInfo(){
   const n=data.congregaciones.length,tV=data.congregaciones.reduce((s,c)=>s+c.visitas.length,0);
   document.getElementById('bk-resumen').textContent=`${n} congregaciones · ${tV} visitas`;
@@ -1154,7 +1149,6 @@ function exportBackup() {
   const json = JSON.stringify(data, null, 2);
   const msg = document.getElementById('export-msg');
   
-  // 1. Intento blindado: Copiar al portapapeles
   const textarea = document.createElement('textarea');
   textarea.value = json;
   textarea.style.position = 'fixed';
@@ -1178,7 +1172,6 @@ function exportBackup() {
   }
   document.body.removeChild(textarea);
 
-  // 2. Intento clásico (por si el WebView lo soporta)
   try {
       const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -1292,7 +1285,7 @@ function renderNombramientos(v){
 function setNomb(i,f,val){const v=gv();if(!v)return;v.nombramientos[i][f]=val;save();}
 function delNomb(i){const v=gv();if(!v)return;v.nombramientos.splice(i,1);save();renderNombramientos(v);}
 
-/* ══ ACTIVIDADES (NOTIFICACIONES CORREGIDAS) ══ */
+/* ══ ACTIVIDADES CON BOTÓN EXPLÍCITO DE ALARMA ══ */
 function renderActividades(v){
   if(!v)return;
   renderActProg(v);renderAlimentos(v);renderCampo(v);
@@ -1300,22 +1293,38 @@ function renderActividades(v){
   const hd=document.getElementById('hosp-dir');if(hd)hd.value=v.hosp_dir||'';
   const ht=document.getElementById('hosp-tel');if(ht)ht.value=v.hosp_tel||'';
 }
-function addActProg(){const v=gv();if(!v)return;if(!v.act_prog)v.act_prog=[];v.act_prog.push({dia:v.fecha||'',hora:'09:00',label:'Nueva actividad',con_quien:'',done:false});save();renderActProg(v);}
+function addActProg(){
+  const v=gv();if(!v)return;
+  if(!v.act_prog)v.act_prog=[];
+  v.act_prog.push({dia:v.fecha||'',hora:'09:00',label:'Nueva actividad',con_quien:'',done:false, alarmaActiva:false});
+  save();
+  renderActProg(v);
+}
 
-function scheduleActNotif(i) {
+function activarAlarmaActividad(i) {
     const v = gv(); if(!v) return;
     const act = v.act_prog[i];
-    if(act.dia && act.hora && !act.done) {
-        const [y, m, d] = act.dia.split('-').map(Number);
-        const [hh, mm] = act.hora.split(':').map(Number);
-        const dt = new Date(y, m-1, d, hh, mm, 0);
-        
-        if(dt > new Date()) {
-            scheduleNativeNotification(Date.now() + i, "Actividad Programada", `${act.label||'Actividad'} con ${act.con_quien||'hermanos'}`, dt);
-            showToast('✅', 'Alarma lista', 'La actividad se notificará a esa hora.');
-        } else {
-            showToast('⚠️', 'Hora pasada', 'Esa hora ya pasó, no sonará alarma.');
-        }
+    
+    if(!act.dia || !act.hora) {
+        showToast('⚠️', 'Datos incompletos', 'Pon fecha y hora primero.');
+        return;
+    }
+    
+    const [y, m, d] = act.dia.split('-').map(Number);
+    const [hh, mm] = act.hora.split(':').map(Number);
+    const dt = new Date(y, m-1, d, hh, mm, 0);
+    
+    if(dt > new Date()) {
+        scheduleNativeNotification(Date.now() + i, "Actividad: " + (act.label || 'Pendiente'), `Con ${act.con_quien || 'hermanos'}`, dt);
+        act.alarmaActiva = true;
+        save();
+        renderActProg(v);
+        showToast('✅', 'Alarma lista', 'Te avisaremos a la hora indicada.');
+    } else {
+        showToast('⚠️', 'Hora pasada', 'Esa hora ya pasó, no se programará.');
+        act.alarmaActiva = false;
+        save();
+        renderActProg(v);
     }
 }
 
@@ -1329,19 +1338,20 @@ function renderActProg(v){
       <span class="act-status ${a.done?'done':'pending'}" style="margin-left:auto">${a.done?'Hecho':'Pendiente'}</span>
     </div>
     <div class="grid2" style="margin-bottom:4px">
-      <div class="field" style="margin-bottom:0"><input type="date" value="${a.dia||''}" onchange="setAP(${i},'dia',this.value); scheduleActNotif(${i})" style="width:100%;padding:3px 5px;font-size:11px;color:var(--aero-glow);font-family:monospace" placeholder="Fecha"/></div>
-      <div class="field" style="margin-bottom:0"><input type="time" value="${a.hora||'09:00'}" onchange="setAP(${i},'hora',this.value); scheduleActNotif(${i})" style="width:100%;padding:3px 5px;font-size:11px;color:var(--aero-glow);font-family:monospace"/></div>
+      <div class="field" style="margin-bottom:0"><input type="date" value="${a.dia||''}" onchange="setAP(${i},'dia',this.value)" style="width:100%;padding:3px 5px;font-size:11px;color:var(--aero-glow);font-family:monospace" placeholder="Fecha"/></div>
+      <div class="field" style="margin-bottom:0"><input type="time" value="${a.hora||'09:00'}" onchange="setAP(${i},'hora',this.value)" style="width:100%;padding:3px 5px;font-size:11px;color:var(--aero-glow);font-family:monospace"/></div>
     </div>
-    <div class="field" style="margin-bottom:4px"><input type="text" value="${a.label||''}" onchange="setAP(${i},'label',this.value); scheduleActNotif(${i})" style="width:100%;padding:4px 6px;font-size:11.5px" placeholder="¿Qué se va a hacer?"/></div>
-    <div class="field" style="margin-bottom:6px"><input type="text" value="${a.con_quien||''}" onchange="setAP(${i},'con_quien',this.value); scheduleActNotif(${i})" style="width:100%;padding:4px 6px;font-size:11.5px" placeholder="¿Con quién?"/></div>
-    <div style="display:flex;gap:5px">
+    <div class="field" style="margin-bottom:4px"><input type="text" value="${a.label||''}" onchange="setAP(${i},'label',this.value)" style="width:100%;padding:4px 6px;font-size:11.5px" placeholder="¿Qué se va a hacer?"/></div>
+    <div class="field" style="margin-bottom:6px"><input type="text" value="${a.con_quien||''}" onchange="setAP(${i},'con_quien',this.value)" style="width:100%;padding:4px 6px;font-size:11.5px" placeholder="¿Con quién?"/></div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap">
+      <button class="btn btn-p btn-sm" style="flex:1; justify-content:center; ${a.alarmaActiva ? 'background:var(--green); border-color:var(--green);' : ''}" onclick="activarAlarmaActividad(${i})">${a.alarmaActiva ? '✅ Alarma programada' : '🔔 Programar Alarma'}</button>
       <button class="btn btn-s btn-sm" onclick="toggleAP(${i})">${a.done?'↩ Marcar pendiente':'✅ Marcar hecho'}</button>
-      <button class="btn btn-d btn-sm" onclick="delAP(${i})">✕ Eliminar</button>
+      <button class="btn btn-d btn-sm" onclick="delAP(${i})">✕</button>
     </div>`;
     list.appendChild(div);
   });
 }
-function setAP(i,f,val){const v=gv();if(!v)return;v.act_prog[i][f]=val;save();}
+function setAP(i,f,val){const v=gv();if(!v)return;v.act_prog[i][f]=val; v.act_prog[i].alarmaActiva = false; save(); renderActProg(v);}
 function toggleAP(i){const v=gv();if(!v)return;v.act_prog[i].done=!v.act_prog[i].done;save();renderActProg(v);}
 function delAP(i){const v=gv();if(!v)return;v.act_prog.splice(i,1);save();renderActProg(v);}
 async function testNotif(){
@@ -1354,6 +1364,7 @@ async function testNotif(){
         showToast('🧪','Prueba web','Estás en web. Usa la app en el celular para alarmas reales.');
     }
 }
+
 function toggleAlim(type){
   const v=gv();if(!v)return;
   if(type==='des')v.show_des=!v.show_des;else v.show_cen=!v.show_cen;
