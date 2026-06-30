@@ -1,23 +1,19 @@
 {
-  "appId": "com.supercircuito.app",
-  "appName": "Super CircuitoApp",
-  "webDir": "www",
-  "android": {
-    "allowMixedContent": false,
-    "backgroundColor": "#000000",
-    "appendUserAgent": "SuperCircuitoApp"
+  "name": "super-circuito-app",
+  "version": "1.0.0",
+  "description": "Super CircuitoApp Vista Edition",
+  "scripts": {
+    "build": "echo done"
   },
-  "plugins": {
-    "LocalNotifications": {
-      "smallIcon": "ic_stat_notify",
-      "iconColor": "#1E5FA8",
-      "sound": "default"
-    },
-    "SplashScreen": {
-      "launchShowDuration": 1500,
-      "backgroundColor": "#000000",
-      "showSpinner": false,
-      "splashImmersive": true
-    }
+  "dependencies": {
+    "@capacitor/android": "6.2.0",
+    "@capacitor/core": "6.2.0",
+    "@capacitor/browser": "6.0.0",
+    "@capacitor/filesystem": "6.0.1",
+    "@capacitor/local-notifications": "6.1.0",
+    "@capacitor/share": "6.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "6.2.0"
   }
 }
