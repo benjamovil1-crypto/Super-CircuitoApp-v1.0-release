@@ -213,18 +213,6 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
 @media(min-width:601px){.timer-display{font-size:68px;}}
 @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 
-/* ══ PRINT CSS CORREGIDO ══ */
-@media print{
-  body{background:#fff !important; color:#000 !important;}
-  .phone::before, .phone::after, body::before, body::after { display: none !important; }
-  .phone{background:#fff !important; box-shadow:none !important; border:none !important; display:block !important; margin:0 !important; max-width:100% !important;}
-  .topbar,.nav-bottom,.gemini-panel,.notif-toast,.mo,.print-modal,.sec-toggle,button,.ftabs{display:none !important;}
-  #print-area{display:block !important; font-family:'Segoe UI', Tahoma, sans-serif; color:#000;}
-  #print-area * { color: #000 !important; background: transparent !important; text-shadow: none !important; box-shadow:none !important; }
-  table{border:1px solid #ccc; width:100%; border-collapse:collapse; margin-bottom:15px;}
-  th, td{border:1px solid #ccc !important; padding:6px !important; font-size:12px;}
-  th{background:#f0f0f0 !important; font-weight:bold; -webkit-print-color-adjust: exact; print-color-adjust: exact;}
-}
 #print-area{display:none;}
 </style>
 </head>
@@ -234,7 +222,7 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
     <div class="topbar-inner">
       <div class="topbar-logo">
         <div class="logo-icon">🔵</div>
-        <div><div>SUPER CIRCUITO APP</div><div class="logo-sub">Vista Edition</div></div>
+        <div><div>SUPER CIRCUITO APP</div><div class="logo-sub">Capacitor Edition</div></div>
       </div>
       <button class="gemini-btn" onclick="openGemini()"><span style="font-size:12px">✨</span> Gemini IA</button>
       <div class="sdot" id="sdot"></div>
@@ -436,7 +424,7 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
       <div class="card"><div class="ct" style="color:#ff8090">Resumen de una visita</div>
         <div class="field"><label>Congregación</label><select id="rep-cong" onchange="repLoadVisitas()"><option value="">Selecciona congregación…</option></select></div>
         <div class="field"><label>Visita</label><select id="rep-visita"><option value="">Selecciona visita…</option></select></div>
-        <button class="btn btn-p" style="width:100%;justify-content:center;margin-top:2px" onclick="printVisita()">👁 Ver / Imprimir</button>
+        <button class="btn btn-p" style="width:100%;justify-content:center;margin-top:2px" onclick="printVisita()">👁 Generar Reporte / Imprimir</button>
       </div>
       <div class="card"><div class="ct" style="color:var(--purple)">Historial completo</div>
         <div class="field"><label>Congregación</label><select id="rep-hist-cong" onchange="renderRepHistorial()"><option value="">Selecciona congregación…</option></select></div>
@@ -448,16 +436,16 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
     <!-- RESPALDO -->
     <div class="page" id="page-respaldo">
       <div class="ph"><div><div class="pt">Respaldo</div><div class="ps">Exporta e importa tus datos</div></div></div>
-      <div class="card"><div class="ct" style="color:var(--green)">📤 Exportar respaldo</div>
-        <p style="font-size:11.5px;color:var(--text-dim);line-height:1.7;margin-bottom:12px">Descarga o copia todo tu avance para guardarlo seguro.</p>
+      <div class="card"><div class="ct" style="color:var(--green)">📤 Exportar respaldo seguro</div>
+        <p style="font-size:11.5px;color:var(--text-dim);line-height:1.7;margin-bottom:12px">Guarda tus datos enviándolos por WhatsApp, Correo o Google Drive.</p>
         <div style="background:rgba(0,2,16,0.52);border:1px solid rgba(48,98,172,0.2);border-radius:6px;padding:10px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:12px;font-weight:700" id="bk-resumen">—</div><div style="font-size:9.5px;color:var(--text-dim);margin-top:2px" id="bk-fecha">—</div></div><div style="font-size:24px">🗄️</div></div>
-        <button class="btn btn-s" style="width:100%;justify-content:center" onclick="exportBackup()">📋 Copiar / Descargar Respaldo JSON</button>
+        <button class="btn btn-s" style="width:100%;justify-content:center" onclick="exportBackup()">📤 Compartir Respaldo .JSON</button>
         <div id="export-msg" style="margin-top:8px;font-size:11px;text-align:center;display:none"></div>
       </div>
       <div class="card"><div class="ct" style="color:var(--aero-bright)">📥 Importar respaldo</div>
-        <p style="font-size:11.5px;color:var(--text-dim);line-height:1.7;margin-bottom:12px">Selecciona un archivo <strong style="color:var(--text)">.json</strong> generado previamente.<br/><span style="color:var(--danger);font-size:10.5px">⚠️ Esto reemplazará los datos actuales.</span></p>
+        <p style="font-size:11.5px;color:var(--text-dim);line-height:1.7;margin-bottom:12px">Selecciona un archivo <strong style="color:var(--text)">.json</strong> guardado previamente.<br/><span style="color:var(--danger);font-size:10.5px">⚠️ Esto reemplazará los datos actuales.</span></p>
         <button class="btn btn-p" style="width:100%;justify-content:center" onclick="document.getElementById('import-file').click()">⬆️ Seleccionar archivo JSON</button>
-        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importBackup(this)"/>
+        <input type="file" id="import-file" accept=".json,text/plain" style="display:none" onchange="importBackup(this)"/>
         <div id="import-msg" style="margin-top:8px;font-size:11.5px;text-align:center;display:none"></div>
       </div>
     </div>
@@ -471,6 +459,7 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
   </nav>
 </div>
 
+<!-- MODALES RESTANTES OCULTOS PARA BREVEDAD EN EL LECTOR... -->
 <!-- MODAL: NUEVA CONG -->
 <div class="mo" id="modal">
   <div class="modal">
@@ -537,41 +526,44 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
   </div>
 </div>
 
-<!-- ÁREA DE IMPRESIÓN OCULTA -->
-<div id="print-area"></div>
-
 <script>
+/* ══ PUENTE EXACTO DE CAPACITOR ══ */
+const isCapacitor = window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+
+async function scheduleNativeNotification(id, title, body, triggerDate) {
+    if (isCapacitor && window.Capacitor.Plugins.LocalNotifications) {
+        try {
+            await window.Capacitor.Plugins.LocalNotifications.requestPermissions();
+            await window.Capacitor.Plugins.LocalNotifications.schedule({
+                notifications: [{
+                    id: id || Math.floor(Math.random() * 1000000),
+                    title: title,
+                    body: body,
+                    schedule: { at: triggerDate }
+                }]
+            });
+            return true;
+        } catch (e) {
+            console.error("Error en Capacitor Notifications:", e);
+        }
+    }
+    return false;
+}
+
 /* ══ VARIABLES DEL CRONÓMETRO ══ */
 let timerRunning = false, timerPaused = 0, timerStart2 = null, timerInt = null;
 
 /* ══ INIT ══ */
-async function solicitarBateriaExenta(){
-  if(window.Capacitor&&Capacitor.isNativePlatform()){
-    try{await LocalNotifications.requestPermissions();}catch(e){}
-    const ya=localStorage.getItem('bateria_aviso');
-    if(!ya){localStorage.setItem('bateria_aviso','1');setTimeout(()=>{alert('⚠️ Para que las notificaciones funcionen con pantalla apagada:\n\nVe a Ajustes → Batería → Optimización de batería → busca "Super CircuitoApp" → selecciona "No optimizar".');},2000);}
-  }
-}
-solicitarBateriaExenta();
-
 const SK='sca_v4';
-const SK_PREV=['sca_v3','sca_v2'];
-let data={congregaciones:[
-  {id:1,nombre:'12 de Octubre',ciudad:'Mochicahui',fecha:'2024-01-15',puntosAgenda:'',observaciones:'',visitas:[],oradores:[]},
-  {id:2,nombre:'Centro',ciudad:'Los Mochis',fecha:'2024-01-15',puntosAgenda:'',observaciones:'',visitas:[],oradores:[]},
-  {id:3,nombre:'Norte',ciudad:'Guasave',fecha:'2024-02-01',puntosAgenda:'',observaciones:'',visitas:[],oradores:[]},
-]};
+let data={congregaciones:[]};
 (function migrateAndLoad(){
   try{const s=localStorage.getItem(SK);if(s){const p=JSON.parse(s);if(p&&p.congregaciones){data=p;data.congregaciones.forEach(c=>{if(!c.oradores)c.oradores=[];});return;}}}catch(e){}
-  for(const oldKey of SK_PREV){
-    try{const s=localStorage.getItem(oldKey);if(s){const p=JSON.parse(s);const imp=p&&p.data?p.data:p;if(imp&&imp.congregaciones){data=imp;data.congregaciones.forEach(c=>{if(!c.oradores)c.oradores=[];});localStorage.setItem(SK,JSON.stringify(data));localStorage.removeItem(oldKey);return;}}}catch(e){}
-  }
 })();
 
 function save(){
   data.lastUpdated = new Date().toISOString(); 
   try{localStorage.setItem(SK,JSON.stringify(data));}catch(e){}
-  const d=document.getElementById('sdot');d.classList.add('on');setTimeout(()=>d.classList.remove('on'),1200);
+  const d=document.getElementById('sdot');if(d){d.classList.add('on');setTimeout(()=>d.classList.remove('on'),1200);}
   if(window.guardarEnLaNube){window.guardarEnLaNube({congregaciones:data.congregaciones, lastUpdated: data.lastUpdated});}
 }
 
@@ -583,13 +575,7 @@ const fmt=v=>'$'+v.toLocaleString('es-MX',{minimumFractionDigits:2,maximumFracti
 const meses=['Mes 1','Mes 2','Mes 3','Mes 4','Mes 5','Mes 6','Mes 7','Mes 8','Mes 9','Mes 10','Mes 11','Mes 12'];
 const CALS=['A+','A','A-','B+','B','B-','C+','C','C-','NR'];
 const CAL_MAP={'A+':'Aplus','A':'A','A-':'Aminus','B+':'Bplus','B':'B','B-':'Bminus','C+':'Cplus','C':'C','C-':'Cminus','NR':'NR'};
-const SKILL_GROUPS=[
-  {t:'Aspectos de la Voz y Expresión Oral',items:['Lectura precisa','Pronunciación clara','Fluidez','Uso de las pausas','Énfasis en las ideas principales','Volumen adecuado','Modulación','Entusiasmo','Calidez y sentimiento']},
-  {t:'Lenguaje Corporal y Presentación',items:['Ademanes y expresiones faciales','Contacto visual','Naturalidad','Apariencia personal','Postura','Uso de medios visuales']},
-  {t:'Estructura y Contenido',items:['Introducciones que despierten interés','Introducciones apropiadas para el auditorio','Desarrollo lógico del tema','Uso de argumentos convincentes','Uso de preguntas para razonar','Ilustraciones que enseñen','Ilustraciones tomadas de situaciones conocidas']},
-  {t:'Integración de Textos Bíblicos',items:['Uso eficaz de la Biblia','Introducción apropiada de los textos','Lectura con el énfasis debido','Aplicación correcta de los textos','Explicación de los textos bíblicos','Enseñanza con ejemplos bíblicos']},
-  {t:'Técnicas de Presentación',items:['Uso de un bosquejo','Buena Argumentación','Exhortación de corazón','Puntos principales que se destacan','Conclusión que mueva a la acción','Claridad','Instrucción para el auditorio','Repetición para enfatizar','Análisis del tema','Vocabulario digno y variado','Uso de notas']},
-];
+const SKILL_GROUPS=[{t:'Aspectos de la Voz y Expresión Oral',items:['Lectura precisa','Pronunciación clara','Fluidez','Uso de las pausas','Énfasis en las ideas principales','Volumen adecuado','Modulación','Entusiasmo','Calidez y sentimiento']},{t:'Lenguaje Corporal y Presentación',items:['Ademanes y expresiones faciales','Contacto visual','Naturalidad','Apariencia personal','Postura','Uso de medios visuales']},{t:'Estructura y Contenido',items:['Introducciones que despierten interés','Introducciones apropiadas para el auditorio','Desarrollo lógico del tema','Uso de argumentos convincentes','Uso de preguntas para razonar','Ilustraciones que enseñen','Ilustraciones tomadas de situaciones conocidas']},{t:'Integración de Textos Bíblicos',items:['Uso eficaz de la Biblia','Introducción apropiada de los textos','Lectura con el énfasis debido','Aplicación correcta de los textos','Explicación de los textos bíblicos','Enseñanza con ejemplos bíblicos']},{t:'Técnicas de Presentación',items:['Uso de un bosquejo','Buena Argumentación','Exhortación de corazón','Puntos principales que se destacan','Conclusión que mueva a la acción','Claridad','Instrucción para el auditorio','Repetición para enfatizar','Análisis del tema','Vocabulario digno y variado','Uso de notas']}];
 
 function emptyOrador(){const sk={};SKILL_GROUPS.forEach(g=>g.items.forEach(it=>{sk[it]=false;}));return{id:Date.now(),nombre:'',calificacion:'A',skills:sk};}
 function emptyVisita(){
@@ -608,39 +594,18 @@ function emptyVisita(){
   analisis:{regulares:'',irregulares:'',conRevisita:'',irregRevisita:'',sinRevisita:'',conEstudio:'',irregEstudio:'',sinEstudio:'',menosDiez:'',publNuevos:'',precAux:'',precReg:'',ancianos:'',ministeriales:'',inactivos:'',censurados:'',expulsados:'',desasociados:'',readmitidos:'',reactivados:'',recienBautizados:'',bautizados:'',noBautizados:''}};
 }
 
-/* ══ FORMATO TIEMPO MM:SS ══ */
 function formatTimeMMSS(val) {
-    if (!val) return "";
-    let clean = val.replace(/\D/g, ''); 
-    if (clean.length === 0) return "";
-    if (clean.length === 1) return "00:0" + clean;
-    if (clean.length === 2) return "00:" + clean;
-    let m = clean.slice(0, 2);
-    let s = clean.slice(2, 4);
-    return m + ":" + s;
+    if (!val) return ""; let clean = val.replace(/\D/g, ''); 
+    if (clean.length === 0) return ""; if (clean.length === 1) return "00:0" + clean;
+    if (clean.length === 2) return "00:" + clean; return clean.slice(0, 2) + ":" + clean.slice(2, 4);
 }
 
-/* ══ NOTIFICACIONES NATIVAS ══ */
-async function scheduleNativeNotification(id, title, body, triggerDate) {
-    try {
-        if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
-            if (window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) {
-                const perm = await window.Capacitor.Plugins.LocalNotifications.requestPermissions();
-                if(perm.display === 'granted') {
-                    await window.Capacitor.Plugins.LocalNotifications.schedule({
-                        notifications: [{ id: id || Math.floor(Math.random()*1000000), title: title, body: body, schedule: { at: triggerDate }, sound: 'default' }]
-                    });
-                }
-            }
-        }
-    } catch (e) { console.error("Error al programar notificación nativa:", e); }
-}
-
-/* ══ RECORDATORIOS EXACTOS DE VISITA (INICIO) ══ */
+/* ══ RECORDATORIOS EXACTOS (INICIO) ══ */
 function scheduleVR(congId){
   const c = data.congregaciones.find(x => x.id === congId);
   if(!c) return;
   
+  // OBTENEMOS FECHA Y HORA ESPECÍFICAMENTE DEL CAMPO EXACTO
   const diaInput = document.getElementById('rdia-' + congId).value;
   const horaInput = document.getElementById('rhora-' + congId).value || '09:00';
   
@@ -651,7 +616,7 @@ function scheduleVR(congId){
 
   const [y, m, d] = diaInput.split('-').map(Number);
   const [hh, mm] = horaInput.split(':').map(Number);
-  const targetDate = new Date(y, m-1, d, hh, mm, 0);
+  const targetDate = new Date(y, m-1, d, hh, mm, 0); 
 
   if (targetDate > new Date()) {
       c.reminderDate = diaInput;
@@ -659,7 +624,7 @@ function scheduleVR(congId){
       c.reminderActive = true;
       save();
       renderHome();
-      scheduleNativeNotification(congId * 10000, `Visita a ${c.nombre}`, `Recordatorio de visita programada.`, targetDate);
+      scheduleNativeNotification(congId * 10000, `Visita a ${c.nombre}`, `Recordatorio exacto programado.`, targetDate);
       showToast('✅', 'Alarma programada', `Sonará el ${diaInput} a las ${horaInput}`);
   } else {
       showToast('⚠️', 'Fecha pasada', 'Esa fecha y hora ya pasaron. Elige una fecha futura.');
@@ -672,7 +637,7 @@ function cancelVR(congId){
   c.reminderActive = false;
   save();
   renderHome();
-  showToast('🔕','Recordatorio eliminado','Ya no recibirás avisos para esta congregación.');
+  showToast('🔕','Recordatorio eliminado','Ya no recibirás este aviso.');
 }
 
 /* ══ NAV ══ */
@@ -688,16 +653,8 @@ function showPage(name){
 }
 function goHome(){showPage('home');}
 
-function saveSortPref(){
-  const sel=document.getElementById('sort-congs');
-  if(sel)localStorage.setItem('sca_sort',sel.value);
-}
-function loadSortPref(){
-  const sel=document.getElementById('sort-congs');
-  if(!sel)return;
-  const saved=localStorage.getItem('sca_sort');
-  if(saved){sel.value=saved;}
-}
+function saveSortPref(){const sel=document.getElementById('sort-congs');if(sel)localStorage.setItem('sca_sort',sel.value);}
+function loadSortPref(){const sel=document.getElementById('sort-congs');if(!sel)return;const saved=localStorage.getItem('sca_sort');if(saved){sel.value=saved;}}
 
 function renderHome(){
   const list=document.getElementById('cong-list');
@@ -708,41 +665,16 @@ function renderHome(){
   let congs=[...data.congregaciones];
   const hoy=new Date();hoy.setHours(0,0,0,0);const hoyTs=hoy.getTime();
 
-  if(sortBy==='alpha'){
-    congs.sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
-  }
-  else if(sortBy==='ultima-visita'){
-    congs.sort((a,b)=>{
-      const va=a.visitas.length?a.visitas[a.visitas.length-1].fecha:'';
-      const vb=b.visitas.length?b.visitas[b.visitas.length-1].fecha:'';
-      return vb.localeCompare(va);
-    });
-  }
-  else if(sortBy==='mas-visitas'){
-    congs.sort((a,b)=>b.visitas.length-a.visitas.length);
-  }
-  else if(sortBy==='visita-prox'){
-    const conFecha=congs.filter(c=>c.fecha).sort((a,b)=>a.fecha.localeCompare(b.fecha));
-    const sinFecha=congs.filter(c=>!c.fecha);
-    congs=[...conFecha,...sinFecha];
-  }
-  else if(sortBy==='fecha-asig'){
-    congs.sort((a,b)=>a.id-b.id);
-  }
-  else{
-    const parseF=f=>{if(!f)return null;const[y,m,d]=f.split('-').map(Number);const dt=new Date(y,m-1,d);dt.setHours(0,0,0,0);return dt.getTime();};
-    congs.sort((a,b)=>{
-      const da=parseF(a.fecha);const db=parseF(b.fecha);
-      if(da===null&&db===null)return a.nombre.localeCompare(b.nombre,'es');
-      if(da===null)return 1;if(db===null)return -1;
-      return Math.abs(da-hoyTs)-Math.abs(db-hoyTs);
-    });
-  }
+  if(sortBy==='alpha') congs.sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+  else if(sortBy==='ultima-visita') congs.sort((a,b)=>{const va=a.visitas.length?a.visitas[a.visitas.length-1].fecha:'';const vb=b.visitas.length?b.visitas[b.visitas.length-1].fecha:'';return vb.localeCompare(va);});
+  else if(sortBy==='mas-visitas') congs.sort((a,b)=>b.visitas.length-a.visitas.length);
+  else if(sortBy==='visita-prox'){const conFecha=congs.filter(c=>c.fecha).sort((a,b)=>a.fecha.localeCompare(b.fecha));const sinFecha=congs.filter(c=>!c.fecha);congs=[...conFecha,...sinFecha];}
+  else if(sortBy==='fecha-asig') congs.sort((a,b)=>a.id-b.id);
+  else {const parseF=f=>{if(!f)return null;const[y,m,d]=f.split('-').map(Number);const dt=new Date(y,m-1,d);dt.setHours(0,0,0,0);return dt.getTime();};congs.sort((a,b)=>{const da=parseF(a.fecha);const db=parseF(b.fecha);if(da===null&&db===null)return a.nombre.localeCompare(b.nombre,'es');if(da===null)return 1;if(db===null)return -1;return Math.abs(da-hoyTs)-Math.abs(db-hoyTs);});}
 
   congs.forEach(c=>{
     const div=document.createElement('div');div.className='ci';div.id='ci-'+c.id;
     const vs=[...c.visitas].reverse().map(v=>`<div class="vi"><div class="vd">${v.fecha}</div><div class="vm">EB: ${avg(v.eb)} · RP: ${avg(v.rp)}</div><button class="btn btn-o btn-sm" onclick="event.stopPropagation();openVisita(${c.id},${v.id})">Abrir</button><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delVisita(${c.id},${v.id})">✕</button></div>`).join('')||'<div style="font-size:10.5px;color:var(--text-dim);padding:5px 0">Sin visitas registradas.</div>';
-    const no=c.oradores?.length||0;
     
     // UI Recordatorio Exacto
     const rDate = c.reminderDate || '';
@@ -752,15 +684,13 @@ function renderHome(){
 
     let badgeHtml='';
     if(c.fecha&&sortBy==='en-curso'){
-      const[y,m,d]=c.fecha.split('-').map(Number);
-      const fTs=new Date(y,m-1,d).setHours(0,0,0,0);
-      const diff=Math.round((fTs-hoyTs)/(1000*60*60*24));
+      const[y,m,d]=c.fecha.split('-').map(Number);const fTs=new Date(y,m-1,d).setHours(0,0,0,0);const diff=Math.round((fTs-hoyTs)/(1000*60*60*24));
       if(diff===0)badgeHtml='<span style="font-size:9px;background:rgba(255,200,0,0.2);color:var(--gold);border:1px solid rgba(255,200,0,0.4);border-radius:8px;padding:1px 6px;margin-left:4px">HOY</span>';
       else if(diff>0&&diff<=3)badgeHtml=`<span style="font-size:9px;background:rgba(255,150,0,0.18);color:#ffb060;border:1px solid rgba(255,150,0,0.35);border-radius:8px;padding:1px 6px;margin-left:4px">en ${diff}d</span>`;
       else if(diff>0&&diff<=7)badgeHtml=`<span style="font-size:9px;background:rgba(100,180,255,0.18);color:var(--aero-bright);border:1px solid rgba(100,180,255,0.3);border-radius:8px;padding:1px 6px;margin-left:4px">en ${diff}d</span>`;
     }
 
-    div.innerHTML=`<div class="ch" onclick="toggleC(${c.id})"><div class="cb2">${c.nombre.slice(0,2).toUpperCase()}</div><div class="ci-info"><div class="ci-name">${c.nombre}${badgeHtml}</div><div class="ci-meta">${c.ciudad}${c.fecha?' · Creada: '+c.fecha:''}</div></div><span class="ci-cnt">${c.visitas.length} visita${c.visitas.length!==1?'s':''}</span><span class="ci-arr">▼</span></div><div class="cbody"><div style="display:flex;gap:5px;margin:10px 0 8px;flex-wrap:wrap"><button class="btn btn-p btn-sm" onclick="event.stopPropagation();newVisita(${c.id})">＋ Nueva visita</button><button class="btn btn-warn btn-sm" onclick="event.stopPropagation();openOradores(${c.id})">🎤 Oradores (${no})</button><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delCong(${c.id})">Eliminar</button></div>
+    div.innerHTML=`<div class="ch" onclick="toggleC(${c.id})"><div class="cb2">${c.nombre.slice(0,2).toUpperCase()}</div><div class="ci-info"><div class="ci-name">${c.nombre}${badgeHtml}</div><div class="ci-meta">${c.ciudad}</div></div><span class="ci-cnt">${c.visitas.length} visita${c.visitas.length!==1?'s':''}</span><span class="ci-arr">▼</span></div><div class="cbody"><div style="display:flex;gap:5px;margin:10px 0 8px;flex-wrap:wrap"><button class="btn btn-p btn-sm" onclick="event.stopPropagation();newVisita(${c.id})">＋ Nueva visita</button><button class="btn btn-warn btn-sm" onclick="event.stopPropagation();openOradores(${c.id})">🎤 Oradores (${c.oradores?.length||0})</button><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delCong(${c.id})">Eliminar</button></div>
     <div style="background:rgba(10,28,68,0.5);border:1px solid rgba(68,118,212,0.25);border-radius:8px;padding:10px;margin-bottom:8px">
       <div style="font-size:10px;font-weight:700;color:var(--gold);letter-spacing:1px;margin-bottom:7px">🔔 PROGRAMAR ALARMA EXACTA</div>
       <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
@@ -810,13 +740,7 @@ function openVisita(congId,visitaId){
   document.getElementById('page-visita').classList.add('active');
   timerReset();
 }
-function setVF(f,val){
-  const v=gv();
-  if(v){
-    v[f]=val;
-    save();
-  }
-}
+function setVF(f,val){const v=gv();if(v){v[f]=val;save();}}
 function saveVisita(){save();goHome();renderHome();}
 function stab(name,el){
   document.querySelectorAll('#page-visita .tp').forEach(p=>p.classList.remove('active'));
@@ -828,198 +752,51 @@ function stab(name,el){
 }
 
 /* ══ TEMPORIZADOR (CRONÓMETRO) ══ */
-function timerStart(){
-  if(timerRunning)return;
-  timerRunning = true;
-  timerStart2 = Date.now() - timerPaused;
-  timerInt = setInterval(() => {
-    const el = document.getElementById('timer-display');
-    if(!el) return;
-    const elapsed = Date.now() - timerStart2;
-    const s = Math.floor(elapsed / 1000);
-    const m = Math.floor(s / 60);
-    el.textContent = (m + '').padStart(2, '0') + ':' + (s % 60 + '').padStart(2, '0');
-  }, 1000);
-}
-function timerPause(){
-  if(!timerRunning) return;
-  clearInterval(timerInt);
-  timerRunning = false;
-  timerPaused = Date.now() - timerStart2;
-}
-function timerReset(){
-  clearInterval(timerInt);
-  timerRunning = false;
-  timerPaused = 0;
-  timerStart2 = null;
-  const el = document.getElementById('timer-display');
-  if(el){ el.textContent = '00:00'; }
-}
+function timerStart(){if(timerRunning)return;timerRunning = true;timerStart2 = Date.now() - timerPaused;timerInt = setInterval(() => {const el = document.getElementById('timer-display');if(!el) return;const elapsed = Date.now() - timerStart2;const s = Math.floor(elapsed / 1000);const m = Math.floor(s / 60);el.textContent = (m + '').padStart(2, '0') + ':' + (s % 60 + '').padStart(2, '0');}, 1000);}
+function timerPause(){if(!timerRunning) return;clearInterval(timerInt);timerRunning = false;timerPaused = Date.now() - timerStart2;}
+function timerReset(){clearInterval(timerInt);timerRunning = false;timerPaused = 0;timerStart2 = null;const el = document.getElementById('timer-display');if(el){ el.textContent = '00:00'; }}
 
-
-/* ══ ASISTENCIA ══ */
-function renderWeeks(){
-  const v=gv();if(!v)return;
-  const n2=parseInt(document.getElementById('v-semanas').value)||6;
-  v.semanas=n2;while(v.eb.length<n2)v.eb.push('');while(v.rp.length<n2)v.rp.push('');save();
-  const tb=document.getElementById('week-tbody');tb.innerHTML='';
-  for(let i=0;i<n2;i++){tb.innerHTML+=`<tr><td>Mes ${i+1}</td><td><input type="number" value="${v.eb[i]||''}" onchange="setWk('eb',${i},this.value)" style="text-align:center"/></td><td><input type="number" value="${v.rp[i]||''}" onchange="setWk('rp',${i},this.value)" style="text-align:center"/></td></tr>`;}
-  tb.innerHTML+=`<tr class="tr"><td>Total</td><td style="text-align:center">${tot(v.eb.slice(0,n2))}</td><td style="text-align:center">${tot(v.rp.slice(0,n2))}</td></tr>`;
-  tb.innerHTML+=`<tr class="ar"><td>Promedio</td><td style="text-align:center">${avg(v.eb.slice(0,n2))}</td><td style="text-align:center">${avg(v.rp.slice(0,n2))}</td></tr>`;
-  document.getElementById('cmp-eb').textContent=avg(v.eb.slice(0,n2));document.getElementById('cmp-rp').textContent=avg(v.rp.slice(0,n2));
-  document.getElementById('cmp-eb-6').value=v.cmp_eb6||'';document.getElementById('cmp-rp-6').value=v.cmp_rp6||'';
-  document.getElementById('cmp-eb-1').value=v.cmp_eb1||'';document.getElementById('cmp-rp-1').value=v.cmp_rp1||'';
-}
+/* ══ ASISTENCIA Y PREDICACIÓN (Funciones Mantenidas Resumidas) ══ */
+function renderWeeks(){const v=gv();if(!v)return;const n2=parseInt(document.getElementById('v-semanas').value)||6;v.semanas=n2;while(v.eb.length<n2)v.eb.push('');while(v.rp.length<n2)v.rp.push('');save();const tb=document.getElementById('week-tbody');tb.innerHTML='';for(let i=0;i<n2;i++){tb.innerHTML+=`<tr><td>Mes ${i+1}</td><td><input type="number" value="${v.eb[i]||''}" onchange="setWk('eb',${i},this.value)" style="text-align:center"/></td><td><input type="number" value="${v.rp[i]||''}" onchange="setWk('rp',${i},this.value)" style="text-align:center"/></td></tr>`;}tb.innerHTML+=`<tr class="tr"><td>Total</td><td style="text-align:center">${tot(v.eb.slice(0,n2))}</td><td style="text-align:center">${tot(v.rp.slice(0,n2))}</td></tr><tr class="ar"><td>Promedio</td><td style="text-align:center">${avg(v.eb.slice(0,n2))}</td><td style="text-align:center">${avg(v.rp.slice(0,n2))}</td></tr>`;document.getElementById('cmp-eb').textContent=avg(v.eb.slice(0,n2));document.getElementById('cmp-rp').textContent=avg(v.rp.slice(0,n2));document.getElementById('cmp-eb-6').value=v.cmp_eb6||'';document.getElementById('cmp-rp-6').value=v.cmp_rp6||'';document.getElementById('cmp-eb-1').value=v.cmp_eb1||'';document.getElementById('cmp-rp-1').value=v.cmp_rp1||'';}
 function setWk(f,i,val){const v=gv();if(!v)return;v[f][i]=val;save();const n2=parseInt(document.getElementById('v-semanas').value)||6;document.getElementById('cmp-eb').textContent=avg(v.eb.slice(0,n2));document.getElementById('cmp-rp').textContent=avg(v.rp.slice(0,n2));}
-
-/* ══ PREDICACIÓN ══ */
-function renderActTable(){
-  const v=gv();if(!v)return;if(!v.act||!v.act.length)v.act=[{cursos:'',informan:''}];
-  const tb=document.getElementById('act-tbody');tb.innerHTML='';
-  v.act.forEach((r,i)=>{tb.innerHTML+=`<tr><td>${meses[i]||'Mes '+(i+1)}</td><td><input type="number" value="${r.cursos||''}" onchange="setAct(${i},'cursos',this.value)" style="text-align:center"/></td><td><input type="number" value="${r.informan||''}" onchange="setAct(${i},'informan',this.value)" style="text-align:center"/></td></tr>`;});
-  const pc=avgNZ(v.act.map(r=>r.cursos)),pi=avgNZ(v.act.map(r=>r.informan));
-  tb.innerHTML+=`<tr class="tr"><td>Promedio</td><td style="text-align:center">${pc}</td><td style="text-align:center">${pi}</td></tr>`;
-  document.getElementById('tot-cursos').textContent=pc;document.getElementById('tot-informan').textContent=pi;
-  const pn=parseFloat(pc)||0,pni=parseFloat(pi)||0;
-  document.getElementById('prom-est').textContent=pni>0?(pn/pni).toFixed(1):'—';save();
-}
+function renderActTable(){const v=gv();if(!v)return;if(!v.act||!v.act.length)v.act=[{cursos:'',informan:''}];const tb=document.getElementById('act-tbody');tb.innerHTML='';v.act.forEach((r,i)=>{tb.innerHTML+=`<tr><td>${meses[i]||'Mes '+(i+1)}</td><td><input type="number" value="${r.cursos||''}" onchange="setAct(${i},'cursos',this.value)" style="text-align:center"/></td><td><input type="number" value="${r.informan||''}" onchange="setAct(${i},'informan',this.value)" style="text-align:center"/></td></tr>`;});const pc=avgNZ(v.act.map(r=>r.cursos)),pi=avgNZ(v.act.map(r=>r.informan));tb.innerHTML+=`<tr class="tr"><td>Promedio</td><td style="text-align:center">${pc}</td><td style="text-align:center">${pi}</td></tr>`;document.getElementById('tot-cursos').textContent=pc;document.getElementById('tot-informan').textContent=pi;const pn=parseFloat(pc)||0,pni=parseFloat(pi)||0;document.getElementById('prom-est').textContent=pni>0?(pn/pni).toFixed(1):'—';save();}
 function setAct(i,f,val){const v=gv();if(!v)return;v.act[i][f]=val;save();renderActTable();}
 function addActRow(){const v=gv();if(!v)return;v.act.push({cursos:'',informan:''});save();renderActTable();}
 
-/* ══ FINANZAS ══ */
-function renderFinRows(){
-  const v=gv();if(!v)return;const tb=document.getElementById('fin-tbody');tb.innerHTML='';
-  v.fin.forEach((r,i)=>{tb.innerHTML+=`<tr><td style="color:var(--text-dim);font-size:9.5px">${meses[i]||'Mes '+(i+1)}</td><td><input type="number" value="${r.ok||''}" onchange="setFin('fin',${i},'ok',this.value)"/></td><td><input type="number" value="${r.cg||''}" onchange="setFin('fin',${i},'cg',this.value)"/></td><td><input type="number" value="${r.gs||''}" onchange="setFin('fin',${i},'gs',this.value)"/></td><td><button class="btn btn-d btn-sm" onclick="delFinRow('fin',${i})">✕</button></td></tr>`;});
-  const tok=tot(v.fin.map(r=>r.ok)),tcg=tot(v.fin.map(r=>r.cg)),tgs=tot(v.fin.map(r=>r.gs));
-  tb.innerHTML+=`<tr class="tr" style="color:var(--gold)"><td>TOTAL</td><td>${fmt(tok)}</td><td>${fmt(tcg)}</td><td>${fmt(tgs)}</td><td></td></tr>`;
-  document.getElementById('fin-saldo-ini').value=v.fin_saldo_ini||'';renderFinTotals();
-}
-function renderFinTotals(){
-  const v=gv();if(!v)return;
-  const ini=nv(v.fin_saldo_ini),ing=tot(v.fin.map(r=>r.ok))+tot(v.fin.map(r=>r.cg)),gas=tot(v.fin.map(r=>r.gs)),f2=ini+ing-gas;
-  document.getElementById('fin-balance-box').style.display='block';
-  document.getElementById('fin-bal-ini').textContent=fmt(ini);document.getElementById('fin-bal-ing').textContent=fmt(ing);
-  document.getElementById('fin-bal-gas').textContent=fmt(gas);
-  const el=document.getElementById('fin-bal-fin');el.textContent=fmt(f2);el.style.color=f2>=0?'var(--green)':'var(--danger)';
-}
+/* ══ FINANZAS Y MANTENIMIENTO ══ */
+function renderFinRows(){const v=gv();if(!v)return;const tb=document.getElementById('fin-tbody');tb.innerHTML='';v.fin.forEach((r,i)=>{tb.innerHTML+=`<tr><td style="color:var(--text-dim);font-size:9.5px">${meses[i]||'Mes '+(i+1)}</td><td><input type="number" value="${r.ok||''}" onchange="setFin('fin',${i},'ok',this.value)"/></td><td><input type="number" value="${r.cg||''}" onchange="setFin('fin',${i},'cg',this.value)"/></td><td><input type="number" value="${r.gs||''}" onchange="setFin('fin',${i},'gs',this.value)"/></td><td><button class="btn btn-d btn-sm" onclick="delFinRow('fin',${i})">✕</button></td></tr>`;});const tok=tot(v.fin.map(r=>r.ok)),tcg=tot(v.fin.map(r=>r.cg)),tgs=tot(v.fin.map(r=>r.gs));tb.innerHTML+=`<tr class="tr" style="color:var(--gold)"><td>TOTAL</td><td>${fmt(tok)}</td><td>${fmt(tcg)}</td><td>${fmt(tgs)}</td><td></td></tr>`;document.getElementById('fin-saldo-ini').value=v.fin_saldo_ini||'';renderFinTotals();}
+function renderFinTotals(){const v=gv();if(!v)return;const ini=nv(v.fin_saldo_ini),ing=tot(v.fin.map(r=>r.ok))+tot(v.fin.map(r=>r.cg)),gas=tot(v.fin.map(r=>r.gs)),f2=ini+ing-gas;document.getElementById('fin-balance-box').style.display='block';document.getElementById('fin-bal-ini').textContent=fmt(ini);document.getElementById('fin-bal-ing').textContent=fmt(ing);document.getElementById('fin-bal-gas').textContent=fmt(gas);const el=document.getElementById('fin-bal-fin');el.textContent=fmt(f2);el.style.color=f2>=0?'var(--green)':'var(--danger)';}
 function setFin(type,i,f,val){const v=gv();if(!v)return;v[type][i][f]=val;save();if(type==='fin')renderFinRows();if(type==='mant')renderMantRows();}
 function addFinRow(type){const v=gv();if(!v)return;if(type==='fin'){v.fin.push({ok:'',cg:'',gs:''});save();renderFinRows();}if(type==='mant'){v.mant.push({ing:'',gs:'',desc:''});save();renderMantRows();}}
 function delFinRow(type,i){const v=gv();if(!v)return;v[type].splice(i,1);save();if(type==='fin')renderFinRows();if(type==='mant')renderMantRows();}
-function renderMantRows(){
-  const v=gv();if(!v)return;const tb=document.getElementById('mant-tbody');tb.innerHTML='';
-  v.mant.forEach((r,i)=>{tb.innerHTML+=`<tr><td style="color:var(--text-dim);font-size:9.5px">${meses[i]||'Mes '+(i+1)}</td><td><input type="number" value="${r.ing||''}" onchange="setFin('mant',${i},'ing',this.value)"/></td><td><input type="number" value="${r.gs||''}" onchange="setFin('mant',${i},'gs',this.value)"/></td><td><input type="text" value="${r.desc||''}" placeholder="Opcional" onchange="setFin('mant',${i},'desc',this.value)"/></td><td><button class="btn btn-d btn-sm" onclick="delFinRow('mant',${i})">✕</button></td></tr>`;});
-  const ti=tot(v.mant.map(r=>r.ing)),tg=tot(v.mant.map(r=>r.gs));
-  tb.innerHTML+=`<tr class="tr" style="color:var(--purple)"><td>TOTAL</td><td>${fmt(ti)}</td><td>${fmt(tg)}</td><td></td><td></td></tr>`;
-  document.getElementById('mant-saldo-ini').value=v.mant_saldo_ini||'';renderMantTotals();
-}
-function renderMantTotals(){
-  const v=gv();if(!v)return;
-  const ini=nv(v.mant_saldo_ini),ing=tot(v.mant.map(r=>r.ing)),gas=tot(v.mant.map(r=>r.gs)),f2=ini+ing-gas;
-  document.getElementById('mant-balance-box').style.display='block';
-  document.getElementById('mant-bal-ini').textContent=fmt(ini);document.getElementById('mant-bal-ing').textContent=fmt(ing);
-  document.getElementById('mant-bal-gas').textContent=fmt(gas);
-  const el=document.getElementById('mant-bal-fin');el.textContent=fmt(f2);el.style.color=f2>=0?'var(--green)':'var(--danger)';
-}
+function renderMantRows(){const v=gv();if(!v)return;const tb=document.getElementById('mant-tbody');tb.innerHTML='';v.mant.forEach((r,i)=>{tb.innerHTML+=`<tr><td style="color:var(--text-dim);font-size:9.5px">${meses[i]||'Mes '+(i+1)}</td><td><input type="number" value="${r.ing||''}" onchange="setFin('mant',${i},'ing',this.value)"/></td><td><input type="number" value="${r.gs||''}" onchange="setFin('mant',${i},'gs',this.value)"/></td><td><input type="text" value="${r.desc||''}" placeholder="Opcional" onchange="setFin('mant',${i},'desc',this.value)"/></td><td><button class="btn btn-d btn-sm" onclick="delFinRow('mant',${i})">✕</button></td></tr>`;});const ti=tot(v.mant.map(r=>r.ing)),tg=tot(v.mant.map(r=>r.gs));tb.innerHTML+=`<tr class="tr" style="color:var(--purple)"><td>TOTAL</td><td>${fmt(ti)}</td><td>${fmt(tg)}</td><td></td><td></td></tr>`;document.getElementById('mant-saldo-ini').value=v.mant_saldo_ini||'';renderMantTotals();}
+function renderMantTotals(){const v=gv();if(!v)return;const ini=nv(v.mant_saldo_ini),ing=tot(v.mant.map(r=>r.ing)),gas=tot(v.mant.map(r=>r.gs)),f2=ini+ing-gas;document.getElementById('mant-balance-box').style.display='block';document.getElementById('mant-bal-ini').textContent=fmt(ini);document.getElementById('mant-bal-ing').textContent=fmt(ing);document.getElementById('mant-bal-gas').textContent=fmt(gas);const el=document.getElementById('mant-bal-fin');el.textContent=fmt(f2);el.style.color=f2>=0?'var(--green)':'var(--danger)';}
 
 /* ══ ANÁLISIS ══ */
-function renderAnalisis(v){
-  const secs=[
-    {t:'Publicadores',i:[['regulares','Regulares'],['irregulares','Irregulares'],['publNuevos','Pub. nuevos']]},
-    {t:'Estudios Bíblicos',i:[['conEstudio','Con estudio'],['irregEstudio','Irregulares'],['sinEstudio','Sin estudio']]},
-    {t:'Nombramientos',i:[['precAux','Prec. Auxiliares'],['precReg','Prec. Regulares'],['ancianos','Ancianos'],['ministeriales','Ministeriales']]},
-    {t:'Movimientos',i:[['bautizados','Bautizados'],['noBautizados','No bautizados'],['recienBautizados','Recién bautizados'],['readmitidos','Readmitidos'],['reactivados','Reactivados'],['inactivos','Inactivos'],['censurados','Censurados'],['expulsados','Sacados'],['desasociados','Desasociados']]},
-  ];
-  const wrap=document.getElementById('analisis-sections');wrap.innerHTML='';
-  secs.forEach(s=>{const card=document.createElement('div');card.className='card';card.innerHTML=`<div class="ct">${s.t}</div><div class="agrid">${s.i.map(([k,l])=>`<div class="ai"><label>${l}</label><input type="number" value="${v.analisis[k]||''}" onchange="setAna('${k}',this.value)"/></div>`).join('')}</div>`;wrap.appendChild(card);});
-}
+function renderAnalisis(v){const secs=[{t:'Publicadores',i:[['regulares','Regulares'],['irregulares','Irregulares'],['publNuevos','Pub. nuevos']]},{t:'Estudios Bíblicos',i:[['conEstudio','Con estudio'],['irregEstudio','Irregulares'],['sinEstudio','Sin estudio']]},{t:'Nombramientos',i:[['precAux','Prec. Auxiliares'],['precReg','Prec. Regulares'],['ancianos','Ancianos'],['ministeriales','Ministeriales']]},{t:'Movimientos',i:[['bautizados','Bautizados'],['noBautizados','No bautizados'],['recienBautizados','Recién bautizados'],['readmitidos','Readmitidos'],['reactivados','Reactivados'],['inactivos','Inactivos'],['censurados','Censurados'],['expulsados','Sacados'],['desasociados','Desasociados']]}];const wrap=document.getElementById('analisis-sections');wrap.innerHTML='';secs.forEach(s=>{const card=document.createElement('div');card.className='card';card.innerHTML=`<div class="ct">${s.t}</div><div class="agrid">${s.i.map(([k,l])=>`<div class="ai"><label>${l}</label><input type="number" value="${v.analisis[k]||''}" onchange="setAna('${k}',this.value)"/></div>`).join('')}</div>`;wrap.appendChild(card);});}
 function setAna(k,val){const v=gv();if(!v)return;v.analisis[k]=val;save();}
 
 /* ══ STATS ══ */
-let curMetric='asistencia';
-let statsVisitaIdx=-1;
-function getVisitaForStats(c){
-  if(statsVisitaIdx<0)return c.visitas.length?c.visitas[c.visitas.length-1]:undefined;
-  return c.visitas[statsVisitaIdx]; 
-}
-function renderStats(){
-  const congs=data.congregaciones;
-  const tV=congs.reduce((s,c)=>s+c.visitas.length,0);
-  const maxVis=Math.max(0,...congs.map(c=>c.visitas.length));
-  let totReg=0,totIrreg=0,totNuevos=0;
-  congs.forEach(c=>{
-    const v=getVisitaForStats(c);
-    if(!v)return;
-    totReg+=nv(v.analisis?.regulares);
-    totIrreg+=nv(v.analisis?.irregulares);
-    totNuevos+=nv(v.analisis?.publNuevos);
-  });
-  let selOpts='<option value="-1">Última visita</option>';
-  for(let i=0;i<maxVis;i++) selOpts+=`<option value="${i}"${statsVisitaIdx===i?' selected':''}>Visita ${i+1}</option>`;
-  document.getElementById('stats-sub').textContent=congs.length+' congregaciones · '+tV+' visitas';
-  document.getElementById('stats-boxes').innerHTML=
-    `<div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-bottom:4px">
-       <label style="font-size:10px;color:var(--text-dim);margin:0;white-space:nowrap">Ver visita:</label>
-       <select style="flex:1;font-size:11px" onchange="statsVisitaIdx=parseInt(this.value);renderStats()">
-         ${selOpts}
-       </select>
-     </div>
-     <div class="sbox"><div class="sv" style="color:var(--green)">${totReg||'—'}</div><div class="sl">Regulares</div></div>
-     <div class="sbox"><div class="sv" style="color:var(--gold)">${totIrreg||'—'}</div><div class="sl">Irregulares</div></div>
-     <div class="sbox"><div class="sv" style="color:var(--purple)">${totNuevos||'—'}</div><div class="sl">Pub. nuevos</div></div>`;
-  renderChart();
-  const sel=document.getElementById('stats-sel');
-  const prevVal=sel.value;
-  sel.innerHTML='<option value="">Selecciona una congregación…</option>';
-  congs.filter(c=>c.visitas.length>0).forEach(c=>sel.innerHTML+=`<option value="${c.id}">${c.nombre} (${c.ciudad})</option>`);
-  if(prevVal)sel.value=prevVal;
-  renderTimeline();
-}
+let curMetric='asistencia'; let statsVisitaIdx=-1;
+function getVisitaForStats(c){if(statsVisitaIdx<0)return c.visitas.length?c.visitas[c.visitas.length-1]:undefined;return c.visitas[statsVisitaIdx];}
+function renderStats(){const congs=data.congregaciones;const tV=congs.reduce((s,c)=>s+c.visitas.length,0);const maxVis=Math.max(0,...congs.map(c=>c.visitas.length));let totReg=0,totIrreg=0,totNuevos=0;congs.forEach(c=>{const v=getVisitaForStats(c);if(!v)return;totReg+=nv(v.analisis?.regulares);totIrreg+=nv(v.analisis?.irregulares);totNuevos+=nv(v.analisis?.publNuevos);});let selOpts='<option value="-1">Última visita</option>';for(let i=0;i<maxVis;i++) selOpts+=`<option value="${i}"${statsVisitaIdx===i?' selected':''}>Visita ${i+1}</option>`;document.getElementById('stats-sub').textContent=congs.length+' congregaciones · '+tV+' visitas';document.getElementById('stats-boxes').innerHTML=`<div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-bottom:4px"><label style="font-size:10px;color:var(--text-dim);margin:0;white-space:nowrap">Ver visita:</label><select style="flex:1;font-size:11px" onchange="statsVisitaIdx=parseInt(this.value);renderStats()">${selOpts}</select></div><div class="sbox"><div class="sv" style="color:var(--green)">${totReg||'—'}</div><div class="sl">Regulares</div></div><div class="sbox"><div class="sv" style="color:var(--gold)">${totIrreg||'—'}</div><div class="sl">Irregulares</div></div><div class="sbox"><div class="sv" style="color:var(--purple)">${totNuevos||'—'}</div><div class="sl">Pub. nuevos</div></div>`;renderChart();const sel=document.getElementById('stats-sel');const prevVal=sel.value;sel.innerHTML='<option value="">Selecciona una congregación…</option>';congs.filter(c=>c.visitas.length>0).forEach(c=>sel.innerHTML+=`<option value="${c.id}">${c.nombre} (${c.ciudad})</option>`);if(prevVal)sel.value=prevVal;renderTimeline();}
 function switchMetric(m,el){document.querySelectorAll('#page-stats .tp').forEach(p=>p.classList.remove('active'));el.classList.add('active');curMetric=m;renderChart();}
-function renderChart(){
-  const wrap=document.getElementById('chart-wrap');wrap.innerHTML='';let hasData=false;
-  data.congregaciones.forEach(c=>{
-    const v=getVisitaForStats(c);if(!v)return;hasData=true;
-    if(curMetric==='asistencia'){
-      const e=parseFloat(avg(v.eb))||0,r2=parseFloat(avg(v.rp))||0,mx=120;
-      wrap.innerHTML+=`<div style="margin-bottom:8px"><div style="font-size:9.5px;color:var(--text-dim);margin-bottom:2px">${c.nombre}</div><div style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><span style="font-size:8.5px;color:var(--text-dim);width:17px">EB</span><div class="bar-track"><div class="bar-fill bar-eb" style="width:${Math.min(e/mx*100,100)}%">${e||''}</div></div></div><div style="display:flex;align-items:center;gap:4px"><span style="font-size:8.5px;color:var(--text-dim);width:17px">RP</span><div class="bar-track"><div class="bar-fill bar-rp" style="width:${Math.min(r2/mx*100,100)}%">${r2||''}</div></div></div></div>`;
-    }else{
-      const raw=curMetric==='estudios'?parseFloat(avgNZ((v.act||[]).map(r=>r.cursos)))||0:nv(v.analisis?.bautizados);
-      const color=curMetric==='estudios'?'rgba(88,148,248,0.86)':'rgba(48,188,88,0.86)';
-      wrap.innerHTML+=`<div style="margin-bottom:6px"><div style="font-size:9.5px;color:var(--text-dim);margin-bottom:2px">${c.nombre}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.min(raw/30*100,100)}%;background:${color}">${raw||''}</div></div></div>`;
-    }
-  });
-  if(!hasData)wrap.innerHTML='<div class="empty"><div class="ic">📊</div><p>No hay datos para la visita seleccionada.</p></div>';
-}
-function renderTimeline(){
-  const id=parseInt(document.getElementById('stats-sel').value);
-  const wrap=document.getElementById('timeline-wrap');
-  if(!id){wrap.innerHTML='<div class="empty"><div class="ic">👆</div><p>Selecciona una congregación.</p></div>';return;}
-  const c=data.congregaciones.find(x=>x.id===id);
-  if(!c||!c.visitas.length){wrap.innerHTML='<div class="empty"><div class="ic">📋</div><p>Sin visitas registradas.</p></div>';return;}
-  let html=`<div style="overflow-x:auto"><table class="wt"><thead><tr><th>Fecha</th><th>E.B.</th><th>R.P.</th><th>Prom.C</th><th>C/pub</th><th>Bautiz.</th></tr></thead><tbody>`;
-  c.visitas.forEach(v=>{const pc=avgNZ((v.act||[]).map(r=>r.cursos));const pi=avgNZ((v.act||[]).map(r=>r.informan));const pn=parseFloat(pc)||0,pni=parseFloat(pi)||0;html+=`<tr><td style="color:var(--aero-glow);font-family:monospace;font-size:9.5px">${v.fecha}</td><td style="text-align:center;font-family:monospace">${avg(v.eb)}</td><td style="text-align:center;font-family:monospace">${avg(v.rp)}</td><td style="text-align:center;font-family:monospace;color:var(--aero-bright)">${pc}</td><td style="text-align:center;font-family:monospace;color:var(--green)">${pni>0?(pn/pni).toFixed(1):'—'}</td><td style="text-align:center;font-family:monospace;color:var(--green)">${v.analisis?.bautizados||'—'}</td></tr>`;});
-  html+='</tbody></table></div>';wrap.innerHTML=html;
-}
+function renderChart(){const wrap=document.getElementById('chart-wrap');wrap.innerHTML='';let hasData=false;data.congregaciones.forEach(c=>{const v=getVisitaForStats(c);if(!v)return;hasData=true;if(curMetric==='asistencia'){const e=parseFloat(avg(v.eb))||0,r2=parseFloat(avg(v.rp))||0,mx=120;wrap.innerHTML+=`<div style="margin-bottom:8px"><div style="font-size:9.5px;color:var(--text-dim);margin-bottom:2px">${c.nombre}</div><div style="display:flex;align-items:center;gap:4px;margin-bottom:2px"><span style="font-size:8.5px;color:var(--text-dim);width:17px">EB</span><div class="bar-track"><div class="bar-fill bar-eb" style="width:${Math.min(e/mx*100,100)}%">${e||''}</div></div></div><div style="display:flex;align-items:center;gap:4px"><span style="font-size:8.5px;color:var(--text-dim);width:17px">RP</span><div class="bar-track"><div class="bar-fill bar-rp" style="width:${Math.min(r2/mx*100,100)}%">${r2||''}</div></div></div></div>`;}else{const raw=curMetric==='estudios'?parseFloat(avgNZ((v.act||[]).map(r=>r.cursos)))||0:nv(v.analisis?.bautizados);const color=curMetric==='estudios'?'rgba(88,148,248,0.86)':'rgba(48,188,88,0.86)';wrap.innerHTML+=`<div style="margin-bottom:6px"><div style="font-size:9.5px;color:var(--text-dim);margin-bottom:2px">${c.nombre}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.min(raw/30*100,100)}%;background:${color}">${raw||''}</div></div></div>`;}});if(!hasData)wrap.innerHTML='<div class="empty"><div class="ic">📊</div><p>No hay datos para la visita seleccionada.</p></div>';}
+function renderTimeline(){const id=parseInt(document.getElementById('stats-sel').value);const wrap=document.getElementById('timeline-wrap');if(!id){wrap.innerHTML='<div class="empty"><div class="ic">👆</div><p>Selecciona una congregación.</p></div>';return;}const c=data.congregaciones.find(x=>x.id===id);if(!c||!c.visitas.length){wrap.innerHTML='<div class="empty"><div class="ic">📋</div><p>Sin visitas registradas.</p></div>';return;}let html=`<div style="overflow-x:auto"><table class="wt"><thead><tr><th>Fecha</th><th>E.B.</th><th>R.P.</th><th>Prom.C</th><th>C/pub</th><th>Bautiz.</th></tr></thead><tbody>`;c.visitas.forEach(v=>{const pc=avgNZ((v.act||[]).map(r=>r.cursos));const pi=avgNZ((v.act||[]).map(r=>r.informan));const pn=parseFloat(pc)||0,pni=parseFloat(pi)||0;html+=`<tr><td style="color:var(--aero-glow);font-family:monospace;font-size:9.5px">${v.fecha}</td><td style="text-align:center;font-family:monospace">${avg(v.eb)}</td><td style="text-align:center;font-family:monospace">${avg(v.rp)}</td><td style="text-align:center;font-family:monospace;color:var(--aero-bright)">${pc}</td><td style="text-align:center;font-family:monospace;color:var(--green)">${pni>0?(pn/pni).toFixed(1):'—'}</td><td style="text-align:center;font-family:monospace;color:var(--green)">${v.analisis?.bautizados||'—'}</td></tr>`;});html+='</tbody></table></div>';wrap.innerHTML=html;}
 function renderInforme(v){if(!v)return;const inf=document.getElementById('v-informe'),adi=document.getElementById('v-adicionales');if(inf)inf.value=v.informe||'';if(adi)adi.value=v.adicionales||'';}
 
-/* ══ REPORTES / IMPRESIÓN ══ */
-function renderReportes(){
-  ['rep-cong','rep-hist-cong'].forEach(id=>{const sel=document.getElementById(id);sel.innerHTML='<option value="">Selecciona congregación…</option>';data.congregaciones.forEach(c=>sel.innerHTML+=`<option value="${c.id}">${c.nombre} (${c.ciudad})</option>`);});
-  document.getElementById('rep-visita').innerHTML='<option value="">Selecciona visita…</option>';
-  document.getElementById('rep-historial-wrap').innerHTML='';
-}
-function repLoadVisitas(){
-  const id=parseInt(document.getElementById('rep-cong').value);const sel=document.getElementById('rep-visita');sel.innerHTML='<option value="">Selecciona visita…</option>';
-  if(!id)return;const c=data.congregaciones.find(x=>x.id===id);if(!c)return;
-  [...c.visitas].reverse().forEach(v=>sel.innerHTML+=`<option value="${v.id}">${v.fecha}</option>`);
-}
+/* ══ REPORTES / IMPRESIÓN VÍA COMPARTIR NATIVO ══ */
+function renderReportes(){['rep-cong','rep-hist-cong'].forEach(id=>{const sel=document.getElementById(id);sel.innerHTML='<option value="">Selecciona congregación…</option>';data.congregaciones.forEach(c=>sel.innerHTML+=`<option value="${c.id}">${c.nombre} (${c.ciudad})</option>`);});document.getElementById('rep-visita').innerHTML='<option value="">Selecciona visita…</option>';document.getElementById('rep-historial-wrap').innerHTML='';}
+function repLoadVisitas(){const id=parseInt(document.getElementById('rep-cong').value);const sel=document.getElementById('rep-visita');sel.innerHTML='<option value="">Selecciona visita…</option>';if(!id)return;const c=data.congregaciones.find(x=>x.id===id);if(!c)return;[...c.visitas].reverse().forEach(v=>sel.innerHTML+=`<option value="${v.id}">${v.fecha}</option>`);}
 
-let _printHTML='';
+let _printHTML=''; let _printTEXT='';
 function buildReportHTML(c,v){
-  const sem=parseInt(v.semanas)||6;
-  const pc=avgNZ((v.act||[]).map(r=>r.cursos)),pi=avgNZ((v.act||[]).map(r=>r.informan));
+  const sem=parseInt(v.semanas)||6; const pc=avgNZ((v.act||[]).map(r=>r.cursos)),pi=avgNZ((v.act||[]).map(r=>r.informan));
   const finIni=nv(v.fin_saldo_ini),finIng=tot((v.fin||[]).map(r=>nv(r.ok)+nv(r.cg))),finGas=tot((v.fin||[]).map(r=>nv(r.gs)));
   const mantIni=nv(v.mant_saldo_ini),mantIng=tot((v.mant||[]).map(r=>nv(r.ing))),mantGas=tot((v.mant||[]).map(r=>nv(r.gs)));
+  
+  _printTEXT = `REPORTE: ${c.nombre} (${c.ciudad})\nVisita: ${v.fecha}\n\n-- ASISTENCIA --\nPromedio EB: ${avg(v.eb.slice(0,sem))}\nPromedio RP: ${avg(v.rp.slice(0,sem))}\n\n-- PREDICACION --\nCursos/mes: ${pc}\nPublicadores: ${pi}\n\n-- FINANZAS --\nSaldo Inicial: ${fmt(finIni)}\nIngresos: ${fmt(finIng)}\nGastos: ${fmt(finGas)}\nSaldo Final: ${fmt(finIni+finIng-finGas)}\n\n-- INFORME --\n${v.informe||'Sin reporte'}`;
+  
   return `<div style="font-family:Segoe UI,Tahoma,sans-serif;color:#1a1a2e;padding:20px;font-size:13px">
   <h2 style="font-size:18px;color:#0d1b4b;margin-bottom:3px">Super CircuitoApp</h2>
   <p style="color:#666;margin-bottom:16px"><strong>${c.nombre}</strong> · ${c.ciudad} | Visita: <strong>${v.fecha}</strong></p>
@@ -1038,7 +815,6 @@ function buildReportHTML(c,v){
     <div><h3 style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#1e5fa8;border-bottom:2px solid #1e5fa8;padding-bottom:3px;margin:0 0 7px">Mantenimiento</h3><div style="background:#f0f5ff;border:1px solid #ccd8f0;border-radius:6px;padding:8px;font-size:11.5px"><div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #e0e8f8"><span>Saldo inicial</span><span style="font-family:monospace;font-weight:700">${fmt(mantIni)}</span></div><div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #e0e8f8"><span>+ Ingresos</span><span style="font-family:monospace;font-weight:700">${fmt(mantIng)}</span></div><div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #e0e8f8"><span>− Gastos</span><span style="font-family:monospace;font-weight:700">${fmt(mantGas)}</span></div><div style="display:flex;justify-content:space-between;padding:4px 0 0;font-weight:700"><span>Saldo final</span><span style="font-family:monospace;color:${mantIni+mantIng-mantGas>=0?'#16a34a':'#dc2626'}">${fmt(mantIni+mantIng-mantGas)}</span></div></div></div>
   </div>
   ${v.informe?`<h3 style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#1e5fa8;border-bottom:2px solid #1e5fa8;padding-bottom:3px;margin:14px 0 7px">Informe</h3><div style="background:#f8f9ff;border:1px solid #ccd0e8;border-radius:6px;padding:10px;white-space:pre-wrap;line-height:1.7;font-size:12px">${v.informe}</div>`:''}
-  <p style="font-size:9.5px;color:#aaa;text-align:center;margin-top:20px;border-top:1px solid #eee;padding-top:8px">Super CircuitoApp · ${new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'})}</p>
   </div>`;
 }
 
@@ -1059,55 +835,36 @@ function doPrint(){
   overlay.style.cssText='position:fixed;inset:0;background:#fff;z-index:99999;overflow-y:auto;-webkit-overflow-scrolling:touch;';
   overlay.innerHTML=
     '<div id="print-overlay-bar" style="background:#1e5fa8;padding:10px 12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:100;">'
-    +'<span style="color:#fff;font-weight:700;font-size:13px;flex:1">Vista previa</span>'
-    +'<button onclick="imprimirReporte()" style="padding:10px 15px;background:#ff8800;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer">🖨️ Imprimir / PDF</button>'
-    +'<button onclick="compartirReporte()" style="padding:10px 15px;background:#fff;color:#1e5fa8;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer">📤 Copiar para WhatsApp</button>'
+    +'<span style="color:#fff;font-weight:700;font-size:13px;flex:1">Reporte</span>'
+    +'<button onclick="compartirReporteNativo()" style="padding:10px 15px;background:#ff8800;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer">📤 Compartir / Guardar en PDF</button>'
     +'<button onclick="document.getElementById(\'print-overlay\').remove()" style="padding:10px 12px;background:rgba(255,255,255,0.18);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:7px;font-size:14px;font-weight:700;cursor:pointer">✕</button>'
     +'</div>'
     +'<div id="print-overlay-body" style="padding:16px;max-width:800px;margin:0 auto">'+_printHTML+'</div>';
   document.body.appendChild(overlay);
 }
 
-function imprimirReporte(){
-  var printArea = document.getElementById('print-area');
-  if(printArea){
-    printArea.innerHTML = _printHTML;
-    printArea.style.display = 'block';
-    var bar = document.getElementById('print-overlay-bar');
-    if(bar) bar.style.display = 'none';
+// ESTA FUNCIÓN ABRE EL MENÚ NATIVO DE ANDROID PARA COMPARTIR EL TEXTO A WHATSAPP, IMPRESORA O CORREO
+async function compartirReporteNativo() {
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: 'Reporte de Visita',
+                text: _printTEXT
+            });
+            return;
+        } catch(e) { console.error("Error al compartir reporte:", e); }
+    }
     
-    setTimeout(function(){
-      try { window.print(); } catch(e) {}
-      setTimeout(function(){
-        printArea.innerHTML = '';
-        printArea.style.display = 'none';
-        if(bar) bar.style.display = 'flex';
-      }, 500);
-    }, 150);
-  }
-}
-
-function compartirReporte() {
-  const body = document.getElementById('print-overlay-body');
-  if(!body) return;
-  
-  let text = body.innerText || body.textContent;
-  text = text.replace(/\n\s*\n/g, '\n\n');
-  
-  const textarea = document.createElement('textarea');
-  textarea.value = text;
-  textarea.style.position = 'fixed';
-  textarea.style.left = '-9999px';
-  document.body.appendChild(textarea);
-  textarea.select();
-  
-  try {
-      document.execCommand('copy');
-      showToast('✅', 'Copiado al portapapeles', '¡Listo! Abre WhatsApp y pega el reporte.');
-  } catch (err) {
-      showToast('❌', 'Error', 'No se pudo copiar automáticamente. Intenta seleccionando el texto.');
-  }
-  document.body.removeChild(textarea);
+    // Si falla el menú nativo, copiamos al portapapeles
+    const textarea = document.createElement('textarea');
+    textarea.value = _printTEXT;
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+        document.execCommand('copy');
+        showToast('✅', 'Copiado', 'Texto copiado al portapapeles.');
+    } catch(err) {}
+    document.body.removeChild(textarea);
 }
 
 function renderRepHistorial(){
@@ -1130,38 +887,53 @@ function printHistorial(){
   let body=`<div style="font-family:Segoe UI,Tahoma,sans-serif;color:#1a1a2e;padding:20px;font-size:13px">
     <h2 style="font-size:18px;color:#0d1b4b;margin-bottom:3px">Super CircuitoApp — Historial</h2>
     <p style="color:#666;margin-bottom:16px"><strong>${c.nombre}</strong> · ${c.ciudad}</p>`;
+  _printTEXT = `HISTORIAL DE VISITAS: ${c.nombre}\n\n`;
   c.visitas.forEach((v,idx)=>{
     body+=`<h3 style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:#1e5fa8;border-bottom:2px solid #1e5fa8;padding-bottom:3px;margin:18px 0 8px">Visita ${idx+1} — ${v.fecha}</h3>`;
     body+=buildReportHTML(c,v).replace(/^.*?<p style[^>]+>[^<]+<\/p>/s,'').replace(/<h2[^>]*>.*?<\/h2>/s,'').replace(/<p[^>]*>.*?<\/p>(\s*<h3)/s,'<h3');
+    _printTEXT += `--- VISITA ${idx+1}: ${v.fecha} ---\nEB Prom: ${avg(v.eb.slice(0,v.semanas))}\nRP Prom: ${avg(v.rp.slice(0,v.semanas))}\n\n`;
   });
   body+=`<p style="font-size:9.5px;color:#aaa;text-align:center;margin-top:20px;border-top:1px solid #eee;padding-top:8px">Super CircuitoApp · ${new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'})}</p></div>`;
   _printHTML=body;
   doPrint();
 }
 
-/* ══ RESPALDO ══ */
+/* ══ RESPALDO VÍA COMPARTIR NATIVO ══ */
 function renderBackupInfo(){
   const n=data.congregaciones.length,tV=data.congregaciones.reduce((s,c)=>s+c.visitas.length,0);
   document.getElementById('bk-resumen').textContent=`${n} congregaciones · ${tV} visitas`;
   document.getElementById('bk-fecha').textContent='Última actualización: '+new Date().toLocaleString('es-MX');
 }
-function exportBackup() {
+
+// ESTA FUNCIÓN SOLUCIONA EL PROBLEMA DEL RESPALDO ABRIENDO EL MENÚ NATIVO DEL CELULAR
+async function exportBackup() {
   const json = JSON.stringify(data, null, 2);
-  const msg = document.getElementById('export-msg');
   
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: 'Respaldo SuperCircuitoApp',
+        text: json
+      });
+      showToast('✅', 'Abriendo menú', 'Selecciona dónde guardar (WhatsApp, Drive, etc).');
+      return;
+    } catch(e) {
+      console.error("Error al usar Share:", e);
+    }
+  }
+
+  // Fallback si la API nativa no responde
+  const msg = document.getElementById('export-msg');
   const textarea = document.createElement('textarea');
   textarea.value = json;
-  textarea.style.position = 'fixed';
-  textarea.style.left = '-9999px';
   document.body.appendChild(textarea);
   textarea.select();
-  let copiado = false;
   try {
-      copiado = document.execCommand('copy');
+      document.execCommand('copy');
       if(msg) {
           msg.style.display = 'block';
           msg.style.color = 'var(--green)';
-          msg.textContent = '✅ ¡Datos copiados! Pégalos en un Bloc de Notas o envíatelos por WhatsApp para guardarlos.';
+          msg.textContent = '✅ ¡Datos copiados al portapapeles! Abre una nota y pégalos.';
       }
   } catch(err) {
       if(msg) {
@@ -1171,21 +943,9 @@ function exportBackup() {
       }
   }
   document.body.removeChild(textarea);
-
-  try {
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'SuperCircuitoApp_Respaldo.json';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-  } catch (e) {}
-
   setTimeout(() => { if(msg) msg.style.display = 'none'; }, 7000);
 }
+
 function importBackup(input) {
   const file = input.files[0];
   if (!file) return;
@@ -1205,7 +965,6 @@ function importBackup(input) {
         setTimeout(() => { msg.style.display = 'none'; }, 3500);
       }
     } catch (ex) {
-      console.error(ex);
       const msg = document.getElementById('import-msg');
       if (msg) {
         msg.style.display = 'block';
@@ -1228,64 +987,24 @@ function renderReunion(v){
   sf('reu-rp-dia',v.reu_rp_dia||'Domingo');sf('reu-rp-hora',v.reu_rp_hora);sf('reu-rp-pres',v.reu_rp_pres);
   sf('reu-rp-can',v.reu_rp_can);sf('reu-rp-can2',v.reu_rp_can2);sf('reu-rp-oracion',v.reu_rp_oracion);
   renderAsigList('vm',v);renderAsigList('rp',v);renderPastoreo(v);renderNombramientos(v);
-  sf('info-lugar',v.info_lugar);
-  sf('info-pre-dia',v.info_pre_dia);
-  sf('info-pre-hora',v.info_pre_hora);
-  sf('info-precursores',v.info_precursores);
-  sf('info-anc-dia',v.info_anc_dia);
-  sf('info-anc-hora',v.info_anc_hora);
-  sf('info-ancianos',v.info_ancianos);
+  sf('info-lugar',v.info_lugar);sf('info-pre-dia',v.info_pre_dia);sf('info-pre-hora',v.info_pre_hora);sf('info-precursores',v.info_precursores);
+  sf('info-anc-dia',v.info_anc_dia);sf('info-anc-hora',v.info_anc_hora);sf('info-ancianos',v.info_ancianos);
 }
-function toggleSection(name){
-  const sec=document.getElementById('sec-'+name),arr=document.getElementById('arr-'+name);
-  const open=sec.style.display==='none';sec.style.display=open?'block':'none';
-  if(arr)arr.style.transform=open?'rotate(180deg)':'';
-}
-function addAsig(type){
-  const v=gv();if(!v)return;
-  const key='asig_'+type;if(!v[key])v[key]=[];
-  v[key].push({nombre:'',tema:'',tiempo:'',hora:''});save();renderAsigList(type,v);
-}
-function renderAsigList(type,v){
-  const key='asig_'+type;const list=document.getElementById('asig-'+type+'-list');if(!list)return;
-  list.innerHTML='';(v[key]||[]).forEach((a,i)=>{
-    const row=document.createElement('div');row.className='asig-row';
-    row.innerHTML=`<input type="text" value="${a.nombre||''}" placeholder="Nombre…" onchange="setAsig('${type}',${i},'nombre',this.value)"/>
-    <input type="text" value="${a.tema||''}" placeholder="Tema / Parte…" onchange="setAsig('${type}',${i},'tema',this.value)"/>
-    <div><input type="text" value="${a.tiempo||''}" placeholder="MM:SS" onchange="setAsig('${type}',${i},'tiempo',this.value)" onblur="this.value=formatTimeMMSS(this.value); setAsig('${type}',${i},'tiempo',this.value)" style="width:100%; text-align:center; font-family:monospace;"/>
-    <div class="asig-time-val" style="color:var(--text-dim); margin-top:2px;">(min:seg)</div></div>
-    <button class="btn btn-d btn-sm" onclick="delAsig('${type}',${i})">✕</button>`;
-    list.appendChild(row);
-  });
-}
+function toggleSection(name){const sec=document.getElementById('sec-'+name),arr=document.getElementById('arr-'+name);const open=sec.style.display==='none';sec.style.display=open?'block':'none';if(arr)arr.style.transform=open?'rotate(180deg)':'';}
+function addAsig(type){const v=gv();if(!v)return;const key='asig_'+type;if(!v[key])v[key]=[];v[key].push({nombre:'',tema:'',tiempo:'',hora:''});save();renderAsigList(type,v);}
+function renderAsigList(type,v){const key='asig_'+type;const list=document.getElementById('asig-'+type+'-list');if(!list)return;list.innerHTML='';(v[key]||[]).forEach((a,i)=>{const row=document.createElement('div');row.className='asig-row';row.innerHTML=`<input type="text" value="${a.nombre||''}" placeholder="Nombre…" onchange="setAsig('${type}',${i},'nombre',this.value)"/><input type="text" value="${a.tema||''}" placeholder="Tema / Parte…" onchange="setAsig('${type}',${i},'tema',this.value)"/><div><input type="text" value="${a.tiempo||''}" placeholder="MM:SS" onchange="setAsig('${type}',${i},'tiempo',this.value)" onblur="this.value=formatTimeMMSS(this.value); setAsig('${type}',${i},'tiempo',this.value)" style="width:100%; text-align:center; font-family:monospace;"/><div class="asig-time-val" style="color:var(--text-dim); margin-top:2px;">(min:seg)</div></div><button class="btn btn-d btn-sm" onclick="delAsig('${type}',${i})">✕</button>`;list.appendChild(row);});}
 function setAsig(type,i,f,val){const v=gv();if(!v)return;const key='asig_'+type;v[key][i][f]=val;save();renderAsigList(type,v);}
 function delAsig(type,i){const v=gv();if(!v)return;const key='asig_'+type;v[key].splice(i,1);save();renderAsigList(type,v);}
 function addPastoreo(){const v=gv();if(!v)return;if(!v.pastoreo)v.pastoreo=[];v.pastoreo.push({familia:'',fecha:'',hora:'',acompanante:'',nota:''});save();renderPastoreo(v);}
-function renderPastoreo(v){
-  const list=document.getElementById('pastoreo-list');if(!list)return;list.innerHTML='';
-  (v.pastoreo||[]).forEach((p,i)=>{list.innerHTML+=`<div style="background:rgba(13,68,28,0.2);border:1px solid rgba(48,148,68,0.2);border-radius:6px;padding:8px;margin-bottom:6px">
-    <div class="grid2">
-      <div class="field"><label>Familia</label><input type="text" value="${p.familia||''}" onchange="setPast(${i},'familia',this.value)"/></div>
-      <div class="field"><label>Acompañante</label><input type="text" value="${p.acompanante||''}" onchange="setPast(${i},'acompanante',this.value)"/></div>
-    </div>
-    <div class="grid2">
-      <div class="field"><label>Fecha</label><input type="date" value="${p.fecha||''}" onchange="setPast(${i},'fecha',this.value)"/></div>
-      <div class="field"><label>Hora</label><input type="time" value="${p.hora||''}" onchange="setPast(${i},'hora',this.value)"/></div>
-    </div>
-    <div class="field"><label>Motivo / Nota</label><input type="text" value="${p.nota||''}" placeholder="Breve descripción…" onchange="setPast(${i},'nota',this.value)"/></div>
-    <button class="btn btn-d btn-sm" onclick="delPast(${i})">✕ Eliminar</button></div>`;});
-}
+function renderPastoreo(v){const list=document.getElementById('pastoreo-list');if(!list)return;list.innerHTML='';(v.pastoreo||[]).forEach((p,i)=>{list.innerHTML+=`<div style="background:rgba(13,68,28,0.2);border:1px solid rgba(48,148,68,0.2);border-radius:6px;padding:8px;margin-bottom:6px"><div class="grid2"><div class="field"><label>Familia</label><input type="text" value="${p.familia||''}" onchange="setPast(${i},'familia',this.value)"/></div><div class="field"><label>Acompañante</label><input type="text" value="${p.acompanante||''}" onchange="setPast(${i},'acompanante',this.value)"/></div></div><div class="grid2"><div class="field"><label>Fecha</label><input type="date" value="${p.fecha||''}" onchange="setPast(${i},'fecha',this.value)"/></div><div class="field"><label>Hora</label><input type="time" value="${p.hora||''}" onchange="setPast(${i},'hora',this.value)"/></div></div><div class="field"><label>Motivo / Nota</label><input type="text" value="${p.nota||''}" placeholder="Breve descripción…" onchange="setPast(${i},'nota',this.value)"/></div><button class="btn btn-d btn-sm" onclick="delPast(${i})">✕ Eliminar</button></div>`;});}
 function setPast(i,f,val){const v=gv();if(!v)return;v.pastoreo[i][f]=val;save();}
 function delPast(i){const v=gv();if(!v)return;v.pastoreo.splice(i,1);save();renderPastoreo(v);}
 function addNombramiento(){const v=gv();if(!v)return;if(!v.nombramientos)v.nombramientos=[];v.nombramientos.push({nombre:'',tipo:'',nota:''});save();renderNombramientos(v);}
-function renderNombramientos(v){
-  const list=document.getElementById('nombramientos-list');if(!list)return;list.innerHTML='';
-  (v.nombramientos||[]).forEach((n,i)=>{list.innerHTML+=`<div style="background:rgba(148,108,0,0.1);border:1px solid rgba(188,138,0,0.2);border-radius:6px;padding:8px;margin-bottom:6px"><div class="grid2"><div class="field"><label>Nombre</label><input type="text" value="${n.nombre||''}" onchange="setNomb(${i},'nombre',this.value)"/></div><div class="field"><label>Tipo</label><select onchange="setNomb(${i},'tipo',this.value)"><option ${n.tipo==='Anciano'?'selected':''}>Anciano</option><option ${n.tipo==='Ministerial'?'selected':''}>Ministerial</option><option ${n.tipo==='Precursor Regular'?'selected':''}>Precursor Regular</option><option ${n.tipo==='Precursor Auxiliar'?'selected':''}>Precursor Auxiliar</option></select></div></div><div class="field"><label>Nota</label><input type="text" value="${n.nota||''}" placeholder="Observación…" onchange="setNomb(${i},'nota',this.value)"/></div><button class="btn btn-d btn-sm" onclick="delNomb(${i})">✕ Eliminar</button></div>`;});
-}
+function renderNombramientos(v){const list=document.getElementById('nombramientos-list');if(!list)return;list.innerHTML='';(v.nombramientos||[]).forEach((n,i)=>{list.innerHTML+=`<div style="background:rgba(148,108,0,0.1);border:1px solid rgba(188,138,0,0.2);border-radius:6px;padding:8px;margin-bottom:6px"><div class="grid2"><div class="field"><label>Nombre</label><input type="text" value="${n.nombre||''}" onchange="setNomb(${i},'nombre',this.value)"/></div><div class="field"><label>Tipo</label><select onchange="setNomb(${i},'tipo',this.value)"><option ${n.tipo==='Anciano'?'selected':''}>Anciano</option><option ${n.tipo==='Ministerial'?'selected':''}>Ministerial</option><option ${n.tipo==='Precursor Regular'?'selected':''}>Precursor Regular</option><option ${n.tipo==='Precursor Auxiliar'?'selected':''}>Precursor Auxiliar</option></select></div></div><div class="field"><label>Nota</label><input type="text" value="${n.nota||''}" placeholder="Observación…" onchange="setNomb(${i},'nota',this.value)"/></div><button class="btn btn-d btn-sm" onclick="delNomb(${i})">✕ Eliminar</button></div>`;});}
 function setNomb(i,f,val){const v=gv();if(!v)return;v.nombramientos[i][f]=val;save();}
 function delNomb(i){const v=gv();if(!v)return;v.nombramientos.splice(i,1);save();renderNombramientos(v);}
 
-/* ══ ACTIVIDADES CON BOTÓN EXPLÍCITO DE ALARMA ══ */
+/* ══ ACTIVIDADES CON ALARMA EXACTA (CAPACITOR NATIVO) ══ */
 function renderActividades(v){
   if(!v)return;
   renderActProg(v);renderAlimentos(v);renderCampo(v);
@@ -1312,16 +1031,16 @@ function activarAlarmaActividad(i) {
     
     const [y, m, d] = act.dia.split('-').map(Number);
     const [hh, mm] = act.hora.split(':').map(Number);
-    const dt = new Date(y, m-1, d, hh, mm, 0);
+    const dt = new Date(y, m-1, d, hh, mm, 0); // OBTENEMOS EXACTAMENTE LA FECHA DE LA ACTIVIDAD
     
     if(dt > new Date()) {
         scheduleNativeNotification(Date.now() + i, "Actividad: " + (act.label || 'Pendiente'), `Con ${act.con_quien || 'hermanos'}`, dt);
         act.alarmaActiva = true;
         save();
         renderActProg(v);
-        showToast('✅', 'Alarma lista', 'Te avisaremos a la hora indicada.');
+        showToast('✅', 'Alarma programada', 'Se notificará directo por el sistema Android.');
     } else {
-        showToast('⚠️', 'Hora pasada', 'Esa hora ya pasó, no se programará.');
+        showToast('⚠️', 'Hora pasada', 'Esa hora ya pasó, elige una hora futura.');
         act.alarmaActiva = false;
         save();
         renderActProg(v);
@@ -1354,134 +1073,36 @@ function renderActProg(v){
 function setAP(i,f,val){const v=gv();if(!v)return;v.act_prog[i][f]=val; v.act_prog[i].alarmaActiva = false; save(); renderActProg(v);}
 function toggleAP(i){const v=gv();if(!v)return;v.act_prog[i].done=!v.act_prog[i].done;save();renderActProg(v);}
 function delAP(i){const v=gv();if(!v)return;v.act_prog.splice(i,1);save();renderActProg(v);}
-async function testNotif(){
-    if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
-        try {
-            await scheduleNativeNotification(999, "Prueba de Alarma", "Las notificaciones nativas funcionan correctamente.", new Date(Date.now() + 5000));
-            showToast('✅','Prueba enviada','Sonará en 5 segundos.');
-        } catch(e) { showToast('❌','Error','No se pudo programar.'); }
-    } else {
-        showToast('🧪','Prueba web','Estás en web. Usa la app en el celular para alarmas reales.');
-    }
-}
 
-function toggleAlim(type){
-  const v=gv();if(!v)return;
-  if(type==='des')v.show_des=!v.show_des;else v.show_cen=!v.show_cen;
-  save();renderAlimentos(v);
-}
-function renderAlimentos(v){
-  if(!v)return;
-  const dot_d=document.getElementById('tog-des-dot'),dot_c=document.getElementById('tog-cen-dot');
-  if(dot_d)dot_d.classList.toggle('on',!!v.show_des);if(dot_c)dot_c.classList.toggle('on',!!v.show_cen);
-  if(!v.alimentos||!v.alimentos.length)v.alimentos=[{dia:'Martes',desayuno:'',comida:'',cena:''},{dia:'Miércoles',desayuno:'',comida:'',cena:''},{dia:'Jueves',desayuno:'',comida:'',cena:''},{dia:'Viernes',desayuno:'',comida:'',cena:''},{dia:'Sábado',desayuno:'',comida:'',cena:''},{dia:'Domingo',desayuno:'',comida:'',cena:''}];
-  const thead=document.getElementById('alim-thead');const tbody=document.getElementById('alim-tbody');
-  if(!thead||!tbody)return;
-  let thRow='<tr><th>Día</th>';
-  if(v.show_des)thRow+='<th>Desayuno</th>';
-  thRow+='<th>Comida</th>';
-  if(v.show_cen)thRow+='<th>Cena</th>';
-  thRow+='<th></th></tr>';
-  thead.innerHTML=thRow;tbody.innerHTML='';
-  v.alimentos.forEach((a,i)=>{
-    let row=`<tr><td style="color:var(--text-dim);font-size:9.5px;white-space:nowrap">${a.dia}</td>`;
-    if(v.show_des)row+=`<td><input type="text" value="${a.desayuno||''}" placeholder="Familia…" onchange="setAlim(${i},'desayuno',this.value)"/></td>`;
-    row+=`<td><input type="text" value="${a.comida||''}" placeholder="Familia…" onchange="setAlim(${i},'comida',this.value)"/></td>`;
-    if(v.show_cen)row+=`<td><input type="text" value="${a.cena||''}" placeholder="Familia…" onchange="setAlim(${i},'cena',this.value)"/></td>`;
-    row+=`<td><button class="btn btn-d btn-sm" onclick="delAlimDay(${i})">✕</button></td></tr>`;
-    tbody.innerHTML+=row;
-  });
-}
+function toggleAlim(type){const v=gv();if(!v)return;if(type==='des')v.show_des=!v.show_des;else v.show_cen=!v.show_cen;save();renderAlimentos(v);}
+function renderAlimentos(v){if(!v)return;const dot_d=document.getElementById('tog-des-dot'),dot_c=document.getElementById('tog-cen-dot');if(dot_d)dot_d.classList.toggle('on',!!v.show_des);if(dot_c)dot_c.classList.toggle('on',!!v.show_cen);if(!v.alimentos||!v.alimentos.length)v.alimentos=[{dia:'Martes',desayuno:'',comida:'',cena:''},{dia:'Miércoles',desayuno:'',comida:'',cena:''},{dia:'Jueves',desayuno:'',comida:'',cena:''},{dia:'Viernes',desayuno:'',comida:'',cena:''},{dia:'Sábado',desayuno:'',comida:'',cena:''},{dia:'Domingo',desayuno:'',comida:'',cena:''}];const thead=document.getElementById('alim-thead');const tbody=document.getElementById('alim-tbody');if(!thead||!tbody)return;let thRow='<tr><th>Día</th>';if(v.show_des)thRow+='<th>Desayuno</th>';thRow+='<th>Comida</th>';if(v.show_cen)thRow+='<th>Cena</th>';thRow+='<th></th></tr>';thead.innerHTML=thRow;tbody.innerHTML='';v.alimentos.forEach((a,i)=>{let row=`<tr><td style="color:var(--text-dim);font-size:9.5px;white-space:nowrap">${a.dia}</td>`;if(v.show_des)row+=`<td><input type="text" value="${a.desayuno||''}" placeholder="Familia…" onchange="setAlim(${i},'desayuno',this.value)"/></td>`;row+=`<td><input type="text" value="${a.comida||''}" placeholder="Familia…" onchange="setAlim(${i},'comida',this.value)"/></td>`;if(v.show_cen)row+=`<td><input type="text" value="${a.cena||''}" placeholder="Familia…" onchange="setAlim(${i},'cena',this.value)"/></td>`;row+=`<td><button class="btn btn-d btn-sm" onclick="delAlimDay(${i})">✕</button></td></tr>`;tbody.innerHTML+=row;});}
 function setAlim(i,f,val){const v=gv();if(!v)return;v.alimentos[i][f]=val;save();}
 function addAlimDay(){const v=gv();if(!v)return;if(!v.alimentos)v.alimentos=[];v.alimentos.push({dia:'Día',desayuno:'',comida:'',cena:''});save();renderAlimentos(v);}
 function delAlimDay(i){const v=gv();if(!v)return;v.alimentos.splice(i,1);save();renderAlimentos(v);}
-function renderCampo(v){
-  if(!v)return;const tb=document.getElementById('campo-tbody');if(!tb)return;tb.innerHTML='';
-  (v.campo||[]).forEach((r,i)=>{tb.innerHTML+=`<tr><td><input type="text" value="${r.dia||''}" style="width:70px" onchange="setCampo(${i},'dia',this.value)"/></td><td><input type="text" value="${r.lugar||''}" onchange="setCampo(${i},'lugar',this.value)"/></td><td><input type="time" value="${r.hora||''}" style="width:80px" onchange="setCampo(${i},'hora',this.value)"/></td><td><input type="text" value="${r.publicador||''}" onchange="setCampo(${i},'publicador',this.value)"/></td><td><input type="text" value="${r.actividad||''}" onchange="setCampo(${i},'actividad',this.value)"/></td><td><button class="btn btn-d btn-sm" onclick="delCampoRow(${i})">✕</button></td></tr>`;});
-}
+function renderCampo(v){if(!v)return;const tb=document.getElementById('campo-tbody');if(!tb)return;tb.innerHTML='';(v.campo||[]).forEach((r,i)=>{tb.innerHTML+=`<tr><td><input type="text" value="${r.dia||''}" style="width:70px" onchange="setCampo(${i},'dia',this.value)"/></td><td><input type="text" value="${r.lugar||''}" onchange="setCampo(${i},'lugar',this.value)"/></td><td><input type="time" value="${r.hora||''}" style="width:80px" onchange="setCampo(${i},'hora',this.value)"/></td><td><input type="text" value="${r.publicador||''}" onchange="setCampo(${i},'publicador',this.value)"/></td><td><input type="text" value="${r.actividad||''}" onchange="setCampo(${i},'actividad',this.value)"/></td><td><button class="btn btn-d btn-sm" onclick="delCampoRow(${i})">✕</button></td></tr>`;});}
 function setCampo(i,f,val){const v=gv();if(!v)return;v.campo[i][f]=val;save();}
 function addCampoRow(){const v=gv();if(!v)return;if(!v.campo)v.campo=[];v.campo.push({dia:'',lugar:'',hora:'',publicador:'',actividad:''});save();renderCampo(v);}
 function delCampoRow(i){const v=gv();if(!v)return;v.campo.splice(i,1);save();renderCampo(v);}
 
 /* ══ ORADORES ══ */
 let _oradCid=null;
-function openOradores(congId){
-  _oradCid=congId;const c=data.congregaciones.find(x=>x.id===congId);
-  document.getElementById('orad-cong-name').textContent=c.nombre;
-  renderOradoresList(c);document.getElementById('modal-oradores').classList.add('open');
-}
+function openOradores(congId){_oradCid=congId;const c=data.congregaciones.find(x=>x.id===congId);document.getElementById('orad-cong-name').textContent=c.nombre;renderOradoresList(c);document.getElementById('modal-oradores').classList.add('open');}
 function closeOradores(){document.getElementById('modal-oradores').classList.remove('open');}
-function addOrador(){
-  const c=data.congregaciones.find(x=>x.id===_oradCid);if(!c)return;
-  if(!c.oradores)c.oradores=[];c.oradores.push(emptyOrador());save();renderOradoresList(c);
-}
-function renderOradoresList(c){
-  const list=document.getElementById('oradores-list');list.innerHTML='';
-  (c.oradores||[]).forEach((o,idx)=>{
-    const calBadge=`<span class="cal-badge cal-${CAL_MAP[o.calificacion]||'B'}">${o.calificacion||'A'}</span>`;
-    const card=document.createElement('div');card.className='orador-card';
-    const skillsHtml=SKILL_GROUPS.map(g=>{
-      const checked=g.items.filter(it=>o.skills&&o.skills[it]).length;
-      return `<div class="chk-group"><div class="chk-group-title" onclick="this.nextElementSibling.classList.toggle('hidden')">${g.t} <span style="color:var(--aero-glow)">${checked}/${g.items.length}</span></div><div class="chk-list">${g.items.map(it=>`<div class="chk-item ${o.skills&&o.skills[it]?'checked':''}" onclick="toggleSkill(${idx},'${it.replace(/'/g,"\\'")}',this)"><input type="checkbox" ${o.skills&&o.skills[it]?'checked':''} readonly/><label>${it}</label></div>`).join('')}</div></div>`;
-    }).join('');
-    card.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><input type="text" value="${o.nombre||''}" placeholder="Nombre del orador…" onchange="setOrador(${idx},'nombre',this.value)" style="flex:1"/><select onchange="setOrador(${idx},'calificacion',this.value)" style="width:60px">${CALS.map(c2=>`<option ${o.calificacion===c2?'selected':''}>${c2}</option>`).join('')}</select>${calBadge}<button class="btn btn-d btn-sm" onclick="delOrador(${idx})">✕</button></div>${skillsHtml}`;
-    list.appendChild(card);
-  });
-  if(!c.oradores||!c.oradores.length)list.innerHTML='<div class="empty"><div class="ic">🎤</div><p>Sin oradores registrados.</p></div>';
-}
+function addOrador(){const c=data.congregaciones.find(x=>x.id===_oradCid);if(!c)return;if(!c.oradores)c.oradores=[];c.oradores.push(emptyOrador());save();renderOradoresList(c);}
+function renderOradoresList(c){const list=document.getElementById('oradores-list');list.innerHTML='';(c.oradores||[]).forEach((o,idx)=>{const calBadge=`<span class="cal-badge cal-${CAL_MAP[o.calificacion]||'B'}">${o.calificacion||'A'}</span>`;const card=document.createElement('div');card.className='orador-card';const skillsHtml=SKILL_GROUPS.map(g=>{const checked=g.items.filter(it=>o.skills&&o.skills[it]).length;return `<div class="chk-group"><div class="chk-group-title" onclick="this.nextElementSibling.classList.toggle('hidden')">${g.t} <span style="color:var(--aero-glow)">${checked}/${g.items.length}</span></div><div class="chk-list">${g.items.map(it=>`<div class="chk-item ${o.skills&&o.skills[it]?'checked':''}" onclick="toggleSkill(${idx},'${it.replace(/'/g,"\\'")}',this)"><input type="checkbox" ${o.skills&&o.skills[it]?'checked':''} readonly/><label>${it}</label></div>`).join('')}</div></div>`;}).join('');card.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><input type="text" value="${o.nombre||''}" placeholder="Nombre del orador…" onchange="setOrador(${idx},'nombre',this.value)" style="flex:1"/><select onchange="setOrador(${idx},'calificacion',this.value)" style="width:60px">${CALS.map(c2=>`<option ${o.calificacion===c2?'selected':''}>${c2}</option>`).join('')}</select>${calBadge}<button class="btn btn-d btn-sm" onclick="delOrador(${idx})">✕</button></div>${skillsHtml}`;list.appendChild(card);});if(!c.oradores||!c.oradores.length)list.innerHTML='<div class="empty"><div class="ic">🎤</div><p>Sin oradores registrados.</p></div>';}
 function setOrador(i,f,val){const c=data.congregaciones.find(x=>x.id===_oradCid);if(!c)return;c.oradores[i][f]=val;save();renderOradoresList(c);}
 function delOrador(i){const c=data.congregaciones.find(x=>x.id===_oradCid);if(!c)return;c.oradores.splice(i,1);save();renderOradoresList(c);}
-function toggleSkill(oIdx,skill,el){
-  const c=data.congregaciones.find(x=>x.id===_oradCid);if(!c)return;
-  const o=c.oradores[oIdx];if(!o.skills)o.skills={};
-  o.skills[skill]=!o.skills[skill];el.classList.toggle('checked',o.skills[skill]);
-  el.querySelector('input').checked=o.skills[skill];save();
-}
+function toggleSkill(oIdx,skill,el){const c=data.congregaciones.find(x=>x.id===_oradCid);if(!c)return;const o=c.oradores[oIdx];if(!o.skills)o.skills={};o.skills[skill]=!o.skills[skill];el.classList.toggle('checked',o.skills[skill]);el.querySelector('input').checked=o.skills[skill];save();}
 
 /* ══ TOAST ══ */
 let _toastTimer=null;
-function showToast(icon,title,msg){
-  const t=document.getElementById('notif-toast');
-  document.getElementById('nt-icon').textContent=icon;
-  document.getElementById('nt-title').textContent=title;
-  document.getElementById('nt-msg').textContent=msg;
-  t.classList.add('show');if(_toastTimer)clearTimeout(_toastTimer);
-  _toastTimer=setTimeout(()=>t.classList.remove('show'),3800);
-}
+function showToast(icon,title,msg){const t=document.getElementById('notif-toast');document.getElementById('nt-icon').textContent=icon;document.getElementById('nt-title').textContent=title;document.getElementById('nt-msg').textContent=msg;t.classList.add('show');if(_toastTimer)clearTimeout(_toastTimer);_toastTimer=setTimeout(()=>t.classList.remove('show'),3800);}
 
 /* ══ GEMINI ══ */
 function openGemini(){document.getElementById('gemini-panel').classList.add('open');}
 function closeGemini(){document.getElementById('gemini-panel').classList.remove('open');}
-function buildPrompt(type){
-  const custom=document.getElementById('gp-custom').value.trim();
-  const resumen=data.congregaciones.map(c=>{
-    const v=c.visitas.length?c.visitas[c.visitas.length-1]:null;
-    if(!v)return `- ${c.nombre} (${c.ciudad}): Sin visitas`;
-    const ebp=avg(v.eb),rpp=avg(v.rp);
-    const pc=avgNZ((v.act||[]).map(r=>r.cursos));
-    return `- ${c.nombre} (${c.ciudad}): EB prom ${ebp}, RP prom ${rpp}, cursos/mes ${pc}, bautizados ${v.analisis?.bautizados||0}`;
-  }).join('\n');
-  const prompts={
-    asistencia:`Analiza los datos de asistencia del siguiente circuito y proporciona un análisis pastoral detallado:\n\nDATOS DEL CIRCUITO:\n${resumen}\n\nIncluye: 1) Tendencias generales, 2) Congregaciones que necesitan atención, 3) Recomendaciones específicas.${custom?'\n\nPREGUNTA ADICIONAL: '+custom:''}`,
-    predicacion:`Analiza los datos de predicación:\n\n${resumen}\n\nIncluye: 1) Rendimiento en estudios bíblicos, 2) Actividad de publicadores, 3) Áreas de mejora.${custom?'\n\nPREGUNTA ADICIONAL: '+custom:''}`,
-    finanzas:`Analiza la situación financiera del circuito:\n\n${resumen}\n\nIncluye: 1) Salud financiera general, 2) Congregaciones con atención especial, 3) Recomendaciones.${custom?'\n\nPREGUNTA ADICIONAL: '+custom:''}`,
-    general:`Genera un análisis general completo del circuito:\n\n${resumen}\n\nIncluye todos los aspectos: asistencia, predicación, crecimiento y situación espiritual.${custom?'\n\nPREGUNTA ADICIONAL: '+custom:''}`,
-    crecimiento:`Analiza el crecimiento del circuito:\n\n${resumen}\n\nIncluye: 1) Bautizados recientes, 2) Nombramientos, 3) Tendencias de crecimiento.${custom?'\n\nPREGUNTA ADICIONAL: '+custom:''}`,
-    recomendaciones:`Basándote en estos datos, genera recomendaciones pastorales concretas:\n\n${resumen}\n\nProporciona acciones específicas para cada congregación y el circuito en general.${custom?'\n\nPREGUNTA ADICIONAL: '+custom:''}`,
-  };
-  const pt=prompts[type]||prompts.general;
-  document.getElementById('gp-prompt-text').textContent=pt;
-  document.getElementById('gp-prompt-section').style.display='block';
-}
-async function copyPrompt(){
-  const txt=document.getElementById('gp-prompt-text').textContent;
-  try{
-    if(navigator.clipboard)await navigator.clipboard.writeText(txt);
-    else{const t=document.createElement('textarea');t.value=txt;t.style.cssText='position:fixed;left:-9999px';document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);}
-    const btn=document.getElementById('copy-btn');btn.classList.add('copy-success');btn.textContent='✅ ¡Copiado!';
-    setTimeout(()=>{btn.classList.remove('copy-success');btn.textContent='📋 Copiar prompt al portapapeles';},2200);
-  }catch(e){showToast('❌','Error','No se pudo copiar. Selecciona el texto manualmente.');}
-}
+function buildPrompt(type){const custom=document.getElementById('gp-custom').value.trim();const resumen=data.congregaciones.map(c=>{const v=c.visitas.length?c.visitas[c.visitas.length-1]:null;if(!v)return `- ${c.nombre} (${c.ciudad}): Sin visitas`;const ebp=avg(v.eb),rpp=avg(v.rp);const pc=avgNZ((v.act||[]).map(r=>r.cursos));return `- ${c.nombre} (${c.ciudad}): EB prom ${ebp}, RP prom ${rpp}, cursos/mes ${pc}, bautizados ${v.analisis?.bautizados||0}`;}).join('\n');const prompts={asistencia:`Analiza los datos de asistencia del siguiente circuito y proporciona un análisis pastoral detallado:\n\nDATOS DEL CIRCUITO:\n${resumen}\n\nIncluye: 1) Tendencias generales, 2) Congregaciones que necesitan atención, 3) Recomendaciones específicas.${custom?'\n\nPREGUNTA ADICIONAL: '+custom:''}`,predicacion:`Analiza los datos de predicación:\n\n${resumen}\n\nIncluye: 1) Rendimiento en estudios bíblicos, 2) Actividad de publicadores, 3) Áreas de mejora.${custom?'\n\nPREGUNTA ADICIONAL: '+custom:''}`,finanzas:`Analiza la situación financiera del circuito:\n\n${resumen}\n\nIncluye: 1) Salud financiera general, 2) Congregaciones con atención especial, 3) Recomendaciones.${custom?'\n\nPREGUNTA ADICIONAL: '+custom:''}`,general:`Genera un análisis general completo del circuito:\n\n${resumen}\n\nIncluye todos los aspectos: asistencia, predicación, crecimiento y situación espiritual.${custom?'\n\nPREGUNTA ADICIONAL: '+custom:''}`,crecimiento:`Analiza el crecimiento del circuito:\n\n${resumen}\n\nIncluye: 1) Bautizados recientes, 2) Nombramientos, 3) Tendencias de crecimiento.${custom?'\n\nPREGUNTA ADICIONAL: '+custom:''}`,recomendaciones:`Basándote en estos datos, genera recomendaciones pastorales concretas:\n\n${resumen}\n\nProporciona acciones específicas para cada congregación y el circuito en general.${custom?'\n\nPREGUNTA ADICIONAL: '+custom:''}`,};const pt=prompts[type]||prompts.general;document.getElementById('gp-prompt-text').textContent=pt;document.getElementById('gp-prompt-section').style.display='block';}
+async function copyPrompt(){const txt=document.getElementById('gp-prompt-text').textContent;try{if(navigator.clipboard)await navigator.clipboard.writeText(txt);else{const t=document.createElement('textarea');t.value=txt;t.style.cssText='position:fixed;left:-9999px';document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);}const btn=document.getElementById('copy-btn');btn.classList.add('copy-success');btn.textContent='✅ ¡Copiado!';setTimeout(()=>{btn.classList.remove('copy-success');btn.textContent='📋 Copiar prompt al portapapeles';},2200);}catch(e){showToast('❌','Error','No se pudo copiar. Selecciona el texto manualmente.');}}
 
 /* ══ INICIO ══ */
 loadSortPref();
@@ -1515,39 +1136,22 @@ renderHome();
   onSnapshot(appConfigRef, (docSnap) => {
     if (docSnap.exists()) {
       const datosEnLaNube = docSnap.data();
+      if (datosEnLaNube.remitente === miIdDeSesion) return; 
+      if (datosEnLaNube.lastUpdated && data.lastUpdated && new Date(datosEnLaNube.lastUpdated) <= new Date(data.lastUpdated)) return; 
       
-      if (datosEnLaNube.remitente === miIdDeSesion) {
-        return; 
-      }
-      
-      if (datosEnLaNube.lastUpdated && data.lastUpdated && new Date(datosEnLaNube.lastUpdated) <= new Date(data.lastUpdated)) {
-        return; 
-      }
-
-      console.log("¡Nuevos datos recibidos de la nube!");
-
       if (datosEnLaNube.congregaciones) {
         data.congregaciones = datosEnLaNube.congregaciones;
         data.lastUpdated = datosEnLaNube.lastUpdated || new Date().toISOString();
         try { localStorage.setItem(SK, JSON.stringify(data)); } catch(e) {}
         renderHome();
-        if (typeof showToast === 'function') {
-          showToast('☁️', 'Sincronizado', 'Datos actualizados desde otro dispositivo.');
-        }
+        if (typeof showToast === 'function') showToast('☁️', 'Sincronizado', 'Datos actualizados desde la nube.');
       }
     }
   });
 
   window.guardarEnLaNube = function(datosParaGuardar) {
     datosParaGuardar.remitente = miIdDeSesion;
-    
-    setDoc(appConfigRef, datosParaGuardar, { merge: true })
-      .then(() => {
-        console.log("¡Datos subidos con éxito a SuperCircuitoApp!");
-      })
-      .catch((error) => {
-        console.error("Error al subir:", error);
-      });
+    setDoc(appConfigRef, datosParaGuardar, { merge: true }).catch((error) => console.error("Error al subir:", error));
   };
 </script>
 </body>
