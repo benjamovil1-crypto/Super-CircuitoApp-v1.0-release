@@ -69,14 +69,6 @@ jobs:
           echo "=== capacitor.config.json generado ==="
           cat capacitor.config.json
 
-      - name: Cap add android
-        run: npx cap add android
-      - name: Cap add android
-        run: npx cap add android
-
-      - name: Cap sync
-        run: npx cap sync android
-
       # ─────────────────────────────────────────────────────────────
       # 6. Redimensionar y copiar íconos con Python + Pillow
       #    (garantiza los 5 tamaños correctos desde cualquier PNG)
