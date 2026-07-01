@@ -54,6 +54,23 @@ jobs:
       # ─────────────────────────────────────────────────────────────
       # 5. Capacitor
       # ─────────────────────────────────────────────────────────────
+      - name: Crear capacitor.config.json
+        run: |
+          cat > capacitor.config.json << 'CAPEOF'
+          {
+            "appId": "com.benjamovil.supercircuitoapp",
+            "appName": "Super CircuitoApp",
+            "webDir": "www",
+            "server": {
+              "androidScheme": "https"
+            }
+          }
+          CAPEOF
+          echo "=== capacitor.config.json generado ==="
+          cat capacitor.config.json
+
+      - name: Cap add android
+        run: npx cap add android
       - name: Cap add android
         run: npx cap add android
 
