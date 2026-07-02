@@ -70,6 +70,23 @@ jobs:
           cat capacitor.config.json
 
       # ─────────────────────────────────────────────────────────────
+      # 5b. Generar/sincronizar el proyecto Android (Capacitor)
+      #     Sin este paso la carpeta android/ nunca existe y todos los
+      #     pasos siguientes (íconos, permisos, gradlew) fallan.
+      # ─────────────────────────────────────────────────────────────
+      - name: Generar proyecto Android
+        run: |
+          if [ ! -d "android" ]; then
+            echo "No existe android/ — creando plataforma con 'npx cap add android'"
+            npx cap add android
+          else
+            echo "android/ ya existe — sincronizando con 'npx cap sync android'"
+            npx cap sync android
+          fi
+          echo "=== Verificando que gradlew exista ==="
+          ls -la android/gradlew
+
+      # ─────────────────────────────────────────────────────────────
       # 6. Redimensionar y copiar íconos con Python + Pillow
       #    (garantiza los 5 tamaños correctos desde cualquier PNG)
       # ─────────────────────────────────────────────────────────────
