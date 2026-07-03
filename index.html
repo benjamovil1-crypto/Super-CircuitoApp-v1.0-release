@@ -443,6 +443,7 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
         <p style="font-size:11.5px;color:var(--text-dim);line-height:1.7;margin-bottom:12px">Descarga un archivo <strong style="color:var(--text)">.json</strong> con toda tu información. Guárdalo en Google Drive o WhatsApp.</p>
         <div style="background:rgba(0,2,16,0.52);border:1px solid rgba(48,98,172,0.2);border-radius:6px;padding:10px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:12px;font-weight:700" id="bk-resumen">—</div><div style="font-size:9.5px;color:var(--text-dim);margin-top:2px" id="bk-fecha">—</div></div><div style="font-size:24px">🗄️</div></div>
         <button class="btn btn-s" style="width:100%;justify-content:center" onclick="exportBackup()">⬇️ Descargar respaldo JSON</button>
+        <button class="btn btn-o" style="width:100%;justify-content:center;margin-top:8px" onclick="compartirUltimoRespaldo()">📤 Compartir el archivo guardado (opcional)</button>
         <button class="btn btn-o" style="width:100%;justify-content:center;margin-top:8px" onclick="openJsonText()">📋 Copiar / ver JSON como texto (garantizado)</button>
         <button class="btn btn-o" style="width:100%;justify-content:center;margin-top:8px;opacity:0.75" onclick="diagnosticoCapacitor()">🔍 Ver diagnóstico técnico</button>
         <div id="export-msg" style="margin-top:8px;font-size:11px;text-align:center;display:none"></div>
@@ -1255,37 +1256,31 @@ function exportBackup() {
   const fileName = 'SuperCircuitoApp_' + fecha + '.json';
   const msg = document.getElementById('export-msg');
 
-  // ── Método 1: Capacitor Filesystem + Share (Android nativo) ──
+  // ── Método 1: Filesystem — escritura directa, sin pasar por Share.
+  //    Esto SÍ es verificable de verdad: es solo escribir bytes en disco,
+  //    no depende de que un intent de Android se complete correctamente. ──
   if (window.Capacitor && window.Capacitor.isNativePlatform &&
       window.Capacitor.isNativePlatform() &&
       window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem) {
-    const { Filesystem, Share, Directory } = window.Capacitor.Plugins;
+    const { Filesystem, Directory } = window.Capacitor.Plugins;
     Filesystem.writeFile({
       path: fileName,
       data: btoa(unescape(encodeURIComponent(json))),
-      directory: Directory.Cache,
-      encoding: 'base64'
+      directory: Directory.Documents,
+      encoding: 'base64',
+      recursive: true
     }).then(result => {
-      return Share.share({
-        title: 'Respaldo SuperCircuitoApp',
-        url: result.uri,
-        dialogTitle: 'Guardar o compartir respaldo'
-      });
-    }).then(() => {
-      if (msg) { msg.style.display='block'; msg.style.color='var(--green)'; msg.textContent='✅ Respaldo listo para guardar.'; setTimeout(()=>msg.style.display='none',3500); }
+      window.__ultimoRespaldoUri = result.uri;
+      if (msg) {
+        msg.style.display='block'; msg.style.color='var(--green)';
+        msg.innerHTML='✅ Guardado de verdad en tu dispositivo.<br/><span style="font-size:10px;opacity:0.85">Ábrelo con "Mis archivos": Almacenamiento interno → Android → data → com.benjamovil.supercircuitoapp → files → Documents → '+fileName+'</span>';
+        setTimeout(()=>msg.style.display='none',9000);
+      }
       marcarRespaldoOk();
     }).catch(e => {
-      if (e.message?.includes('cancel')) return; // el usuario cerró el diálogo de compartir, no es error
-      mostrarErrorTecnico('Filesystem/Share nativo',e);
-      // ── Nunca fallar en silencio: intentamos compartir solo el TEXTO (no requiere FileProvider) ──
-      if (window.Capacitor.Plugins.Share) {
-        window.Capacitor.Plugins.Share.share({ title: 'Respaldo SuperCircuitoApp', text: json, dialogTitle: 'Guardar respaldo' })
-          .then(()=>{ if(msg){msg.style.display='block';msg.style.color='var(--green)';msg.textContent='✅ Respaldo compartido como texto.';setTimeout(()=>msg.style.display='none',3500);} marcarRespaldoOk(); })
-          .catch(e2=>{ mostrarErrorTecnico('Share como texto',e2); if(msg){msg.style.display='block';msg.style.color='var(--gold)';msg.textContent='⚠️ No se pudo compartir el archivo. Mira el error abajo.';setTimeout(()=>msg.style.display='none',5000);} });
-      } else {
-        mostrarErrorTecnico('Share no disponible',{message:'window.Capacitor.Plugins.Share es undefined'});
-        if (msg) { msg.style.display='block'; msg.style.color='var(--gold)'; msg.textContent='⚠️ No se pudo guardar el archivo. Mira el error abajo.'; setTimeout(()=>msg.style.display='none',5000); }
-      }
+      mostrarErrorTecnico('Filesystem.writeFile',e);
+      if (msg) { msg.style.display='block'; msg.style.color='var(--gold)'; msg.textContent='⚠️ No se pudo escribir el archivo. Mira el error abajo — mándamelo para corregirlo de raíz.'; setTimeout(()=>msg.style.display='none',6000); }
+      tryBlobDownload(json, fileName, msg);
     });
     return;
   }
@@ -1306,6 +1301,21 @@ function exportBackup() {
 
   // ── Método 3: Blob URL (navegador web puro) ──
   tryBlobDownload(json, fileName, msg);
+}
+
+function compartirUltimoRespaldo(){
+  const msg = document.getElementById('export-msg');
+  if (!window.__ultimoRespaldoUri) {
+    if (msg) { msg.style.display='block'; msg.style.color='var(--gold)'; msg.textContent='Primero descarga un respaldo con el botón de arriba.'; setTimeout(()=>msg.style.display='none',3500); }
+    return;
+  }
+  if (window.Capacitor?.Plugins?.Share) {
+    window.Capacitor.Plugins.Share.share({
+      title: 'Respaldo SuperCircuitoApp',
+      url: window.__ultimoRespaldoUri,
+      dialogTitle: 'Compartir respaldo'
+    }).catch(e => mostrarErrorTecnico('Compartir archivo guardado',e));
+  }
 }
 
 function tryBlobDownload(json, fileName, msg) {
