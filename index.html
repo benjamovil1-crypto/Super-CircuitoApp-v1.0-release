@@ -1243,6 +1243,7 @@ function diagnosticoCapacitor(){
     lineas.push('Plugins registrados ('+plugins.length+'): '+(plugins.join(', ')||'ninguno'));
     lineas.push('Filesystem disponible: '+(!!(window.Capacitor.Plugins&&window.Capacitor.Plugins.Filesystem)));
     lineas.push('Share disponible: '+(!!(window.Capacitor.Plugins&&window.Capacitor.Plugins.Share)));
+    lineas.push('DownloadSaver disponible: '+(!!(window.Capacitor.Plugins&&window.Capacitor.Plugins.DownloadSaver)));
   }
   lineas.push('navigator.canShare: '+(!!navigator.canShare));
   lineas.push('User agent: '+navigator.userAgent);
@@ -1256,9 +1257,37 @@ function exportBackup() {
   const fileName = 'SuperCircuitoApp_' + fecha + '.json';
   const msg = document.getElementById('export-msg');
 
-  // ── Método 1: Filesystem — escritura directa, sin pasar por Share.
-  //    Esto SÍ es verificable de verdad: es solo escribir bytes en disco,
-  //    no depende de que un intent de Android se complete correctamente. ──
+  // ── Método 1: Plugin nativo DownloadSaver — guarda en la carpeta
+  //    REAL de Descargas usando MediaStore (la API que Android exige
+  //    para que un archivo sea visible en "Mis archivos"). A diferencia
+  //    de Filesystem.writeFile, esto NO usa la carpeta privada oculta
+  //    Android/data/... — usa la carpeta pública Descargas de verdad. ──
+  if (window.Capacitor && window.Capacitor.isNativePlatform &&
+      window.Capacitor.isNativePlatform() &&
+      window.Capacitor.Plugins && window.Capacitor.Plugins.DownloadSaver) {
+    window.Capacitor.Plugins.DownloadSaver.saveJson({
+      fileName: fileName,
+      data: btoa(unescape(encodeURIComponent(json)))
+    }).then(result => {
+      window.__ultimoRespaldoUri = result.uri;
+      if (msg) {
+        msg.style.display='block'; msg.style.color='var(--green)';
+        msg.innerHTML='✅ Guardado en la carpeta <b>Descargas</b> de tu teléfono.<br/><span style="font-size:10px;opacity:0.85">Ábrelo con "Mis archivos" → Descargas → '+fileName+'</span>';
+        setTimeout(()=>msg.style.display='none',9000);
+      }
+      marcarRespaldoOk();
+    }).catch(e => {
+      mostrarErrorTecnico('DownloadSaver.saveJson',e);
+      if (msg) { msg.style.display='block'; msg.style.color='var(--gold)'; msg.textContent='⚠️ No se pudo escribir en Descargas. Mira el error abajo — mándamelo para corregirlo de raíz.'; setTimeout(()=>msg.style.display='none',6000); }
+      tryBlobDownload(json, fileName, msg);
+    });
+    return;
+  }
+
+  // ── Método 1b (respaldo si el plugin nativo no está disponible en
+  //    este build todavía): Filesystem — guarda en carpeta privada de
+  //    la app. Funciona, pero NO es visible en "Mis archivos" desde
+  //    Android 11+ por restricción del sistema operativo. ──
   if (window.Capacitor && window.Capacitor.isNativePlatform &&
       window.Capacitor.isNativePlatform() &&
       window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem) {
@@ -1272,8 +1301,8 @@ function exportBackup() {
     }).then(result => {
       window.__ultimoRespaldoUri = result.uri;
       if (msg) {
-        msg.style.display='block'; msg.style.color='var(--green)';
-        msg.innerHTML='✅ Guardado de verdad en tu dispositivo.<br/><span style="font-size:10px;opacity:0.85">Ábrelo con "Mis archivos": Almacenamiento interno → Android → data → com.benjamovil.supercircuitoapp → files → Documents → '+fileName+'</span>';
+        msg.style.display='block'; msg.style.color='var(--gold)';
+        msg.innerHTML='⚠️ Se guardó, pero en una carpeta privada que Android oculta del explorador de archivos (limitación del sistema, no del código). Usa "Copiar / ver JSON" mientras actualizas a la versión más reciente de la app.';
         setTimeout(()=>msg.style.display='none',9000);
       }
       marcarRespaldoOk();
