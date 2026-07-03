@@ -445,12 +445,22 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
         <button class="btn btn-s" style="width:100%;justify-content:center" onclick="exportBackup()">⬇️ Descargar respaldo JSON</button>
         <button class="btn btn-o" style="width:100%;justify-content:center;margin-top:8px" onclick="openJsonText()">📋 Copiar / ver JSON como texto</button>
         <div id="export-msg" style="margin-top:8px;font-size:11px;text-align:center;display:none"></div>
+        <div id="export-error-box" style="margin-top:10px;display:none;background:rgba(90,0,0,0.35);border:1px solid rgba(255,80,80,0.4);border-radius:6px;padding:9px">
+          <div style="font-size:10.5px;color:#ffb0b0;font-weight:700;margin-bottom:4px">⚠️ Error técnico (mándame captura de esto):</div>
+          <div id="export-error-text" style="font-size:10px;font-family:monospace;color:#ffd0d0;word-break:break-word"></div>
+        </div>
       </div>
       <div class="card"><div class="ct" style="color:var(--aero-bright)">📥 Importar respaldo</div>
         <p style="font-size:11.5px;color:var(--text-dim);line-height:1.7;margin-bottom:12px">Selecciona un archivo <strong style="color:var(--text)">.json</strong> generado previamente.<br/><span style="color:var(--danger);font-size:10.5px">⚠️ Esto reemplazará los datos actuales.</span></p>
         <button class="btn btn-p" style="width:100%;justify-content:center" onclick="document.getElementById('import-file').click()">⬆️ Seleccionar archivo JSON</button>
         <input type="file" id="import-file" accept=".json" style="display:none" onchange="importBackup(this)"/>
         <div id="import-msg" style="margin-top:8px;font-size:11.5px;text-align:center;display:none"></div>
+        <div style="margin-top:14px;border-top:1px solid rgba(68,118,212,0.2);padding-top:12px">
+          <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px">O pega aquí el texto que copiaste antes:</div>
+          <textarea id="import-text-area" placeholder="Pega el JSON aquí…" style="width:100%;height:110px;font-family:monospace;font-size:10px;background:rgba(0,2,16,0.6);color:var(--text);border:1px solid rgba(68,118,212,0.3);border-radius:6px;padding:8px;resize:vertical"></textarea>
+          <button class="btn btn-p" style="width:100%;justify-content:center;margin-top:8px" onclick="importBackupFromText()">📋 Importar desde texto pegado</button>
+          <div id="import-text-msg" style="margin-top:8px;font-size:11.5px;text-align:center;display:none"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -708,11 +718,12 @@ function renderHome(){
     congs.sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
   }
   else if(sortBy==='ultima-visita'){
-    congs.sort((a,b)=>{
-      const va=a.visitas.length?a.visitas[a.visitas.length-1].fecha:'';
-      const vb=b.visitas.length?b.visitas[b.visitas.length-1].fecha:'';
-      return vb.localeCompare(va);
-    });
+    /* Se usa la FECHA MÁXIMA real entre todas las visitas, no el último
+       elemento del arreglo — el orden de inserción no siempre coincide
+       con el orden cronológico (ej. si se edita la fecha de una visita
+       después de crearla, o si no se registran en orden). */
+    const maxFecha=c=>c.visitas.length?c.visitas.reduce((m,v)=>v.fecha>m?v.fecha:m,''):'';
+    congs.sort((a,b)=>maxFecha(b).localeCompare(maxFecha(a)));
   }
   else if(sortBy==='mas-visitas'){
     congs.sort((a,b)=>b.visitas.length-a.visitas.length);
@@ -728,12 +739,15 @@ function renderHome(){
     congs.sort((a,b)=>a.id-b.id);
   }
   else{
-    /* ── EN CURSO: más cercana a HOY (absoluta), con o sin fecha ──
-       La congregación cuya fecha programada (c.fecha) está más cerca
-       del día de hoy aparece primero. Sin importar si es futura o pasada.
-       Las que no tienen fecha van al final. */
+    /* ── EN CURSO ──
+       1º) La congregación marcada MANUALMENTE como "Estoy aquí ahora"
+           (c.enCurso) siempre va primero — solo tú sabes cuál es en
+           realidad, ninguna fórmula de fechas puede adivinarlo.
+       2º) El resto, por cercanía a hoy (como antes). */
     const parseF=f=>{if(!f)return null;const[y,m,d]=f.split('-').map(Number);const dt=new Date(y,m-1,d);dt.setHours(0,0,0,0);return dt.getTime();};
     congs.sort((a,b)=>{
+      if(a.enCurso&&!b.enCurso)return -1;
+      if(b.enCurso&&!a.enCurso)return 1;
       const da=parseF(a.fecha);const db=parseF(b.fecha);
       if(da===null&&db===null)return a.nombre.localeCompare(b.nombre,'es');
       if(da===null)return 1;if(db===null)return -1;
@@ -760,7 +774,7 @@ function renderHome(){
       else if(diff>0&&diff<=7)badgeHtml=`<span style="font-size:9px;background:rgba(100,180,255,0.18);color:var(--aero-bright);border:1px solid rgba(100,180,255,0.3);border-radius:8px;padding:1px 6px;margin-left:4px">en ${diff}d</span>`;
     }
 
-    div.innerHTML=`<div class="ch" onclick="toggleC(${c.id})"><div class="cb2">${c.nombre.slice(0,2).toUpperCase()}</div><div class="ci-info"><div class="ci-name">${c.nombre}${badgeHtml}</div><div class="ci-meta">${c.ciudad}${c.fecha?' · '+c.fecha:''}</div></div><span class="ci-cnt">${c.visitas.length} visita${c.visitas.length!==1?'s':''}</span><span class="ci-arr">▼</span></div><div class="cbody"><div style="display:flex;gap:5px;margin:10px 0 8px;flex-wrap:wrap"><button class="btn btn-p btn-sm" onclick="event.stopPropagation();newVisita(${c.id})">＋ Nueva visita</button><button class="btn btn-warn btn-sm" onclick="event.stopPropagation();openOradores(${c.id})">🎤 Oradores (${no})</button><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delCong(${c.id})">Eliminar</button></div>
+    div.innerHTML=`<div class="ch" onclick="toggleC(${c.id})"><div class="cb2">${c.nombre.slice(0,2).toUpperCase()}</div><div class="ci-info"><div class="ci-name">${c.enCurso?'<span style="font-size:9px;background:rgba(80,220,120,0.2);color:#6fe89a;border:1px solid rgba(80,220,120,0.4);border-radius:8px;padding:1px 6px;margin-right:4px">📍 AQUÍ AHORA</span>':''}${c.nombre}${badgeHtml}</div><div class="ci-meta">${c.ciudad}${c.fecha?' · '+c.fecha:''}</div></div><span class="ci-cnt">${c.visitas.length} visita${c.visitas.length!==1?'s':''}</span><span class="ci-arr">▼</span></div><div class="cbody"><div style="display:flex;gap:5px;margin:10px 0 8px;flex-wrap:wrap"><button class="btn ${c.enCurso?'btn-d':'btn-s'} btn-sm" onclick="event.stopPropagation();toggleEnCurso(${c.id})">${c.enCurso?'📍 Quitar "aquí ahora"':'📍 Marcar: estoy aquí ahora'}</button><button class="btn btn-p btn-sm" onclick="event.stopPropagation();newVisita(${c.id})">＋ Nueva visita</button><button class="btn btn-warn btn-sm" onclick="event.stopPropagation();openOradores(${c.id})">🎤 Oradores (${no})</button><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delCong(${c.id})">Eliminar</button></div>
     <div style="background:rgba(10,28,68,0.5);border:1px solid rgba(68,118,212,0.25);border-radius:8px;padding:10px;margin-bottom:8px">
       <div style="font-size:10px;font-weight:700;color:var(--gold);letter-spacing:1px;margin-bottom:7px">🔔 RECORDATORIO DE VISITA</div>
       <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
@@ -789,6 +803,11 @@ function renderHome(){
   });
 }
 function toggleC(id){document.getElementById('ci-'+id).classList.toggle('open');}
+function toggleEnCurso(id){
+  const activar=!data.congregaciones.find(x=>x.id===id)?.enCurso;
+  data.congregaciones.forEach(c=>{c.enCurso=(c.id===id)&&activar;});
+  save();renderHome();
+}
 function updCong(id,f,v){const c=data.congregaciones.find(x=>x.id===id);if(c){c[f]=v;save();}}
 function delCong(id){if(!confirm('¿Eliminar esta congregación?'))return;data.congregaciones=data.congregaciones.filter(c=>c.id!==id);save();renderHome();}
 function delVisita(cid,vid){const c=data.congregaciones.find(x=>x.id===cid);if(c){c.visitas=c.visitas.filter(v=>v.id!==vid);save();renderHome();}}
@@ -1192,10 +1211,27 @@ function printHistorial(){
 /* ══ RESPALDO ══ */
 function renderBackupInfo(){
   const n=data.congregaciones.length,tV=data.congregaciones.reduce((s,c)=>s+c.visitas.length,0);
-  document.getElementById('bk-resumen').textContent=`${n} congregaciones · ${tV} visitas`;
-  document.getElementById('bk-fecha').textContent='Última actualización: '+new Date().toLocaleString('es-MX');
+  document.getElementById('bk-resumen').textContent=`${n} congregaciones · ${tV} visitas actualmente en la app`;
+  const last=localStorage.getItem('sca_ultimo_respaldo_ok');
+  document.getElementById('bk-fecha').textContent=last?('Último respaldo confirmado: '+last):'⚠️ Aún no se ha confirmado ningún respaldo exitoso';
+}
+function marcarRespaldoOk(){
+  const ahora=new Date().toLocaleString('es-MX');
+  localStorage.setItem('sca_ultimo_respaldo_ok',ahora);
+  renderBackupInfo();
+}
+function mostrarErrorTecnico(contexto,e){
+  console.error(contexto,e);
+  const box=document.getElementById('export-error-box');
+  const txt=document.getElementById('export-error-text');
+  if(box&&txt){
+    txt.textContent=contexto+': '+(e&&(e.message||e.toString?e.toString():JSON.stringify(e)));
+    box.style.display='block';
+  }
 }
 function exportBackup() {
+  const errBox=document.getElementById('export-error-box');
+  if(errBox) errBox.style.display='none';
   const json = JSON.stringify(data, null, 2);
   const fecha = new Date().toISOString().split('T')[0];
   const fileName = 'SuperCircuitoApp_' + fecha + '.json';
@@ -1219,17 +1255,18 @@ function exportBackup() {
       });
     }).then(() => {
       if (msg) { msg.style.display='block'; msg.style.color='var(--green)'; msg.textContent='✅ Respaldo listo para guardar.'; setTimeout(()=>msg.style.display='none',3500); }
+      marcarRespaldoOk();
     }).catch(e => {
       if (e.message?.includes('cancel')) return; // el usuario cerró el diálogo de compartir, no es error
-      console.error('Capacitor export falló, usando respaldo alterno:', e);
+      mostrarErrorTecnico('Filesystem/Share nativo',e);
       // ── Nunca fallar en silencio: intentamos compartir solo el TEXTO (no requiere FileProvider) ──
       if (window.Capacitor.Plugins.Share) {
         window.Capacitor.Plugins.Share.share({ title: 'Respaldo SuperCircuitoApp', text: json, dialogTitle: 'Guardar respaldo' })
-          .then(()=>{ if(msg){msg.style.display='block';msg.style.color='var(--green)';msg.textContent='✅ Respaldo compartido como texto.';setTimeout(()=>msg.style.display='none',3500);} })
-          .catch(()=>{ openJsonText(); if(msg){msg.style.display='block';msg.style.color='var(--gold)';msg.textContent='⚠️ No se pudo compartir el archivo. Usa "Copiar / ver JSON".';setTimeout(()=>msg.style.display='none',5000);} });
+          .then(()=>{ if(msg){msg.style.display='block';msg.style.color='var(--green)';msg.textContent='✅ Respaldo compartido como texto.';setTimeout(()=>msg.style.display='none',3500);} marcarRespaldoOk(); })
+          .catch(e2=>{ mostrarErrorTecnico('Share como texto',e2); if(msg){msg.style.display='block';msg.style.color='var(--gold)';msg.textContent='⚠️ No se pudo compartir el archivo. Mira el error abajo.';setTimeout(()=>msg.style.display='none',5000);} });
       } else {
-        openJsonText();
-        if (msg) { msg.style.display='block'; msg.style.color='var(--gold)'; msg.textContent='⚠️ No se pudo guardar el archivo. Usa "Copiar / ver JSON".'; setTimeout(()=>msg.style.display='none',5000); }
+        mostrarErrorTecnico('Share no disponible',{message:'window.Capacitor.Plugins.Share es undefined'});
+        if (msg) { msg.style.display='block'; msg.style.color='var(--gold)'; msg.textContent='⚠️ No se pudo guardar el archivo. Mira el error abajo.'; setTimeout(()=>msg.style.display='none',5000); }
       }
     });
     return;
@@ -1242,8 +1279,9 @@ function exportBackup() {
       navigator.share({ files: [file], title: 'Respaldo SuperCircuitoApp' })
         .then(() => {
           if (msg) { msg.style.display='block'; msg.style.color='var(--green)'; msg.textContent='✅ Respaldo compartido correctamente.'; setTimeout(()=>msg.style.display='none',3500); }
+          marcarRespaldoOk();
         })
-        .catch(e => { if (e.name !== 'AbortError') tryBlobDownload(json, fileName, msg); });
+        .catch(e => { if (e.name !== 'AbortError'){ mostrarErrorTecnico('Web Share API',e); tryBlobDownload(json, fileName, msg); } });
       return;
     }
   }
@@ -1262,11 +1300,12 @@ function tryBlobDownload(json, fileName, msg) {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     if (msg) { msg.style.display='block'; msg.style.color='var(--green)'; msg.textContent='✅ Respaldo descargado correctamente.'; setTimeout(()=>msg.style.display='none',3500); }
+    marcarRespaldoOk();
   } catch(e) {
     // ── Fallback final: siempre mostrar el JSON en pantalla para copiar manualmente ──
-    console.error('Blob download falló:', e);
+    mostrarErrorTecnico('Descarga Blob',e);
     openJsonText();
-    if (msg) { msg.style.display='block'; msg.style.color='var(--gold)'; msg.textContent='⚠️ No se pudo descargar. Usa "Copiar / ver JSON".'; setTimeout(()=>msg.style.display='none',5000); }
+    if (msg) { msg.style.display='block'; msg.style.color='var(--gold)'; msg.textContent='⚠️ No se pudo descargar. Mira el error abajo y usa "Copiar / ver JSON" mientras tanto.'; setTimeout(()=>msg.style.display='none',5000); }
   }
 }
 
@@ -1286,7 +1325,7 @@ function closeJsonText(){
 function copyJsonText(){
   const area = document.getElementById('jsontext-area');
   const msg = document.getElementById('jsontext-msg');
-  const showOk = ()=>{ if(msg){msg.style.display='block';msg.style.color='var(--green)';msg.textContent='✅ Copiado al portapapeles.';setTimeout(()=>msg.style.display='none',3000);} };
+  const showOk = ()=>{ if(msg){msg.style.display='block';msg.style.color='var(--green)';msg.textContent='✅ Copiado al portapapeles.';setTimeout(()=>msg.style.display='none',3000);} marcarRespaldoOk(); };
   const showManual = ()=>{
     area.focus(); area.select();
     if(msg){msg.style.display='block';msg.style.color='var(--gold)';msg.textContent='⚠️ Copia automática no disponible. Ya seleccioné el texto — usa "mantener presionado → copiar".';setTimeout(()=>msg.style.display='none',6000);}
@@ -1302,6 +1341,13 @@ function copyJsonText(){
     try{ document.execCommand('copy')?showOk():showManual(); }catch(e){ showManual(); }
   }
 }
+function aplicarImport(raw){
+  const p = JSON.parse(raw);
+  const imp = p && p.data ? p.data : p;
+  data = imp;
+  save();
+  renderHome();
+}
 function importBackup(input) {
   const file = input.files[0];
   if (!file) return;
@@ -1309,14 +1355,7 @@ function importBackup(input) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const p = JSON.parse(e.target.result);
-      const imp = p && p.data ? p.data : p;
-      
-      // Asignación directa sin bloqueos ni candados estrictos
-      data = imp; 
-      save();
-      renderHome();
-      
+      aplicarImport(e.target.result);
       const msg = document.getElementById('import-msg');
       if (msg) {
         msg.style.display = 'block';
@@ -1338,6 +1377,21 @@ function importBackup(input) {
 
   reader.readAsText(file);
   input.value = '';
+}
+function importBackupFromText(){
+  const area = document.getElementById('import-text-area');
+  const msg = document.getElementById('import-text-msg');
+  const raw = area ? area.value.trim() : '';
+  if (!raw) return;
+  if (!confirm('¿Reemplazar los datos actuales con este respaldo pegado?')) return;
+  try {
+    aplicarImport(raw);
+    if (msg) { msg.style.display='block'; msg.style.color='var(--green)'; msg.textContent='✅ Datos importados correctamente.'; setTimeout(()=>msg.style.display='none',3500); }
+    area.value='';
+  } catch(ex) {
+    console.error(ex);
+    if (msg) { msg.style.display='block'; msg.style.color='var(--danger)'; msg.textContent='❌ El texto pegado no es un JSON válido.'; setTimeout(()=>msg.style.display='none',4000); }
+  }
 }
 /* ══ REUNIÓN ══ */
 function renderReunion(v){
