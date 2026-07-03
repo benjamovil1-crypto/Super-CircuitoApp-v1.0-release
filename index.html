@@ -1243,6 +1243,7 @@ function diagnosticoCapacitor(){
     lineas.push('Plugins registrados ('+plugins.length+'): '+(plugins.join(', ')||'ninguno'));
     lineas.push('Filesystem disponible: '+(!!(window.Capacitor.Plugins&&window.Capacitor.Plugins.Filesystem)));
     lineas.push('Share disponible: '+(!!(window.Capacitor.Plugins&&window.Capacitor.Plugins.Share)));
+    lineas.push('FileSharer disponible: '+(!!(window.Capacitor.Plugins&&window.Capacitor.Plugins.CapacitorFileSharer)));
     lineas.push('DownloadSaver disponible: '+(!!(window.Capacitor.Plugins&&window.Capacitor.Plugins.DownloadSaver)));
   }
   lineas.push('navigator.canShare: '+(!!navigator.canShare));
@@ -1250,130 +1251,41 @@ function diagnosticoCapacitor(){
   if(box&&txt){ txt.textContent=lineas.join('\n'); box.style.display='block'; }
 }
 function exportBackup() {
-  const errBox=document.getElementById('export-error-box');
-  if(errBox) errBox.style.display='none';
   const json = JSON.stringify(data, null, 2);
   const fecha = new Date().toISOString().split('T')[0];
   const fileName = 'SuperCircuitoApp_' + fecha + '.json';
   const msg = document.getElementById('export-msg');
+  const errBox = document.getElementById('export-error-box');
+  if (errBox) errBox.style.display = 'none';
 
-  // ── Método 1: Plugin nativo DownloadSaver — guarda en la carpeta
-  //    REAL de Descargas usando MediaStore (la API que Android exige
-  //    para que un archivo sea visible en "Mis archivos"). A diferencia
-  //    de Filesystem.writeFile, esto NO usa la carpeta privada oculta
-  //    Android/data/... — usa la carpeta pública Descargas de verdad. ──
-  if (window.Capacitor && window.Capacitor.isNativePlatform &&
-      window.Capacitor.isNativePlatform() &&
-      window.Capacitor.Plugins && window.Capacitor.Plugins.DownloadSaver) {
-    window.Capacitor.Plugins.DownloadSaver.saveJson({
-      fileName: fileName,
-      data: btoa(unescape(encodeURIComponent(json)))
-    }).then(result => {
-      window.__ultimoRespaldoUri = result.uri;
-      if (msg) {
-        msg.style.display='block'; msg.style.color='var(--green)';
-        msg.innerHTML='✅ Guardado en la carpeta <b>Descargas</b> de tu teléfono.<br/><span style="font-size:10px;opacity:0.85">Ábrelo con "Mis archivos" → Descargas → '+fileName+'</span>';
-        setTimeout(()=>msg.style.display='none',9000);
-      }
+  // FileSharer — plugin npm que envía un ARCHIVO REAL (.json) con el
+  // menú nativo de Android. El usuario elige dónde guardarlo:
+  // "Mis archivos/Descargas", Google Drive, Gmail, etc.
+  // Plugin: @byteowls/capacitor-filesharer v6.0.0
+  if (window.Capacitor && window.Capacitor.Plugins &&
+      window.Capacitor.Plugins.CapacitorFileSharer) {
+    window.Capacitor.Plugins.CapacitorFileSharer.share({
+      filename: fileName,
+      contentType: 'application/json',
+      base64Data: btoa(unescape(encodeURIComponent(json)))
+    }).then(() => {
       marcarRespaldoOk();
+      if (msg) { msg.style.display='block'; msg.style.color='var(--green)'; msg.textContent='✅ Archivo .json compartido. Guárdalo en Descargas o Drive.'; setTimeout(()=>msg.style.display='none',5000); }
     }).catch(e => {
-      mostrarErrorTecnico('DownloadSaver.saveJson',e);
-      if (msg) { msg.style.display='block'; msg.style.color='var(--gold)'; msg.textContent='⚠️ No se pudo escribir en Descargas. Mira el error abajo — mándamelo para corregirlo de raíz.'; setTimeout(()=>msg.style.display='none',6000); }
-      tryBlobDownload(json, fileName, msg);
+      if (e && (e.message||'').toLowerCase().includes('cancel')) return;
+      mostrarErrorTecnico('FileSharer.share', e);
+      openJsonText();
     });
     return;
   }
 
-  // ── Método 1b (respaldo si el plugin nativo no está disponible en
-  //    este build todavía): Filesystem — guarda en carpeta privada de
-  //    la app. Funciona, pero NO es visible en "Mis archivos" desde
-  //    Android 11+ por restricción del sistema operativo. ──
-  if (window.Capacitor && window.Capacitor.isNativePlatform &&
-      window.Capacitor.isNativePlatform() &&
-      window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem) {
-    const { Filesystem, Directory } = window.Capacitor.Plugins;
-    Filesystem.writeFile({
-      path: fileName,
-      data: btoa(unescape(encodeURIComponent(json))),
-      directory: Directory.Documents,
-      encoding: 'base64',
-      recursive: true
-    }).then(result => {
-      window.__ultimoRespaldoUri = result.uri;
-      if (msg) {
-        msg.style.display='block'; msg.style.color='var(--gold)';
-        msg.innerHTML='⚠️ Se guardó, pero en una carpeta privada que Android oculta del explorador de archivos (limitación del sistema, no del código). Usa "Copiar / ver JSON" mientras actualizas a la versión más reciente de la app.';
-        setTimeout(()=>msg.style.display='none',9000);
-      }
-      marcarRespaldoOk();
-    }).catch(e => {
-      mostrarErrorTecnico('Filesystem.writeFile',e);
-      if (msg) { msg.style.display='block'; msg.style.color='var(--gold)'; msg.textContent='⚠️ No se pudo escribir el archivo. Mira el error abajo — mándamelo para corregirlo de raíz.'; setTimeout(()=>msg.style.display='none',6000); }
-      tryBlobDownload(json, fileName, msg);
-    });
-    return;
-  }
-
-  // ── Método 2: Web Share API con archivo (Chrome/Android moderno) ──
-  if (navigator.canShare) {
-    const file = new File([json], fileName, { type: 'application/json' });
-    if (navigator.canShare({ files: [file] })) {
-      navigator.share({ files: [file], title: 'Respaldo SuperCircuitoApp' })
-        .then(() => {
-          if (msg) { msg.style.display='block'; msg.style.color='var(--green)'; msg.textContent='✅ Respaldo compartido correctamente.'; setTimeout(()=>msg.style.display='none',3500); }
-          marcarRespaldoOk();
-        })
-        .catch(e => { if (e.name !== 'AbortError'){ mostrarErrorTecnico('Web Share API',e); tryBlobDownload(json, fileName, msg); } });
-      return;
-    }
-  }
-
-  // ── Método 3: Blob URL (navegador web puro) ──
-  tryBlobDownload(json, fileName, msg);
+  // Fallback web (sin Capacitor)
+  openJsonText();
 }
 
-function compartirUltimoRespaldo(){
-  const msg = document.getElementById('export-msg');
-  if (!window.__ultimoRespaldoUri) {
-    if (msg) { msg.style.display='block'; msg.style.color='var(--gold)'; msg.textContent='Primero descarga un respaldo con el botón de arriba.'; setTimeout(()=>msg.style.display='none',3500); }
-    return;
-  }
-  if (window.Capacitor?.Plugins?.Share) {
-    window.Capacitor.Plugins.Share.share({
-      title: 'Respaldo SuperCircuitoApp',
-      url: window.__ultimoRespaldoUri,
-      dialogTitle: 'Compartir respaldo'
-    }).catch(e => mostrarErrorTecnico('Compartir archivo guardado',e));
-  }
-}
+function compartirUltimoRespaldo(){ exportBackup(); }
 
 function tryBlobDownload(json, fileName, msg) {
-  let intentoOk = false;
-  try {
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = fileName;
-    document.body.appendChild(a); a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    intentoOk = true;
-  } catch(e) {
-    mostrarErrorTecnico('Descarga Blob',e);
-  }
-  // ── IMPORTANTE: que a.click() no lance error NO significa que el archivo
-  //    se haya guardado de verdad — en el WebView de Android esto puede
-  //    "funcionar" sin error y no guardar nada en ningún lado visible.
-  //    Por eso ya NO marcamos esto como confirmado, y siempre mostramos
-  //    el texto real como respaldo garantizado. ──
-  if (msg) {
-    msg.style.display='block';
-    msg.style.color='var(--gold)';
-    msg.textContent = intentoOk
-      ? '⚠️ Se intentó descargar, pero no podemos confirmar si tu dispositivo guardó el archivo. Aquí tienes el respaldo garantizado en texto:'
-      : '⚠️ La descarga automática falló. Aquí tienes el respaldo garantizado en texto:';
-    setTimeout(()=>msg.style.display='none',7000);
-  }
   openJsonText();
 }
 
