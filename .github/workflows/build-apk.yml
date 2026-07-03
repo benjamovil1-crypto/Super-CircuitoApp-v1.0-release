@@ -18,6 +18,25 @@ jobs:
         uses: actions/checkout@v4
 
       # ─────────────────────────────────────────────────────────────
+      # 1b. FIJAR el keystore de firma debug (CRÍTICO)
+      #     Cada ejecución de GitHub Actions es una máquina nueva. Sin
+      #     este paso, Gradle genera un keystore debug ALEATORIO distinto
+      #     en cada build → cada APK queda firmado con una firma diferente
+      #     → Android RECHAZA instalar/actualizar la app sobre la versión
+      #     anterior (falla silenciosa "App no instalada", sin aviso claro)
+      #     → el teléfono se queda corriendo la versión vieja para siempre,
+      #     sin importar cuántos cambios se suban. Este paso usa siempre
+      #     el MISMO keystore para que Android trate cada build como una
+      #     actualización legítima de la misma app.
+      # ─────────────────────────────────────────────────────────────
+      - name: Fijar keystore de firma debug
+        run: |
+          mkdir -p ~/.android
+          echo "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" | base64 -d > ~/.android/debug.keystore
+          echo "OK — keystore fijo instalado en ~/.android/debug.keystore"
+          ls -la ~/.android/debug.keystore
+
+      # ─────────────────────────────────────────────────────────────
       # 2. Entorno
       # ─────────────────────────────────────────────────────────────
       - name: Java 17
