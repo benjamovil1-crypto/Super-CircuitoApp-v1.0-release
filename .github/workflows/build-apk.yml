@@ -163,6 +163,30 @@ jobs:
           echo "OK permisos"
 
       # ─────────────────────────────────────────────────────────────
+      # 8b. FileProvider — necesario para que Share.share() pueda
+      #     compartir el archivo de respaldo .json. Sin esto, exportar
+      #     el respaldo falla silenciosamente en Android.
+      # ─────────────────────────────────────────────────────────────
+      - name: Configurar FileProvider para respaldos
+        run: |
+          M="android/app/src/main/AndroidManifest.xml"
+          mkdir -p android/app/src/main/res/xml
+          cat > android/app/src/main/res/xml/file_paths.xml << 'XMLEOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <paths xmlns:android="http://schemas.android.com/apk/res/android">
+              <cache-path name="cache" path="." />
+              <external-path name="external_files" path="." />
+              <external-cache-path name="external_cache" path="." />
+          </paths>
+          XMLEOF
+          PROVIDER='    <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.fileprovider" android:exported="false" android:grantUriPermissions="true"><meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" /></provider>'
+          if ! grep -q "fileprovider" "$M"; then
+            sed -i "s|</application>|$PROVIDER\n</application>|" "$M"
+          fi
+          echo "OK FileProvider"
+          cat "$M"
+
+      # ─────────────────────────────────────────────────────────────
       # 9. build.gradle — SDK y versión
       # ─────────────────────────────────────────────────────────────
       - name: Configurar build.gradle
