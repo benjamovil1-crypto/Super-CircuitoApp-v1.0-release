@@ -443,11 +443,12 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
         <p style="font-size:11.5px;color:var(--text-dim);line-height:1.7;margin-bottom:12px">Descarga un archivo <strong style="color:var(--text)">.json</strong> con toda tu información. Guárdalo en Google Drive o WhatsApp.</p>
         <div style="background:rgba(0,2,16,0.52);border:1px solid rgba(48,98,172,0.2);border-radius:6px;padding:10px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:12px;font-weight:700" id="bk-resumen">—</div><div style="font-size:9.5px;color:var(--text-dim);margin-top:2px" id="bk-fecha">—</div></div><div style="font-size:24px">🗄️</div></div>
         <button class="btn btn-s" style="width:100%;justify-content:center" onclick="exportBackup()">⬇️ Descargar respaldo JSON</button>
-        <button class="btn btn-o" style="width:100%;justify-content:center;margin-top:8px" onclick="openJsonText()">📋 Copiar / ver JSON como texto</button>
+        <button class="btn btn-o" style="width:100%;justify-content:center;margin-top:8px" onclick="openJsonText()">📋 Copiar / ver JSON como texto (garantizado)</button>
+        <button class="btn btn-o" style="width:100%;justify-content:center;margin-top:8px;opacity:0.75" onclick="diagnosticoCapacitor()">🔍 Ver diagnóstico técnico</button>
         <div id="export-msg" style="margin-top:8px;font-size:11px;text-align:center;display:none"></div>
         <div id="export-error-box" style="margin-top:10px;display:none;background:rgba(90,0,0,0.35);border:1px solid rgba(255,80,80,0.4);border-radius:6px;padding:9px">
-          <div style="font-size:10.5px;color:#ffb0b0;font-weight:700;margin-bottom:4px">⚠️ Error técnico (mándame captura de esto):</div>
-          <div id="export-error-text" style="font-size:10px;font-family:monospace;color:#ffd0d0;word-break:break-word"></div>
+          <div style="font-size:10.5px;color:#ffb0b0;font-weight:700;margin-bottom:4px">⚠️ Información técnica (mándame captura de esto):</div>
+          <div id="export-error-text" style="font-size:10px;font-family:monospace;color:#ffd0d0;word-break:break-word;white-space:pre-wrap"></div>
         </div>
       </div>
       <div class="card"><div class="ct" style="color:var(--aero-bright)">📥 Importar respaldo</div>
@@ -1229,6 +1230,23 @@ function mostrarErrorTecnico(contexto,e){
     box.style.display='block';
   }
 }
+function diagnosticoCapacitor(){
+  const box=document.getElementById('export-error-box');
+  const txt=document.getElementById('export-error-text');
+  const lineas=[];
+  lineas.push('window.Capacitor existe: '+(!!window.Capacitor));
+  if(window.Capacitor){
+    lineas.push('isNativePlatform(): '+(window.Capacitor.isNativePlatform?window.Capacitor.isNativePlatform():'función no existe'));
+    lineas.push('getPlatform(): '+(window.Capacitor.getPlatform?window.Capacitor.getPlatform():'función no existe'));
+    const plugins=window.Capacitor.Plugins?Object.keys(window.Capacitor.Plugins):[];
+    lineas.push('Plugins registrados ('+plugins.length+'): '+(plugins.join(', ')||'ninguno'));
+    lineas.push('Filesystem disponible: '+(!!(window.Capacitor.Plugins&&window.Capacitor.Plugins.Filesystem)));
+    lineas.push('Share disponible: '+(!!(window.Capacitor.Plugins&&window.Capacitor.Plugins.Share)));
+  }
+  lineas.push('navigator.canShare: '+(!!navigator.canShare));
+  lineas.push('User agent: '+navigator.userAgent);
+  if(box&&txt){ txt.textContent=lineas.join('\n'); box.style.display='block'; }
+}
 function exportBackup() {
   const errBox=document.getElementById('export-error-box');
   if(errBox) errBox.style.display='none';
@@ -1291,6 +1309,7 @@ function exportBackup() {
 }
 
 function tryBlobDownload(json, fileName, msg) {
+  let intentoOk = false;
   try {
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -1299,14 +1318,24 @@ function tryBlobDownload(json, fileName, msg) {
     document.body.appendChild(a); a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    if (msg) { msg.style.display='block'; msg.style.color='var(--green)'; msg.textContent='✅ Respaldo descargado correctamente.'; setTimeout(()=>msg.style.display='none',3500); }
-    marcarRespaldoOk();
+    intentoOk = true;
   } catch(e) {
-    // ── Fallback final: siempre mostrar el JSON en pantalla para copiar manualmente ──
     mostrarErrorTecnico('Descarga Blob',e);
-    openJsonText();
-    if (msg) { msg.style.display='block'; msg.style.color='var(--gold)'; msg.textContent='⚠️ No se pudo descargar. Mira el error abajo y usa "Copiar / ver JSON" mientras tanto.'; setTimeout(()=>msg.style.display='none',5000); }
   }
+  // ── IMPORTANTE: que a.click() no lance error NO significa que el archivo
+  //    se haya guardado de verdad — en el WebView de Android esto puede
+  //    "funcionar" sin error y no guardar nada en ningún lado visible.
+  //    Por eso ya NO marcamos esto como confirmado, y siempre mostramos
+  //    el texto real como respaldo garantizado. ──
+  if (msg) {
+    msg.style.display='block';
+    msg.style.color='var(--gold)';
+    msg.textContent = intentoOk
+      ? '⚠️ Se intentó descargar, pero no podemos confirmar si tu dispositivo guardó el archivo. Aquí tienes el respaldo garantizado en texto:'
+      : '⚠️ La descarga automática falló. Aquí tienes el respaldo garantizado en texto:';
+    setTimeout(()=>msg.style.display='none',7000);
+  }
+  openJsonText();
 }
 
 /* ── Ver / copiar el respaldo como texto plano ──
