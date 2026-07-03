@@ -1243,7 +1243,7 @@ function diagnosticoCapacitor(){
     lineas.push('Plugins registrados ('+plugins.length+'): '+(plugins.join(', ')||'ninguno'));
     lineas.push('Filesystem disponible: '+(!!(window.Capacitor.Plugins&&window.Capacitor.Plugins.Filesystem)));
     lineas.push('Share disponible: '+(!!(window.Capacitor.Plugins&&window.Capacitor.Plugins.Share)));
-    lineas.push('FileSharer disponible: '+(!!(window.Capacitor.Plugins&&window.Capacitor.Plugins.CapacitorFileSharer)));
+    lineas.push('FileSharer disponible: '+(!!(window.Capacitor.Plugins&&window.Capacitor.Plugins.FileSharer)));
     lineas.push('DownloadSaver disponible: '+(!!(window.Capacitor.Plugins&&window.Capacitor.Plugins.DownloadSaver)));
   }
   lineas.push('navigator.canShare: '+(!!navigator.canShare));
@@ -1263,8 +1263,8 @@ function exportBackup() {
   // "Mis archivos/Descargas", Google Drive, Gmail, etc.
   // Plugin: @byteowls/capacitor-filesharer v6.0.0
   if (window.Capacitor && window.Capacitor.Plugins &&
-      window.Capacitor.Plugins.CapacitorFileSharer) {
-    window.Capacitor.Plugins.CapacitorFileSharer.share({
+      window.Capacitor.Plugins.FileSharer) {
+    window.Capacitor.Plugins.FileSharer.share({
       filename: fileName,
       contentType: 'application/json',
       base64Data: btoa(unescape(encodeURIComponent(json)))
