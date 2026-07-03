@@ -443,6 +443,7 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
         <p style="font-size:11.5px;color:var(--text-dim);line-height:1.7;margin-bottom:12px">Descarga un archivo <strong style="color:var(--text)">.json</strong> con toda tu información. Guárdalo en Google Drive o WhatsApp.</p>
         <div style="background:rgba(0,2,16,0.52);border:1px solid rgba(48,98,172,0.2);border-radius:6px;padding:10px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:12px;font-weight:700" id="bk-resumen">—</div><div style="font-size:9.5px;color:var(--text-dim);margin-top:2px" id="bk-fecha">—</div></div><div style="font-size:24px">🗄️</div></div>
         <button class="btn btn-s" style="width:100%;justify-content:center" onclick="exportBackup()">⬇️ Descargar respaldo JSON</button>
+        <button class="btn btn-o" style="width:100%;justify-content:center;margin-top:8px" onclick="openJsonText()">📋 Copiar / ver JSON como texto</button>
         <div id="export-msg" style="margin-top:8px;font-size:11px;text-align:center;display:none"></div>
       </div>
       <div class="card"><div class="ct" style="color:var(--aero-bright)">📥 Importar respaldo</div>
@@ -485,6 +486,22 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
     <div class="modal-body">
       <button class="btn btn-p btn-sm" style="margin-bottom:12px" onclick="addOrador()">＋ Agregar orador</button>
       <div id="oradores-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: VER / COPIAR JSON -->
+<div class="mo" id="modal-jsontext">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-titlebar">
+      <div class="modal-title">📋 Respaldo en texto</div>
+      <button class="btn btn-o btn-sm" style="padding:2px 8px" onclick="closeJsonText()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:11px;color:var(--text-dim);line-height:1.6;margin-bottom:8px">Toca "Copiar" o selecciona todo el texto manualmente y pégalo en Notas, WhatsApp o un documento para guardarlo aparte.</p>
+      <textarea id="jsontext-area" readonly onclick="this.select()" style="width:100%;height:260px;font-family:monospace;font-size:10px;background:rgba(0,2,16,0.6);color:var(--text);border:1px solid rgba(68,118,212,0.3);border-radius:6px;padding:8px;resize:vertical"></textarea>
+      <button class="btn btn-p" style="width:100%;justify-content:center;margin-top:10px" onclick="copyJsonText()">📋 Copiar al portapapeles</button>
+      <div id="jsontext-msg" style="margin-top:8px;font-size:11px;text-align:center;display:none"></div>
     </div>
   </div>
 </div>
@@ -761,6 +778,11 @@ function renderHome(){
         ${remResumen}
       </div>
       ${!c.fecha?'<div style="font-size:9.5px;color:var(--danger);margin-top:4px">⚠️ Primero configura la fecha de próxima visita en el campo de arriba</div>':''}
+    </div>
+    <div class="abox" style="background:rgba(10,28,68,0.5);border:1px solid rgba(68,118,212,0.25);border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="font-size:10px;font-weight:700;color:var(--aero-bright);letter-spacing:1px;margin-bottom:7px">📅 PRÓXIMA VISITA PROGRAMADA</div>
+      <input type="date" value="${c.fecha||''}" onclick="event.stopPropagation()" onchange="event.stopPropagation();updCong(${c.id},'fecha',this.value);renderHome();" style="width:100%"/>
+      <div style="font-size:9.5px;color:var(--text-dim);margin-top:5px">Actualiza esta fecha después de cada visita para que el orden "En curso" y "Próxima visita" reflejen la realidad.</div>
     </div>
     <div class="abox"><div class="blbl">📋 Puntos para la agenda</div><textarea rows="3" placeholder="Temas a tratar…" onchange="updCong(${c.id},'puntosAgenda',this.value)">${c.puntosAgenda||''}</textarea></div><div class="obox"><div class="blbl">📝 Observaciones</div><textarea rows="3" placeholder="Notas generales…" onchange="updCong(${c.id},'observaciones',this.value)">${c.observaciones||''}</textarea></div><div class="slbl">Historial de visitas</div>${vs}</div>`;
     list.appendChild(div);
@@ -1198,7 +1220,17 @@ function exportBackup() {
     }).then(() => {
       if (msg) { msg.style.display='block'; msg.style.color='var(--green)'; msg.textContent='✅ Respaldo listo para guardar.'; setTimeout(()=>msg.style.display='none',3500); }
     }).catch(e => {
-      if (!e.message?.includes('cancel')) console.error('Capacitor export:', e);
+      if (e.message?.includes('cancel')) return; // el usuario cerró el diálogo de compartir, no es error
+      console.error('Capacitor export falló, usando respaldo alterno:', e);
+      // ── Nunca fallar en silencio: intentamos compartir solo el TEXTO (no requiere FileProvider) ──
+      if (window.Capacitor.Plugins.Share) {
+        window.Capacitor.Plugins.Share.share({ title: 'Respaldo SuperCircuitoApp', text: json, dialogTitle: 'Guardar respaldo' })
+          .then(()=>{ if(msg){msg.style.display='block';msg.style.color='var(--green)';msg.textContent='✅ Respaldo compartido como texto.';setTimeout(()=>msg.style.display='none',3500);} })
+          .catch(()=>{ openJsonText(); if(msg){msg.style.display='block';msg.style.color='var(--gold)';msg.textContent='⚠️ No se pudo compartir el archivo. Usa "Copiar / ver JSON".';setTimeout(()=>msg.style.display='none',5000);} });
+      } else {
+        openJsonText();
+        if (msg) { msg.style.display='block'; msg.style.color='var(--gold)'; msg.textContent='⚠️ No se pudo guardar el archivo. Usa "Copiar / ver JSON".'; setTimeout(()=>msg.style.display='none',5000); }
+      }
     });
     return;
   }
@@ -1231,12 +1263,43 @@ function tryBlobDownload(json, fileName, msg) {
     URL.revokeObjectURL(url);
     if (msg) { msg.style.display='block'; msg.style.color='var(--green)'; msg.textContent='✅ Respaldo descargado correctamente.'; setTimeout(()=>msg.style.display='none',3500); }
   } catch(e) {
-    // ── Fallback final: copiar JSON al portapapeles ──
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(json).then(() => {
-        if (msg) { msg.style.display='block'; msg.style.color='var(--gold)'; msg.textContent='⚠️ No se pudo descargar. JSON copiado al portapapeles — pégalo en un .txt.'; setTimeout(()=>msg.style.display='none',5000); }
-      });
-    }
+    // ── Fallback final: siempre mostrar el JSON en pantalla para copiar manualmente ──
+    console.error('Blob download falló:', e);
+    openJsonText();
+    if (msg) { msg.style.display='block'; msg.style.color='var(--gold)'; msg.textContent='⚠️ No se pudo descargar. Usa "Copiar / ver JSON".'; setTimeout(()=>msg.style.display='none',5000); }
+  }
+}
+
+/* ── Ver / copiar el respaldo como texto plano ──
+   No depende de Filesystem, Share ni navigator.clipboard (que a veces
+   falla en el WebView de Android). El textarea siempre funciona porque
+   usa selección de texto nativa del navegador. */
+function openJsonText(){
+  const json = JSON.stringify(data, null, 2);
+  const area = document.getElementById('jsontext-area');
+  if (area) area.value = json;
+  document.getElementById('modal-jsontext').classList.add('open');
+}
+function closeJsonText(){
+  document.getElementById('modal-jsontext').classList.remove('open');
+}
+function copyJsonText(){
+  const area = document.getElementById('jsontext-area');
+  const msg = document.getElementById('jsontext-msg');
+  const showOk = ()=>{ if(msg){msg.style.display='block';msg.style.color='var(--green)';msg.textContent='✅ Copiado al portapapeles.';setTimeout(()=>msg.style.display='none',3000);} };
+  const showManual = ()=>{
+    area.focus(); area.select();
+    if(msg){msg.style.display='block';msg.style.color='var(--gold)';msg.textContent='⚠️ Copia automática no disponible. Ya seleccioné el texto — usa "mantener presionado → copiar".';setTimeout(()=>msg.style.display='none',6000);}
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(area.value).then(showOk).catch(()=>{
+      // ── Fallback: execCommand con selección real (funciona en WebView aunque falle la Clipboard API) ──
+      area.focus(); area.select();
+      try{ document.execCommand('copy')?showOk():showManual(); }catch(e){ showManual(); }
+    });
+  } else {
+    area.focus(); area.select();
+    try{ document.execCommand('copy')?showOk():showManual(); }catch(e){ showManual(); }
   }
 }
 function importBackup(input) {
