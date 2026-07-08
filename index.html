@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<title>Super CircuitoApp — Vista Edition v2.6</title>
+<title>Super CircuitoApp — Vista Edition v6.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -1660,6 +1660,10 @@ renderHome();
   // 3. INICIALIZAR — API compat: firebase.initializeApp / firebase.firestore()
   const app = firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
+  // Evita que campos "undefined" (comunes al crecer la estructura de datos
+  // con módulos nuevos: pastoreo, nombramientos, act_prog, etc.) rompan
+  // silenciosamente el .set() de subida.
+  db.settings({ ignoreUndefinedProperties: true });
   window.db = db;
 
   // 4. REFERENCIA EXCLUSIVA PARA ESTA APP (misma colección/documento)
@@ -1728,12 +1732,30 @@ renderHome();
       try { datosParaGuardar._ts = parseInt(localStorage.getItem('sca_ts')) || Date.now(); } catch(e) { datosParaGuardar._ts = Date.now(); }
     }
 
+    // Aviso preventivo: Firestore rechaza documentos de más de ~1 MiB.
+    try {
+      const tamBytes = new Blob([JSON.stringify(datosParaGuardar)]).size;
+      if (tamBytes > 900000) {
+        console.warn('Documento cercano/superando el límite de Firestore (1 MiB): ' + tamBytes + ' bytes');
+        if (typeof showToast === 'function') {
+          showToast('⚠️', 'Datos muy grandes', 'La subida a la nube puede estar fallando por tamaño (' + Math.round(tamBytes/1024) + ' KB). Contacta soporte.');
+        }
+      }
+    } catch(e) {}
+
     appConfigRef.set(datosParaGuardar, { merge: true })
       .then(() => {
         console.log("¡Datos subidos con éxito a SuperCircuitoApp!");
+        localStorage.setItem('sca_ultima_subida_ok', new Date().toLocaleString('es-MX'));
       })
       .catch((error) => {
         console.error("Error al subir:", error);
+        if (typeof mostrarErrorTecnico === 'function') {
+          mostrarErrorTecnico('Error al subir a la nube', error);
+        }
+        if (typeof showToast === 'function') {
+          showToast('❌', 'No se pudo subir a la nube', (error && error.message) ? error.message : 'Error desconocido');
+        }
       });
   };
 </script>
