@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<title>Super CircuitoApp — Vista Edition v6.1</title>
+<title>Super CircuitoApp — Vista Edition v6.3</title>
 <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -1711,6 +1711,27 @@ renderHome();
 
       // Aplicar datos recibidos al estado local
       if (datosEnLaNube.congregaciones) {
+        // ── CANDADO ANTI-PÉRDIDA DE DATOS ──
+        // Si la nube trae MENOS congregaciones o MENOS visitas totales que
+        // lo que ya hay en este dispositivo, NO se aplica automáticamente
+        // (evita que un dato vacío/de fábrica de otro dispositivo borre
+        // información real). En vez de eso, se avisa y se vuelve a subir
+        // lo local para que "gane" en la próxima comparación de nube.
+        const nuevoTotalCong = datosEnLaNube.congregaciones.length;
+        const nuevoTotalVis = datosEnLaNube.congregaciones.reduce((a,c)=>a+((c.visitas&&c.visitas.length)||0),0);
+        const localTotalCong = data.congregaciones.length;
+        const localTotalVis = data.congregaciones.reduce((a,c)=>a+((c.visitas&&c.visitas.length)||0),0);
+        const pareceMenor = localTotalCong > 0 && (nuevoTotalCong < localTotalCong || (nuevoTotalCong === localTotalCong && nuevoTotalVis < localTotalVis));
+
+        if (pareceMenor) {
+          console.warn('Datos de la nube tienen menos información ('+nuevoTotalCong+' cong / '+nuevoTotalVis+' visitas) que lo local ('+localTotalCong+' cong / '+localTotalVis+' visitas). NO se aplica automáticamente.');
+          if (typeof showToast === 'function') {
+            showToast('⚠️', 'Posible pérdida de datos evitada', 'La nube tenía menos información que este dispositivo. No se sobrescribió. Se volvió a subir tu información local.');
+          }
+          if (window.guardarEnLaNube) { window.guardarEnLaNube({ congregaciones: data.congregaciones }); }
+          return;
+        }
+
         data.congregaciones = datosEnLaNube.congregaciones;
         try {
           localStorage.setItem(SK, JSON.stringify(data));
