@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<title>Super CircuitoApp — Vista Edition v6.7</title>
+<title>Super CircuitoApp — Vista Edition v7.0</title>
 <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -245,7 +245,7 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
     <div class="topbar-inner">
       <div class="topbar-logo">
         <div class="logo-icon">🔵</div>
-        <div><div>SUPER CIRCUITO APP</div><div class="logo-sub">Vista Edition v6.7</div></div>
+        <div><div>SUPER CIRCUITO APP</div><div class="logo-sub">Vista Edition v7.0</div></div>
       </div>
       <button class="gemini-btn" onclick="openGemini()"><span style="font-size:12px">✨</span> Gemini IA</button>
       <div class="sdot" id="sdot"></div>
@@ -294,6 +294,16 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
       </div>
 
       <div class="tpanel active" id="tab-asistencia">
+        <div class="card"><div class="ct" style="color:var(--green)">🎯 Semana de Visita — Meta de Asistencia</div>
+          <div class="grid2">
+            <div class="field"><label>Martes — Asistencia real</label><input type="number" id="sv-entresem" onchange="setVF('semvis_entresem',this.value);calcCumplSemVis()"/></div>
+            <div class="field"><label>Meta Fin de Semana</label><input type="number" id="sv-meta" onchange="setVF('semvis_meta',this.value);calcCumplSemVis()"/></div>
+          </div>
+          <div class="field"><label>Fin de Semana — Asistencia real</label><input type="number" id="sv-finde" onchange="setVF('semvis_finde',this.value);calcCumplSemVis()"/></div>
+          <div class="prom-box" style="margin-top:8px">
+            <div style="grid-column:span 2"><div class="pv" id="sv-cumpl" style="color:var(--green);font-size:28px">—</div><div class="pl">Cumplimiento de meta</div></div>
+          </div>
+        </div>
         <div class="card">
           <div class="ct">Reuniones de Congregación</div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
@@ -403,6 +413,7 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
         </div>
         <div class="card"><div class="ct" style="color:var(--gold)">🍽 Alimentos</div><div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap"><div class="vista-toggle" onclick="toggleAlim('des')"><div class="toggle-dot" id="tog-des-dot"><div class="toggle-knob" id="tog-des-knob"></div></div><span style="font-size:10.5px;font-weight:700;color:#5ce875">☀️ Desayunos</span></div><div class="vista-toggle" onclick="toggleAlim('cen')"><div class="toggle-dot" id="tog-cen-dot"><div class="toggle-knob" id="tog-cen-knob"></div></div><span style="font-size:10.5px;font-weight:700;color:var(--purple)">🌙 Cenas</span></div></div><div style="overflow-x:auto"><table class="ft"><thead id="alim-thead"><tr></tr></thead><tbody id="alim-tbody"></tbody></table></div><button class="btn btn-o btn-sm" style="margin-top:6px;border-style:dashed" onclick="addAlimDay()">＋ Agregar día</button></div>
         <div class="card"><div class="ct" style="color:var(--aero-glow)">🚶 Servicio del Campo</div><div style="overflow-x:auto"><table class="ft"><thead><tr><th>Día</th><th>Lugar</th><th>Hora</th><th>Publicador</th><th>Actividad</th><th></th></tr></thead><tbody id="campo-tbody"></tbody></table></div><button class="btn btn-o btn-sm" style="margin-top:6px" onclick="addCampoRow()">＋ Agregar día</button></div>
+        <div class="card"><div class="ct" style="color:var(--purple)">🚶 Servicio del Campo — Esposa</div><div style="overflow-x:auto"><table class="ft"><thead><tr><th>Día</th><th>Lugar</th><th>Hora</th><th>Publicador</th><th>Actividad</th><th></th></tr></thead><tbody id="campo-esposa-tbody"></tbody></table></div><button class="btn btn-o btn-sm" style="margin-top:6px" onclick="addCampoEsposaRow()">＋ Agregar día</button></div>
         <div class="card"><div class="ct" style="color:var(--green)">🏠 Hospedaje</div><div class="field"><label>Familia / Persona anfitriona</label><input type="text" id="hosp-nombre" placeholder="Nombre del anfitrión…" onchange="setVF('hosp_nombre',this.value)"/></div><div class="field"><label>Dirección</label><input type="text" id="hosp-dir" placeholder="Calle, número, colonia…" onchange="setVF('hosp_dir',this.value)"/></div><div class="field"><label>Teléfono</label><input type="tel" id="hosp-tel" placeholder="Número de contacto…" onchange="setVF('hosp_tel',this.value)"/></div></div>
       </div>
 
@@ -659,6 +670,7 @@ function emptyOrador(){const sk={};SKILL_GROUPS.forEach(g=>g.items.forEach(it=>{
 function emptyVisita(){
   return{id:Date.now(),fecha:new Date().toISOString().slice(0,10),semanas:6,
   eb:['','','','','',''],rp:['','','','','',''],cmp_eb6:'',cmp_rp6:'',cmp_eb1:'',cmp_rp1:'',
+  semvis_entresem:'',semvis_meta:'',semvis_finde:'',semvis_cumpl:'',
   act:[{cursos:'',informan:''},{cursos:'',informan:''},{cursos:'',informan:''},{cursos:'',informan:''},{cursos:'',informan:''},{cursos:'',informan:''}],
   fin_saldo_ini:'',fin:[{ok:'',cg:'',gs:''},{ok:'',cg:'',gs:''},{ok:'',cg:'',gs:''},{ok:'',cg:'',gs:''},{ok:'',cg:'',gs:''},{ok:'',cg:'',gs:''}],
   mant_saldo_ini:'',mant:[{ing:'',gs:'',desc:''},{ing:'',gs:'',desc:''},{ing:'',gs:'',desc:''},{ing:'',gs:'',desc:''},{ing:'',gs:'',desc:''},{ing:'',gs:'',desc:''}],
@@ -668,6 +680,7 @@ function emptyVisita(){
   show_des:false,show_cen:false,act_prog:[],
   alimentos:[{dia:'Martes',desayuno:'',comida:'',cena:''},{dia:'Miércoles',desayuno:'',comida:'',cena:''},{dia:'Jueves',desayuno:'',comida:'',cena:''},{dia:'Viernes',desayuno:'',comida:'',cena:''},{dia:'Sábado',desayuno:'',comida:'',cena:''},{dia:'Domingo',desayuno:'',comida:'',cena:''}],
   campo:[{dia:'Miércoles',lugar:'',hora:'',publicador:'',actividad:''},{dia:'Jueves',lugar:'',hora:'',publicador:'',actividad:''},{dia:'Viernes',lugar:'',hora:'',publicador:'',actividad:''},{dia:'Sábado',lugar:'',hora:'',publicador:'',actividad:''},{dia:'Domingo',lugar:'',hora:'',publicador:'',actividad:''}],
+  campoEsposa:[{dia:'Miércoles',lugar:'',hora:'',publicador:'',actividad:''},{dia:'Jueves',lugar:'',hora:'',publicador:'',actividad:''},{dia:'Viernes',lugar:'',hora:'',publicador:'',actividad:''},{dia:'Sábado',lugar:'',hora:'',publicador:'',actividad:''},{dia:'Domingo',lugar:'',hora:'',publicador:'',actividad:''}],
   hosp_nombre:'',hosp_dir:'',hosp_tel:'',informe:'',adicionales:'',
   analisis:{regulares:'',irregulares:'',conRevisita:'',irregRevisita:'',sinRevisita:'',conEstudio:'',irregEstudio:'',sinEstudio:'',menosDiez:'',publNuevos:'',precAux:'',precReg:'',ancianos:'',ministeriales:'',inactivos:'',censurados:'',expulsados:'',desasociados:'',readmitidos:'',reactivados:'',recienBautizados:'',bautizados:'',noBautizados:''}};
 }
@@ -865,8 +878,19 @@ function renderWeeks(){
   document.getElementById('cmp-eb').textContent=avg(v.eb.slice(0,n2));document.getElementById('cmp-rp').textContent=avg(v.rp.slice(0,n2));
   document.getElementById('cmp-eb-6').value=v.cmp_eb6||'';document.getElementById('cmp-rp-6').value=v.cmp_rp6||'';
   document.getElementById('cmp-eb-1').value=v.cmp_eb1||'';document.getElementById('cmp-rp-1').value=v.cmp_rp1||'';
+  document.getElementById('sv-entresem').value=v.semvis_entresem||'';document.getElementById('sv-meta').value=v.semvis_meta||'';document.getElementById('sv-finde').value=v.semvis_finde||'';
+  document.getElementById('sv-cumpl').textContent=(v.semvis_cumpl!==''&&v.semvis_cumpl!=null)?v.semvis_cumpl+'%':'—';
 }
 function setWk(f,i,val){const v=gv();if(!v)return;v[f][i]=val;save();const n2=parseInt(document.getElementById('v-semanas').value)||6;document.getElementById('cmp-eb').textContent=avg(v.eb.slice(0,n2));document.getElementById('cmp-rp').textContent=avg(v.rp.slice(0,n2));}
+function calcCumplSemVis(){
+  const v=gv();if(!v)return;
+  const meta=parseFloat(v.semvis_meta),finde=parseFloat(v.semvis_finde);
+  const el=document.getElementById('sv-cumpl');if(!el)return;
+  if(!meta||isNaN(meta)||isNaN(finde)){el.textContent='—';v.semvis_cumpl='';save();return;}
+  const pct=Math.round((finde/meta)*100);
+  el.textContent=pct+'%';
+  v.semvis_cumpl=pct;save();
+}
 
 /* ══ PREDICACIÓN ══ */
 function renderActTable(){
@@ -932,7 +956,7 @@ function setAna(k,val){const v=gv();if(!v)return;v.analisis[k]=val;save();}
 
 /* ══ FIX #2: STATS — solo congregaciones con datos para la visita seleccionada ══ */
 let curMetric='asistencia';
-let statsVisitaIdx=-1;
+let statsVisitaIdx=0;
 
 function getVisitaForStats(c){
   if(statsVisitaIdx<0)return c.visitas.length?c.visitas[c.visitas.length-1]:undefined;
@@ -956,7 +980,7 @@ function renderStats(){
     totNuevos+=nv(v.analisis?.publNuevos);
   });
 
-  let selOpts='<option value="-1">Última visita</option>';
+  let selOpts='';
   for(let i=0;i<maxVis;i++) selOpts+=`<option value="${i}"${statsVisitaIdx===i?' selected':''}>Visita ${i+1}</option>`;
 
   document.getElementById('stats-sub').textContent=congs.length+' congregaciones · '+tV+' visitas';
@@ -1431,7 +1455,7 @@ function delNomb(i){const v=gv();if(!v)return;v.nombramientos.splice(i,1);save()
 /* ══ ACTIVIDADES ══ */
 function renderActividades(v){
   if(!v)return;
-  renderActProg(v);renderAlimentos(v);renderCampo(v);
+  renderActProg(v);renderAlimentos(v);renderCampo(v);renderCampoEsposa(v);
   const hn=document.getElementById('hosp-nombre');if(hn)hn.value=v.hosp_nombre||'';
   const hd=document.getElementById('hosp-dir');if(hd)hd.value=v.hosp_dir||'';
   const ht=document.getElementById('hosp-tel');if(ht)ht.value=v.hosp_tel||'';
@@ -1503,6 +1527,13 @@ function renderCampo(v){
 function setCampo(i,f,val){const v=gv();if(!v)return;v.campo[i][f]=val;save();}
 function addCampoRow(){const v=gv();if(!v)return;if(!v.campo)v.campo=[];v.campo.push({dia:'',lugar:'',hora:'',publicador:'',actividad:''});save();renderCampo(v);}
 function delCampoRow(i){const v=gv();if(!v)return;v.campo.splice(i,1);save();renderCampo(v);}
+function renderCampoEsposa(v){
+  if(!v)return;const tb=document.getElementById('campo-esposa-tbody');if(!tb)return;tb.innerHTML='';
+  (v.campoEsposa||[]).forEach((r,i)=>{tb.innerHTML+=`<tr><td><input type="text" value="${r.dia||''}" style="width:70px" onchange="setCampoEsposa(${i},'dia',this.value)"/></td><td><input type="text" value="${r.lugar||''}" onchange="setCampoEsposa(${i},'lugar',this.value)"/></td><td><input type="time" value="${r.hora||''}" style="width:80px" onchange="setCampoEsposa(${i},'hora',this.value)"/></td><td><input type="text" value="${r.publicador||''}" onchange="setCampoEsposa(${i},'publicador',this.value)"/></td><td><input type="text" value="${r.actividad||''}" onchange="setCampoEsposa(${i},'actividad',this.value)"/></td><td><button class="btn btn-d btn-sm" onclick="delCampoEsposaRow(${i})">✕</button></td></tr>`;});
+}
+function setCampoEsposa(i,f,val){const v=gv();if(!v)return;v.campoEsposa[i][f]=val;save();}
+function addCampoEsposaRow(){const v=gv();if(!v)return;if(!v.campoEsposa)v.campoEsposa=[];v.campoEsposa.push({dia:'',lugar:'',hora:'',publicador:'',actividad:''});save();renderCampoEsposa(v);}
+function delCampoEsposaRow(i){const v=gv();if(!v)return;v.campoEsposa.splice(i,1);save();renderCampoEsposa(v);}
 
 /* ══ ORADORES ══ */
 let _oradCid=null;
