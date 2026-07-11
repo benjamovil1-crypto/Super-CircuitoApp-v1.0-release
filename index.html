@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<title>Super CircuitoApp — Vista Edition v7.0</title>
+<title>Super CircuitoApp — Vista Edition v7.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -85,6 +85,13 @@ body::after{content:'';position:fixed;bottom:0;left:0;right:0;height:22vh;pointe
 .vi{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(13,48,128,0.26),rgba(4,18,58,0.36));border:1px solid rgba(68,128,212,0.2);border-radius:6px;padding:6px 10px;margin-bottom:4px;}
 .vd{font-size:10.5px;color:var(--aero-glow);font-weight:700;font-family:monospace;}.vm{flex:1;font-size:9.5px;color:var(--text-dim);}
 .slbl{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);font-weight:700;margin-bottom:4px;}
+.s10c{background:linear-gradient(135deg,rgba(192,132,252,0.10),rgba(58,10,98,0.22));border:1px solid rgba(192,132,252,0.28);border-radius:7px;overflow:hidden;margin-bottom:6px;}
+.s10c.open{border-color:rgba(192,132,252,0.5);}
+.s10h{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;user-select:none;}
+.s10-arr{color:var(--text-dim);font-size:8.5px;transition:transform .18s;}
+.s10c.open .s10-arr{transform:rotate(180deg);}
+.s10body{display:none;padding:2px 10px 10px;border-top:1px solid rgba(192,132,252,0.18);}
+.s10c.open .s10body{display:block;}
 .ftabs{display:flex;gap:2px;flex-wrap:wrap;margin:10px 0 2px;background:rgba(0,0,0,0.55);border:1px solid rgba(58,118,188,0.2);border-radius:6px;padding:3px;}
 .tp{padding:4px 9px;border-radius:3px;font-size:10.5px;font-weight:700;cursor:pointer;border:1px solid transparent;color:var(--text-dim);transition:all .11s;background:transparent;}
 .tp:hover{background:rgba(48,108,188,0.16);color:var(--aero-bright);}
@@ -245,7 +252,7 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
     <div class="topbar-inner">
       <div class="topbar-logo">
         <div class="logo-icon">🔵</div>
-        <div><div>SUPER CIRCUITO APP</div><div class="logo-sub">Vista Edition v7.0</div></div>
+        <div><div>SUPER CIRCUITO APP</div><div class="logo-sub">Vista Edition v7.1</div></div>
       </div>
       <button class="gemini-btn" onclick="openGemini()"><span style="font-size:12px">✨</span> Gemini IA</button>
       <div class="sdot" id="sdot"></div>
@@ -285,6 +292,7 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
       <div class="ftabs">
         <div class="tp active" onclick="stab('asistencia',this)">📋 Asistencia</div>
         <div class="tp" onclick="stab('actividad',this)">📖 Predicación</div>
+        <div class="tp" onclick="stab('prec',this)">🎯 P. R.</div>
         <div class="tp" onclick="stab('finanzas',this)">💰 Finanzas</div>
         <div class="tp" onclick="stab('mantenimiento',this)">🔧 Mantenimiento</div>
         <div class="tp" onclick="stab('analisis',this)">📊 Análisis</div>
@@ -336,6 +344,22 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
             <div><div class="pv" id="tot-informan" style="color:var(--aero-glow)">—</div><div class="pl">Prom. pub./mes</div></div>
             <div style="grid-column:span 2;border-top:1px solid rgba(68,128,192,0.2);padding-top:8px;margin-top:2px">
               <div class="pv" id="prom-est" style="color:var(--green);font-size:28px">—</div><div class="pl">Cursos ÷ publicadores</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tpanel" id="tab-prec">
+        <div class="card"><div class="ct">P. R. — Cursos, informan y horas por mes</div>
+          <div style="overflow-x:auto"><table class="wt"><thead><tr><th>Mes</th><th>Cursos bíblicos</th><th>Informan</th><th>Horas</th></tr></thead><tbody id="prec-tbody"></tbody></table></div>
+          <button class="btn btn-o btn-sm" style="margin-top:6px" onclick="addPrecRow()">＋ Mes</button>
+        </div>
+        <div class="card"><div class="ct">Resumen semestral</div>
+          <div class="prom-box">
+            <div><div class="pv" id="prec-tot-cursos" style="color:var(--aero-bright)">—</div><div class="pl">Prom. cursos/mes</div></div>
+            <div><div class="pv" id="prec-tot-informan" style="color:var(--aero-glow)">—</div><div class="pl">Prom. informan</div></div>
+            <div style="grid-column:span 2;border-top:1px solid rgba(68,128,192,0.2);padding-top:8px;margin-top:2px">
+              <div class="pv" id="prec-tot-horas" style="color:var(--green);font-size:28px">—</div><div class="pl">Prom. horas/mes</div>
             </div>
           </div>
         </div>
@@ -632,9 +656,9 @@ async function cancelLocalNotif(id){
 const SK='sca_v4';
 const SK_PREV=['sca_v3','sca_v2'];
 let data={congregaciones:[
-  {id:1,nombre:'12 de Octubre',ciudad:'Mochicahui',fecha:'2024-01-15',puntosAgenda:'',observaciones:'',visitas:[],oradores:[]},
-  {id:2,nombre:'Centro',ciudad:'Los Mochis',fecha:'2024-01-15',puntosAgenda:'',observaciones:'',visitas:[],oradores:[]},
-  {id:3,nombre:'Norte',ciudad:'Guasave',fecha:'2024-02-01',puntosAgenda:'',observaciones:'',visitas:[],oradores:[]},
+  {id:1,nombre:'12 de Octubre',ciudad:'Mochicahui',fecha:'2024-01-15',puntosAgenda:'',observaciones:'',visitas:[],oradores:[],s10:[]},
+  {id:2,nombre:'Centro',ciudad:'Los Mochis',fecha:'2024-01-15',puntosAgenda:'',observaciones:'',visitas:[],oradores:[],s10:[]},
+  {id:3,nombre:'Norte',ciudad:'Guasave',fecha:'2024-02-01',puntosAgenda:'',observaciones:'',visitas:[],oradores:[],s10:[]},
 ]};
 (function migrateAndLoad(){
   try{const s=localStorage.getItem(SK);if(s){const p=JSON.parse(s);if(p&&p.congregaciones){data=p;data.congregaciones.forEach(c=>{if(!c.oradores)c.oradores=[];});return;}}}catch(e){}
@@ -672,6 +696,7 @@ function emptyVisita(){
   eb:['','','','','',''],rp:['','','','','',''],cmp_eb6:'',cmp_rp6:'',cmp_eb1:'',cmp_rp1:'',
   semvis_entresem:'',semvis_meta:'',semvis_finde:'',semvis_cumpl:'',
   act:[{cursos:'',informan:''},{cursos:'',informan:''},{cursos:'',informan:''},{cursos:'',informan:''},{cursos:'',informan:''},{cursos:'',informan:''}],
+  prec:[{cursos:'',informan:'',horas:''},{cursos:'',informan:'',horas:''},{cursos:'',informan:'',horas:''},{cursos:'',informan:'',horas:''},{cursos:'',informan:'',horas:''},{cursos:'',informan:'',horas:''}],
   fin_saldo_ini:'',fin:[{ok:'',cg:'',gs:''},{ok:'',cg:'',gs:''},{ok:'',cg:'',gs:''},{ok:'',cg:'',gs:''},{ok:'',cg:'',gs:''},{ok:'',cg:'',gs:''}],
   mant_saldo_ini:'',mant:[{ing:'',gs:'',desc:''},{ing:'',gs:'',desc:''},{ing:'',gs:'',desc:''},{ing:'',gs:'',desc:''},{ing:'',gs:'',desc:''},{ing:'',gs:'',desc:''}],
   reu_vm_dia:'Martes',reu_vm_hora:'',reu_vm_pres:'',reu_vm_can1:'',reu_vm_can2:'',reu_vm_can3:'',reu_vm_oracion:'',asig_vm:[],
@@ -682,7 +707,7 @@ function emptyVisita(){
   campo:[{dia:'Miércoles',lugar:'',hora:'',publicador:'',actividad:''},{dia:'Jueves',lugar:'',hora:'',publicador:'',actividad:''},{dia:'Viernes',lugar:'',hora:'',publicador:'',actividad:''},{dia:'Sábado',lugar:'',hora:'',publicador:'',actividad:''},{dia:'Domingo',lugar:'',hora:'',publicador:'',actividad:''}],
   campoEsposa:[{dia:'Miércoles',lugar:'',hora:'',publicador:'',actividad:''},{dia:'Jueves',lugar:'',hora:'',publicador:'',actividad:''},{dia:'Viernes',lugar:'',hora:'',publicador:'',actividad:''},{dia:'Sábado',lugar:'',hora:'',publicador:'',actividad:''},{dia:'Domingo',lugar:'',hora:'',publicador:'',actividad:''}],
   hosp_nombre:'',hosp_dir:'',hosp_tel:'',informe:'',adicionales:'',
-  analisis:{regulares:'',irregulares:'',conRevisita:'',irregRevisita:'',sinRevisita:'',conEstudio:'',irregEstudio:'',sinEstudio:'',menosDiez:'',publNuevos:'',precAux:'',precReg:'',ancianos:'',ministeriales:'',inactivos:'',censurados:'',expulsados:'',desasociados:'',readmitidos:'',reactivados:'',recienBautizados:'',bautizados:'',noBautizados:''}};
+  analisis:{regulares:'',irregulares:'',conRevisita:'',irregRevisita:'',sinRevisita:'',conEstudio:'',irregEstudio:'',sinEstudio:'',menosDiez:'',publNuevos:'',precAux:'',precReg:'',ancianos:'',ministeriales:'',inactivos:'',censurados:'',expulsados:'',desasociados:'',readmitidos:'',reactivados:'',recienBautizados:'',bautizados:'',noBautizados:'',tcPublicadores:'',tcAuxiliares:'',tcRegulares:''}};
 }
 
 /* ══ NAV ══ */
@@ -773,6 +798,16 @@ function renderHome(){
   congs.forEach(c=>{
     const div=document.createElement('div');div.className='ci';div.id='ci-'+c.id;
     const vs=[...c.visitas].reverse().map(v=>`<div class="vi"><div class="vd">${v.fecha}</div><div class="vm">EB: ${avg(v.eb)} · RP: ${avg(v.rp)}</div><button class="btn btn-o btn-sm" onclick="event.stopPropagation();openVisita(${c.id},${v.id})">Abrir</button><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delVisita(${c.id},${v.id})">✕</button></div>`).join('')||'<div style="font-size:10.5px;color:var(--text-dim);padding:5px 0">Sin visitas registradas.</div>';
+    const s10html=[...(c.s10||[])].reverse().map(s=>`<div class="s10c" id="s10c-${c.id}-${s.id}"><div class="s10h" onclick="event.stopPropagation();toggleS10(${c.id},${s.id})"><div style="flex:1"><div style="font-weight:700;font-size:12px;color:#e0c3ff">📋 ${s.anio||'Año sin definir'}</div><div style="font-size:9.5px;color:var(--text-dim)">Asistencia: ${s.asistProm||'—'} · Activos: ${s.activos||'—'}</div></div><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delS10(${c.id},${s.id})">✕</button><span class="s10-arr">▼</span></div><div class="s10body">
+      <div class="grid2"><div class="field"><label>Año de servicio</label><input type="text" placeholder="2025–2026" value="${s.anio||''}" onchange="setS10(${c.id},${s.id},'anio',this.value)"/></div><div class="field"><label>Fecha de envío</label><input type="date" value="${s.fechaEnvio||''}" onchange="setS10(${c.id},${s.id},'fechaEnvio',this.value)"/></div></div>
+      <div class="grid2"><div class="field"><label>Prom. asistencia reuniones</label><input type="number" value="${s.asistProm||''}" onchange="setS10(${c.id},${s.id},'asistProm',this.value)"/></div><div class="field"><label>Publicadores activos</label><input type="number" value="${s.activos||''}" onchange="setS10(${c.id},${s.id},'activos',this.value)"/></div></div>
+      <div class="grid2"><div class="field"><label>Inactivos</label><input type="number" value="${s.inactivos||''}" onchange="setS10(${c.id},${s.id},'inactivos',this.value)"/></div><div class="field"><label>Reactivados</label><input type="number" value="${s.reactivados||''}" onchange="setS10(${c.id},${s.id},'reactivados',this.value)"/></div></div>
+      <div class="grid2"><div class="field"><label>Publicadores sordos</label><input type="number" value="${s.sordos||''}" onchange="setS10(${c.id},${s.id},'sordos',this.value)"/></div><div class="field"><label>Publicadores ciegos</label><input type="number" value="${s.ciegos||''}" onchange="setS10(${c.id},${s.id},'ciegos',this.value)"/></div></div>
+      <div class="field"><label>Publicadores encarcelados</label><input type="number" value="${s.encarcelados||''}" onchange="setS10(${c.id},${s.id},'encarcelados',this.value)"/></div>
+      <div class="grid2"><div class="field"><label>Total de territorios</label><input type="number" value="${s.territoriosTotal||''}" onchange="setS10(${c.id},${s.id},'territoriosTotal',this.value)"/></div><div class="field"><label>Territorios sin abarcar</label><input type="number" value="${s.territoriosSin||''}" onchange="setS10(${c.id},${s.id},'territoriosSin',this.value)"/></div></div>
+      <div class="field"><label>¿Aceptaría ayuda de la sucursal?</label><select onchange="setS10(${c.id},${s.id},'ayudaSucursal',this.value)"><option value=""${!s.ayudaSucursal?' selected':''}>—</option><option value="Sí"${s.ayudaSucursal==='Sí'?' selected':''}>Sí</option><option value="No"${s.ayudaSucursal==='No'?' selected':''}>No</option><option value="N-A"${s.ayudaSucursal==='N-A'?' selected':''}>N-A</option></select></div>
+      <div class="field"><label>Observaciones</label><textarea rows="2" onchange="setS10(${c.id},${s.id},'observaciones',this.value)">${s.observaciones||''}</textarea></div>
+    </div></div>`).join('')||'<div style="font-size:10.5px;color:var(--text-dim);padding:5px 0">Sin años S-10 registrados.</div>';
     const no=c.oradores?.length||0;
     const rem=c.reminder;
     const remActivo=rem!==undefined&&rem!==null;
@@ -813,7 +848,8 @@ function renderHome(){
       <input type="date" value="${c.fecha||''}" onclick="event.stopPropagation()" onchange="event.stopPropagation();updCong(${c.id},'fecha',this.value);renderHome();" style="width:100%"/>
       <div style="font-size:9.5px;color:var(--text-dim);margin-top:5px">Actualiza esta fecha después de cada visita para que el orden "En curso" y "Próxima visita" reflejen la realidad.</div>
     </div>
-    <div class="abox"><div class="blbl">📋 Puntos para la agenda</div><textarea rows="3" placeholder="Temas a tratar…" onchange="updCong(${c.id},'puntosAgenda',this.value)">${c.puntosAgenda||''}</textarea></div><div class="obox"><div class="blbl">📝 Observaciones</div><textarea rows="3" placeholder="Notas generales…" onchange="updCong(${c.id},'observaciones',this.value)">${c.observaciones||''}</textarea></div><div class="slbl">Historial de visitas</div>${vs}</div>`;
+    <div class="abox"><div class="blbl">📋 Puntos para la agenda</div><textarea rows="3" placeholder="Temas a tratar…" onchange="updCong(${c.id},'puntosAgenda',this.value)">${c.puntosAgenda||''}</textarea></div><div class="obox"><div class="blbl">📝 Observaciones</div><textarea rows="3" placeholder="Notas generales…" onchange="updCong(${c.id},'observaciones',this.value)">${c.observaciones||''}</textarea></div><div class="slbl">Historial de visitas</div>${vs}
+    <div class="slbl" style="margin-top:10px;display:flex;align-items:center;justify-content:space-between"><span>📋 Historial S-10</span><button class="btn btn-o btn-sm" onclick="event.stopPropagation();addS10(${c.id})">＋ Nuevo año</button></div>${s10html}</div>`;
     list.appendChild(div);
   });
 }
@@ -825,12 +861,16 @@ function toggleEnCurso(id){
 }
 function updCong(id,f,v){const c=data.congregaciones.find(x=>x.id===id);if(c){c[f]=v;save();}}
 function delCong(id){if(!confirm('¿Eliminar esta congregación?'))return;data.congregaciones=data.congregaciones.filter(c=>c.id!==id);save();renderHome();}
+function toggleS10(cid,sid){const el=document.getElementById('s10c-'+cid+'-'+sid);if(el)el.classList.toggle('open');}
+function addS10(cid){const c=data.congregaciones.find(x=>x.id===cid);if(!c)return;if(!c.s10)c.s10=[];c.s10.push({id:Date.now(),anio:'',fechaEnvio:'',asistProm:'',activos:'',inactivos:'',reactivados:'',sordos:'',ciegos:'',encarcelados:'',territoriosTotal:'',territoriosSin:'',ayudaSucursal:'',observaciones:''});save();renderHome();}
+function setS10(cid,sid,f,val){const c=data.congregaciones.find(x=>x.id===cid);if(!c||!c.s10)return;const s=c.s10.find(x=>x.id===sid);if(s){s[f]=val;save();}}
+function delS10(cid,sid){if(!confirm('¿Eliminar este año S-10?'))return;const c=data.congregaciones.find(x=>x.id===cid);if(!c)return;c.s10=(c.s10||[]).filter(x=>x.id!==sid);save();renderHome();}
 function delVisita(cid,vid){const c=data.congregaciones.find(x=>x.id===cid);if(c){c.visitas=c.visitas.filter(v=>v.id!==vid);save();renderHome();}}
 function openModal(){document.getElementById('modal').classList.add('open');}
 function closeModal(){document.getElementById('modal').classList.remove('open');}
 function saveCong(){
   const nombre=document.getElementById('m-nombre').value.trim();if(!nombre)return;
-  data.congregaciones.push({id:Date.now(),nombre,ciudad:document.getElementById('m-ciudad').value,fecha:document.getElementById('m-fecha').value,puntosAgenda:'',observaciones:'',visitas:[],oradores:[]});
+  data.congregaciones.push({id:Date.now(),nombre,ciudad:document.getElementById('m-ciudad').value,fecha:document.getElementById('m-fecha').value,puntosAgenda:'',observaciones:'',visitas:[],oradores:[],s10:[]});
   save();closeModal();renderHome();
   ['m-nombre','m-ciudad','m-fecha'].forEach(id=>document.getElementById(id).value='');
 }
@@ -849,7 +889,7 @@ function openVisita(congId,visitaId){
   document.getElementById('v-semanas').value=v.semanas||6;
   document.querySelectorAll('#page-visita .tp').forEach((p,i)=>p.classList.toggle('active',i===0));
   document.querySelectorAll('.tpanel').forEach((p,i)=>p.classList.toggle('active',i===0));
-  renderWeeks();renderActTable();renderFinRows();renderMantRows();renderAnalisis(v);renderInforme(v);renderReunion(v);renderActividades(v);
+  renderWeeks();renderActTable();renderPrecTable();renderFinRows();renderMantRows();renderAnalisis(v);renderInforme(v);renderReunion(v);renderActividades(v);
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-visita').classList.add('active');
@@ -864,6 +904,7 @@ function stab(name,el){
   if(name==='actividad')renderActTable();if(name==='finanzas')renderFinRows();
   if(name==='mantenimiento')renderMantRows();if(name==='informe')renderInforme(gv());
   if(name==='reunion')renderReunion(gv());if(name==='actividades')renderActividades(gv());
+  if(name==='prec')renderPrecTable();
 }
 
 /* ══ ASISTENCIA ══ */
@@ -905,6 +946,16 @@ function renderActTable(){
 }
 function setAct(i,f,val){const v=gv();if(!v)return;v.act[i][f]=val;save();renderActTable();}
 function addActRow(){const v=gv();if(!v)return;v.act.push({cursos:'',informan:''});save();renderActTable();}
+function renderPrecTable(){
+  const v=gv();if(!v)return;if(!v.prec||!v.prec.length)v.prec=[{cursos:'',informan:'',horas:''}];
+  const tb=document.getElementById('prec-tbody');tb.innerHTML='';
+  v.prec.forEach((r,i)=>{tb.innerHTML+=`<tr><td>${meses[i]||'Mes '+(i+1)}</td><td><input type="number" value="${r.cursos||''}" onchange="setPrec(${i},'cursos',this.value)" style="text-align:center"/></td><td><input type="number" value="${r.informan||''}" onchange="setPrec(${i},'informan',this.value)" style="text-align:center"/></td><td><input type="number" value="${r.horas||''}" onchange="setPrec(${i},'horas',this.value)" style="text-align:center"/></td></tr>`;});
+  const pc=avgNZ(v.prec.map(r=>r.cursos)),pi=avgNZ(v.prec.map(r=>r.informan)),ph=avgNZ(v.prec.map(r=>r.horas));
+  tb.innerHTML+=`<tr class="tr"><td>Promedio</td><td style="text-align:center">${pc}</td><td style="text-align:center">${pi}</td><td style="text-align:center">${ph}</td></tr>`;
+  document.getElementById('prec-tot-cursos').textContent=pc;document.getElementById('prec-tot-informan').textContent=pi;document.getElementById('prec-tot-horas').textContent=ph;save();
+}
+function setPrec(i,f,val){const v=gv();if(!v)return;v.prec[i][f]=val;save();renderPrecTable();}
+function addPrecRow(){const v=gv();if(!v)return;v.prec.push({cursos:'',informan:'',horas:''});save();renderPrecTable();}
 
 /* ══ FINANZAS ══ */
 function renderFinRows(){
@@ -951,8 +1002,19 @@ function renderAnalisis(v){
   ];
   const wrap=document.getElementById('analisis-sections');wrap.innerHTML='';
   secs.forEach(s=>{const card=document.createElement('div');card.className='card';card.innerHTML=`<div class="ct">${s.t}</div><div class="agrid">${s.i.map(([k,l])=>`<div class="ai"><label>${l}</label><input type="number" value="${v.analisis[k]||''}" onchange="setAna('${k}',this.value)"/></div>`).join('')}</div>`;wrap.appendChild(card);});
+  if(!v.analisis.tcPublicadores)v.analisis.tcPublicadores=ultimoConDato(v.act,'cursos');
+  if(!v.analisis.tcRegulares)v.analisis.tcRegulares=ultimoConDato(v.prec,'cursos');
+  const suma=(parseFloat(v.analisis.tcPublicadores)||0)+(parseFloat(v.analisis.tcAuxiliares)||0)+(parseFloat(v.analisis.tcRegulares)||0);
+  const tc=document.createElement('div');tc.className='card';
+  tc.innerHTML=`<div class="ct" style="color:var(--gold)">📚 Total de Cursos — Mes Más Reciente</div><div class="agrid">
+    <div class="ai"><label>Publicadores</label><input type="number" value="${v.analisis.tcPublicadores||''}" onchange="setAna('tcPublicadores',this.value);renderAnalisis(gv())"/></div>
+    <div class="ai"><label>Prec. Auxiliares</label><input type="number" value="${v.analisis.tcAuxiliares||''}" onchange="setAna('tcAuxiliares',this.value);renderAnalisis(gv())"/></div>
+    <div class="ai"><label>Prec. Regulares</label><input type="number" value="${v.analisis.tcRegulares||''}" onchange="setAna('tcRegulares',this.value);renderAnalisis(gv())"/></div>
+  </div><div class="prom-box" style="margin-top:8px"><div style="grid-column:span 2"><div class="pv" style="color:var(--gold);font-size:28px">${suma||'—'}</div><div class="pl">Total combinado</div></div></div>`;
+  wrap.appendChild(tc);save();
 }
 function setAna(k,val){const v=gv();if(!v)return;v.analisis[k]=val;save();}
+function ultimoConDato(arr,campo){if(!arr)return'';for(let i=arr.length-1;i>=0;i--){if(arr[i][campo]!==''&&arr[i][campo]!=null)return arr[i][campo];}return'';}
 
 /* ══ FIX #2: STATS — solo congregaciones con datos para la visita seleccionada ══ */
 let curMetric='asistencia';
