@@ -860,12 +860,12 @@ function toggleEnCurso(id){
   save();renderHome();
 }
 function updCong(id,f,v){const c=data.congregaciones.find(x=>x.id===id);if(c){c[f]=v;save();}}
-function delCong(id){if(!confirm('¿Eliminar esta congregación?'))return;data.congregaciones=data.congregaciones.filter(c=>c.id!==id);save();renderHome();}
+function delCong(id){if(!confirm('⚠️ Confirma acción: BORRAR\n\n¿Eliminar esta congregación?'))return;data.congregaciones=data.congregaciones.filter(c=>c.id!==id);save();renderHome();}
 function toggleS10(cid,sid){const el=document.getElementById('s10c-'+cid+'-'+sid);if(el)el.classList.toggle('open');}
 function addS10(cid){const c=data.congregaciones.find(x=>x.id===cid);if(!c)return;if(!c.s10)c.s10=[];c.s10.push({id:Date.now(),anio:'',fechaEnvio:'',asistProm:'',activos:'',inactivos:'',reactivados:'',sordos:'',ciegos:'',encarcelados:'',territoriosTotal:'',territoriosSin:'',ayudaSucursal:'',observaciones:''});save();renderHome();}
 function setS10(cid,sid,f,val){const c=data.congregaciones.find(x=>x.id===cid);if(!c||!c.s10)return;const s=c.s10.find(x=>x.id===sid);if(s){s[f]=val;save();}}
-function delS10(cid,sid){if(!confirm('¿Eliminar este año S-10?'))return;const c=data.congregaciones.find(x=>x.id===cid);if(!c)return;c.s10=(c.s10||[]).filter(x=>x.id!==sid);save();renderHome();}
-function delVisita(cid,vid){const c=data.congregaciones.find(x=>x.id===cid);if(c){c.visitas=c.visitas.filter(v=>v.id!==vid);save();renderHome();}}
+function delS10(cid,sid){if(!confirm('⚠️ Confirma acción: BORRAR\n\n¿Eliminar este año S-10?'))return;const c=data.congregaciones.find(x=>x.id===cid);if(!c)return;c.s10=(c.s10||[]).filter(x=>x.id!==sid);save();renderHome();}
+function delVisita(cid,vid){if(!confirm('⚠️ Confirma acción: BORRAR\n\n¿Eliminar esta visita?'))return;const c=data.congregaciones.find(x=>x.id===cid);if(c){c.visitas=c.visitas.filter(v=>v.id!==vid);save();renderHome();}}
 function openModal(){document.getElementById('modal').classList.add('open');}
 function closeModal(){document.getElementById('modal').classList.remove('open');}
 function saveCong(){
@@ -975,7 +975,7 @@ function renderFinTotals(){
 }
 function setFin(type,i,f,val){const v=gv();if(!v)return;v[type][i][f]=val;save();if(type==='fin')renderFinRows();if(type==='mant')renderMantRows();}
 function addFinRow(type){const v=gv();if(!v)return;if(type==='fin'){v.fin.push({ok:'',cg:'',gs:''});save();renderFinRows();}if(type==='mant'){v.mant.push({ing:'',gs:'',desc:''});save();renderMantRows();}}
-function delFinRow(type,i){const v=gv();if(!v)return;v[type].splice(i,1);save();if(type==='fin')renderFinRows();if(type==='mant')renderMantRows();}
+function delFinRow(type,i){if(!confirm('⚠️ Confirma acción: BORRAR\n\n¿Eliminar este registro?'))return;const v=gv();if(!v)return;v[type].splice(i,1);save();if(type==='fin')renderFinRows();if(type==='mant')renderMantRows();}
 function renderMantRows(){
   const v=gv();if(!v)return;const tb=document.getElementById('mant-tbody');tb.innerHTML='';
   v.mant.forEach((r,i)=>{tb.innerHTML+=`<tr><td style="color:var(--text-dim);font-size:9.5px">${meses[i]||'Mes '+(i+1)}</td><td><input type="number" value="${r.ing||''}" onchange="setFin('mant',${i},'ing',this.value)"/></td><td><input type="number" value="${r.gs||''}" onchange="setFin('mant',${i},'gs',this.value)"/></td><td><input type="text" value="${r.desc||''}" placeholder="Opcional" onchange="setFin('mant',${i},'desc',this.value)"/></td><td><button class="btn btn-d btn-sm" onclick="delFinRow('mant',${i})">✕</button></td></tr>`;});
@@ -1498,21 +1498,21 @@ function renderAsigList(type,v){
   });
 }
 function setAsig(type,i,f,val){const v=gv();if(!v)return;const key='asig_'+type;v[key][i][f]=val;save();renderAsigList(type,v);}
-function delAsig(type,i){const v=gv();if(!v)return;const key='asig_'+type;v[key].splice(i,1);save();renderAsigList(type,v);}
+function delAsig(type,i){if(!confirm('⚠️ Confirma acción: BORRAR\n\n¿Eliminar esta asignación?'))return;const v=gv();if(!v)return;const key='asig_'+type;v[key].splice(i,1);save();renderAsigList(type,v);}
 function addPastoreo(){const v=gv();if(!v)return;if(!v.pastoreo)v.pastoreo=[];v.pastoreo.push({familia:'',fecha:'',hora:'',acompanante:'',nota:''});save();renderPastoreo(v);}
 function renderPastoreo(v){
   const list=document.getElementById('pastoreo-list');if(!list)return;list.innerHTML='';
   (v.pastoreo||[]).forEach((p,i)=>{list.innerHTML+=`<div style="background:rgba(13,68,28,0.2);border:1px solid rgba(48,148,68,0.2);border-radius:6px;padding:8px;margin-bottom:6px"><div class="grid2"><div class="field"><label>Familia</label><input type="text" value="${p.familia||''}" onchange="setPast(${i},'familia',this.value)"/></div><div class="field"><label>Fecha</label><input type="date" value="${p.fecha||''}" onchange="setPast(${i},'fecha',this.value)"/></div></div><div class="grid2"><div class="field"><label>Hora</label><input type="time" value="${p.hora||''}" onchange="setPast(${i},'hora',this.value)"/></div><div class="field"><label>Acompañante</label><input type="text" value="${p.acompanante||''}" placeholder="Nombre…" onchange="setPast(${i},'acompanante',this.value)"/></div></div><div class="field"><label>Nota / Motivo</label><input type="text" value="${p.nota||''}" placeholder="Breve descripción…" onchange="setPast(${i},'nota',this.value)"/></div><button class="btn btn-d btn-sm" onclick="delPast(${i})">✕ Eliminar</button></div>`;});
 }
 function setPast(i,f,val){const v=gv();if(!v)return;v.pastoreo[i][f]=val;save();}
-function delPast(i){const v=gv();if(!v)return;v.pastoreo.splice(i,1);save();renderPastoreo(v);}
+function delPast(i){if(!confirm('⚠️ Confirma acción: BORRAR\n\n¿Eliminar este registro de pastoreo?'))return;const v=gv();if(!v)return;v.pastoreo.splice(i,1);save();renderPastoreo(v);}
 function addNombramiento(){const v=gv();if(!v)return;if(!v.nombramientos)v.nombramientos=[];v.nombramientos.push({nombre:'',tipo:'',nota:''});save();renderNombramientos(v);}
 function renderNombramientos(v){
   const list=document.getElementById('nombramientos-list');if(!list)return;list.innerHTML='';
   (v.nombramientos||[]).forEach((n,i)=>{list.innerHTML+=`<div style="background:rgba(148,108,0,0.1);border:1px solid rgba(188,138,0,0.2);border-radius:6px;padding:8px;margin-bottom:6px"><div class="grid2"><div class="field"><label>Nombre</label><input type="text" value="${n.nombre||''}" onchange="setNomb(${i},'nombre',this.value)"/></div><div class="field"><label>Tipo</label><select onchange="setNomb(${i},'tipo',this.value)"><option ${n.tipo==='Anciano'?'selected':''}>Anciano</option><option ${n.tipo==='Ministerial'?'selected':''}>Ministerial</option><option ${n.tipo==='Precursor Regular'?'selected':''}>Precursor Regular</option><option ${n.tipo==='Precursor Auxiliar'?'selected':''}>Precursor Auxiliar</option></select></div></div><div class="field"><label>Nota</label><input type="text" value="${n.nota||''}" placeholder="Observación…" onchange="setNomb(${i},'nota',this.value)"/></div><button class="btn btn-d btn-sm" onclick="delNomb(${i})">✕ Eliminar</button></div>`;});
 }
 function setNomb(i,f,val){const v=gv();if(!v)return;v.nombramientos[i][f]=val;save();}
-function delNomb(i){const v=gv();if(!v)return;v.nombramientos.splice(i,1);save();renderNombramientos(v);}
+function delNomb(i){if(!confirm('⚠️ Confirma acción: BORRAR\n\n¿Eliminar este nombramiento?'))return;const v=gv();if(!v)return;v.nombramientos.splice(i,1);save();renderNombramientos(v);}
 
 /* ══ ACTIVIDADES ══ */
 function renderActividades(v){
@@ -1548,7 +1548,7 @@ async function reprogramarAP(v,i){
 }
 function setAP(i,f,val){const v=gv();if(!v)return;v.act_prog[i][f]=val;save();reprogramarAP(v,i);}
 async function toggleAP(i){const v=gv();if(!v)return;v.act_prog[i].done=!v.act_prog[i].done;save();await reprogramarAP(v,i);renderActProg(v);}
-async function delAP(i){const v=gv();if(!v)return;await cancelLocalNotif(notifIdActProg(v.act_prog[i]));v.act_prog.splice(i,1);save();renderActProg(v);}
+async function delAP(i){if(!confirm('⚠️ Confirma acción: BORRAR\n\n¿Eliminar esta actividad/programa?'))return;const v=gv();if(!v)return;await cancelLocalNotif(notifIdActProg(v.act_prog[i]));v.act_prog.splice(i,1);save();renderActProg(v);}
 async function testNotif(){
   if(!tieneNotifNativas()){showToast('⚠️','Solo en la app instalada','Las notificaciones reales no funcionan en esta vista previa de navegador, solo dentro de la app instalada en tu Android.');return;}
   const when=new Date(Date.now()+5000);
@@ -1581,21 +1581,21 @@ function renderAlimentos(v){
 }
 function setAlim(i,f,val){const v=gv();if(!v)return;v.alimentos[i][f]=val;save();}
 function addAlimDay(){const v=gv();if(!v)return;if(!v.alimentos)v.alimentos=[];v.alimentos.push({dia:'Día',desayuno:'',comida:'',cena:''});save();renderAlimentos(v);}
-function delAlimDay(i){const v=gv();if(!v)return;v.alimentos.splice(i,1);save();renderAlimentos(v);}
+function delAlimDay(i){if(!confirm('⚠️ Confirma acción: BORRAR\n\n¿Eliminar este registro de alimentos?'))return;const v=gv();if(!v)return;v.alimentos.splice(i,1);save();renderAlimentos(v);}
 function renderCampo(v){
   if(!v)return;const tb=document.getElementById('campo-tbody');if(!tb)return;tb.innerHTML='';
   (v.campo||[]).forEach((r,i)=>{tb.innerHTML+=`<tr><td><input type="text" value="${r.dia||''}" style="width:70px" onchange="setCampo(${i},'dia',this.value)"/></td><td><input type="text" value="${r.lugar||''}" onchange="setCampo(${i},'lugar',this.value)"/></td><td><input type="time" value="${r.hora||''}" style="width:80px" onchange="setCampo(${i},'hora',this.value)"/></td><td><input type="text" value="${r.publicador||''}" onchange="setCampo(${i},'publicador',this.value)"/></td><td><input type="text" value="${r.actividad||''}" onchange="setCampo(${i},'actividad',this.value)"/></td><td><button class="btn btn-d btn-sm" onclick="delCampoRow(${i})">✕</button></td></tr>`;});
 }
 function setCampo(i,f,val){const v=gv();if(!v)return;v.campo[i][f]=val;save();}
 function addCampoRow(){const v=gv();if(!v)return;if(!v.campo)v.campo=[];v.campo.push({dia:'',lugar:'',hora:'',publicador:'',actividad:''});save();renderCampo(v);}
-function delCampoRow(i){const v=gv();if(!v)return;v.campo.splice(i,1);save();renderCampo(v);}
+function delCampoRow(i){if(!confirm('⚠️ Confirma acción: BORRAR\n\n¿Eliminar este registro de campo?'))return;const v=gv();if(!v)return;v.campo.splice(i,1);save();renderCampo(v);}
 function renderCampoEsposa(v){
   if(!v)return;const tb=document.getElementById('campo-esposa-tbody');if(!tb)return;tb.innerHTML='';
   (v.campoEsposa||[]).forEach((r,i)=>{tb.innerHTML+=`<tr><td><input type="text" value="${r.dia||''}" style="width:70px" onchange="setCampoEsposa(${i},'dia',this.value)"/></td><td><input type="text" value="${r.lugar||''}" onchange="setCampoEsposa(${i},'lugar',this.value)"/></td><td><input type="time" value="${r.hora||''}" style="width:80px" onchange="setCampoEsposa(${i},'hora',this.value)"/></td><td><input type="text" value="${r.publicador||''}" onchange="setCampoEsposa(${i},'publicador',this.value)"/></td><td><input type="text" value="${r.actividad||''}" onchange="setCampoEsposa(${i},'actividad',this.value)"/></td><td><button class="btn btn-d btn-sm" onclick="delCampoEsposaRow(${i})">✕</button></td></tr>`;});
 }
 function setCampoEsposa(i,f,val){const v=gv();if(!v)return;v.campoEsposa[i][f]=val;save();}
 function addCampoEsposaRow(){const v=gv();if(!v)return;if(!v.campoEsposa)v.campoEsposa=[];v.campoEsposa.push({dia:'',lugar:'',hora:'',publicador:'',actividad:''});save();renderCampoEsposa(v);}
-function delCampoEsposaRow(i){const v=gv();if(!v)return;v.campoEsposa.splice(i,1);save();renderCampoEsposa(v);}
+function delCampoEsposaRow(i){if(!confirm('⚠️ Confirma acción: BORRAR\n\n¿Eliminar este registro de campo (esposa)?'))return;const v=gv();if(!v)return;v.campoEsposa.splice(i,1);save();renderCampoEsposa(v);}
 
 /* ══ ORADORES ══ */
 let _oradCid=null;
@@ -1624,7 +1624,7 @@ function renderOradoresList(c){
   if(!c.oradores||!c.oradores.length)list.innerHTML='<div class="empty"><div class="ic">🎤</div><p>Sin oradores registrados.</p></div>';
 }
 function setOrador(i,f,val){const c=data.congregaciones.find(x=>x.id===_oradCid);if(!c)return;c.oradores[i][f]=val;save();renderOradoresList(c);}
-function delOrador(i){const c=data.congregaciones.find(x=>x.id===_oradCid);if(!c)return;c.oradores.splice(i,1);save();renderOradoresList(c);}
+function delOrador(i){if(!confirm('⚠️ Confirma acción: BORRAR\n\n¿Eliminar este orador?'))return;const c=data.congregaciones.find(x=>x.id===_oradCid);if(!c)return;c.oradores.splice(i,1);save();renderOradoresList(c);}
 function toggleSkill(oIdx,skill,el){
   const c=data.congregaciones.find(x=>x.id===_oradCid);if(!c)return;
   const o=c.oradores[oIdx];if(!o.skills)o.skills={};
