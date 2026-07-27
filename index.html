@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<title>Super CircuitoApp — Vista Edition v7.1</title>
+<title>Super CircuitoApp — Vista Edition v7.5</title>
 <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -252,7 +252,7 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
     <div class="topbar-inner">
       <div class="topbar-logo">
         <div class="logo-icon">🔵</div>
-        <div><div>SUPER CIRCUITO APP</div><div class="logo-sub">Vista Edition v7.1</div></div>
+        <div><div>SUPER CIRCUITO APP</div><div class="logo-sub">Vista Edition v7.5</div></div>
       </div>
       <button class="gemini-btn" onclick="openGemini()"><span style="font-size:12px">✨</span> Gemini IA</button>
       <div class="sdot" id="sdot"></div>
@@ -519,6 +519,17 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
       <div class="field"><label>Ciudad / Localidad</label><input type="text" id="m-ciudad" placeholder="Mochicahui"/></div>
       <div class="field"><label>Fecha de asignación</label><input type="date" id="m-fecha"/></div>
       <div class="row" style="margin-top:4px"><button class="btn btn-p" onclick="saveCong()">Guardar</button><button class="btn btn-o" onclick="closeModal()">Cancelar</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CORREGIR NOMBRE CONG -->
+<div class="mo" id="modal-editcong">
+  <div class="modal">
+    <div class="modal-titlebar"><div class="modal-title">✏️ Corregir nombre</div><button class="btn btn-o btn-sm" style="padding:2px 8px" onclick="closeEditCong()">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Nombre de la congregación</label><input type="text" id="ec-nombre" placeholder="Nombre correcto"/></div>
+      <div class="row" style="margin-top:4px"><button class="btn btn-p" onclick="saveEditCong()">Guardar</button><button class="btn btn-o" onclick="closeEditCong()">Cancelar</button></div>
     </div>
   </div>
 </div>
@@ -824,7 +835,7 @@ function renderHome(){
       else if(diff>0&&diff<=7)badgeHtml=`<span style="font-size:9px;background:rgba(100,180,255,0.18);color:var(--aero-bright);border:1px solid rgba(100,180,255,0.3);border-radius:8px;padding:1px 6px;margin-left:4px">en ${diff}d</span>`;
     }
 
-    div.innerHTML=`<div class="ch" onclick="toggleC(${c.id})"><div class="cb2">${c.nombre.slice(0,2).toUpperCase()}</div><div class="ci-info"><div class="ci-name">${c.enCurso?'<span style="font-size:9px;background:rgba(80,220,120,0.2);color:#6fe89a;border:1px solid rgba(80,220,120,0.4);border-radius:8px;padding:1px 6px;margin-right:4px">📍 AQUÍ AHORA</span>':''}${c.nombre}${badgeHtml}</div><div class="ci-meta">${c.ciudad}${c.fecha?' · '+c.fecha:''}</div></div><span class="ci-cnt">${c.visitas.length} visita${c.visitas.length!==1?'s':''}</span><span class="ci-arr">▼</span></div><div class="cbody"><div style="display:flex;gap:5px;margin:10px 0 8px;flex-wrap:wrap"><button class="btn ${c.enCurso?'btn-d':'btn-s'} btn-sm" onclick="event.stopPropagation();toggleEnCurso(${c.id})">${c.enCurso?'📍 Quitar "aquí ahora"':'📍 Marcar: estoy aquí ahora'}</button><button class="btn btn-p btn-sm" onclick="event.stopPropagation();newVisita(${c.id})">＋ Nueva visita</button><button class="btn btn-warn btn-sm" onclick="event.stopPropagation();openOradores(${c.id})">🎤 Oradores (${no})</button><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delCong(${c.id})">Eliminar</button></div>
+    div.innerHTML=`<div class="ch" onclick="toggleC(${c.id})"><div class="cb2">${c.nombre.slice(0,2).toUpperCase()}</div><div class="ci-info"><div class="ci-name">${c.enCurso?'<span style="font-size:9px;background:rgba(80,220,120,0.2);color:#6fe89a;border:1px solid rgba(80,220,120,0.4);border-radius:8px;padding:1px 6px;margin-right:4px">📍 AQUÍ AHORA</span>':''}${c.nombre}${badgeHtml}</div><div class="ci-meta">${c.ciudad}${c.fecha?' · '+c.fecha:''}</div></div><span class="ci-cnt">${c.visitas.length} visita${c.visitas.length!==1?'s':''}</span><span class="ci-arr">▼</span></div><div class="cbody"><div style="display:flex;gap:5px;margin:10px 0 8px;flex-wrap:wrap"><button class="btn ${c.enCurso?'btn-d':'btn-s'} btn-sm" onclick="event.stopPropagation();toggleEnCurso(${c.id})">${c.enCurso?'📍 Quitar "aquí ahora"':'📍 Marcar: estoy aquí ahora'}</button><button class="btn btn-p btn-sm" onclick="event.stopPropagation();newVisita(${c.id})">＋ Nueva visita</button><button class="btn btn-warn btn-sm" onclick="event.stopPropagation();openOradores(${c.id})">🎤 Oradores (${no})</button><button class="btn btn-o btn-sm" onclick="event.stopPropagation();openEditCong(${c.id})">✏️ Corregir nombre</button><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delCong(${c.id})">Eliminar</button></div>
     <div style="background:rgba(10,28,68,0.5);border:1px solid rgba(68,118,212,0.25);border-radius:8px;padding:10px;margin-bottom:8px">
       <div style="font-size:10px;font-weight:700;color:var(--gold);letter-spacing:1px;margin-bottom:7px">🔔 RECORDATORIO DE VISITA</div>
       <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
@@ -873,6 +884,21 @@ function saveCong(){
   data.congregaciones.push({id:Date.now(),nombre,ciudad:document.getElementById('m-ciudad').value,fecha:document.getElementById('m-fecha').value,puntosAgenda:'',observaciones:'',visitas:[],oradores:[],s10:[]});
   save();closeModal();renderHome();
   ['m-nombre','m-ciudad','m-fecha'].forEach(id=>document.getElementById(id).value='');
+}
+
+/* ══ CORREGIR NOMBRE DE CONGREGACIÓN (por si se anotó mal al crearla) ══ */
+let _ecId=null;
+function openEditCong(id){
+  const c=data.congregaciones.find(x=>x.id===id);if(!c)return;
+  _ecId=id;
+  document.getElementById('ec-nombre').value=c.nombre;
+  document.getElementById('modal-editcong').classList.add('open');
+}
+function closeEditCong(){document.getElementById('modal-editcong').classList.remove('open');}
+function saveEditCong(){
+  const nombre=document.getElementById('ec-nombre').value.trim();if(!nombre)return;
+  const c=data.congregaciones.find(x=>x.id===_ecId);if(!c)return;
+  c.nombre=nombre;save();closeEditCong();renderHome();
 }
 
 /* ══ VISITA ══ */
