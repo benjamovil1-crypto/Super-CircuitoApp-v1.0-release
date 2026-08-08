@@ -118,10 +118,10 @@ jobs:
           mkdir -p android/app/src/main/res/xml
           mkdir -p android/app/src/main/java/com/benjamovil/supercircuitoapp
 
-          # 2. Copiar archivos
+                    # 2. Copiar archivos
           cp widget-files/widget_layout.xml android/app/src/main/res/layout/
           cp widget-files/circuito_widget_info.xml android/app/src/main/res/xml/
-          cp widget-files/WidgetProvider.kt android/app/src/main/java/com/benjamovil/supercircuitoapp/
+          cp widget-files/WidgetProvider.java android/app/src/main/java/com/benjamovil/supercircuitoapp/
 
           # 3. Registrar en AndroidManifest
           M="android/app/src/main/AndroidManifest.xml"
