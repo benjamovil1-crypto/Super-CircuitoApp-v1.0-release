@@ -683,8 +683,69 @@ function save(){
   try{localStorage.setItem(SK,JSON.stringify(data));localStorage.setItem('sca_ts',_ts);}catch(e){}
   const d=document.getElementById('sdot');d.classList.add('on');setTimeout(()=>d.classList.remove('on'),1200);
   if(window.guardarEnLaNube){window.guardarEnLaNube({congregaciones:data.congregaciones,_ts});}
+  
+  // Actualizar el widget silenciosamente cada vez que se guarda algo
+  actualizarWidgetNativo();
 }
 
+async function actualizarWidgetNativo() {
+    if (!window.Capacitor || !window.Capacitor.Plugins.Preferences) return;
+    try {
+        const { Preferences } = window.Capacitor.Plugins;
+        
+        // 1. Buscar la congregación actual (Prioridad: 'En curso', luego la 'Abierta')
+        let cong = data.congregaciones.find(c => c.enCurso);
+        if (!cong && typeof cCid !== 'undefined' && cCid) cong = data.congregaciones.find(c => c.id === cCid);
+        if (!cong) return;
+        
+        // 2. Obtener la última visita registrada
+        if (!cong.visitas || cong.visitas.length === 0) return;
+        let visita = cong.visitas[cong.visitas.length - 1];
+        
+        // 3. Obtener el día de la semana actual
+        const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        const diaHoy = diasSemana[new Date().getDay()];
+        
+        // 4. Armar texto de Comida de HOY
+        let textoComida = "Libre / Sin asignar";
+        if (visita.alimentos) {
+            let alimHoy = visita.alimentos.find(a => a.dia === diaHoy);
+            if (alimHoy) {
+                let partes = [];
+                if (alimHoy.desayuno) partes.push(`Des: ${alimHoy.desayuno}`);
+                if (alimHoy.comida) partes.push(`Com: ${alimHoy.comida}`);
+                if (alimHoy.cena) partes.push(`Cen: ${alimHoy.cena}`);
+                if (partes.length > 0) textoComida = partes.join(" | ");
+            }
+        }
+        
+        // 5. Armar texto del Campo de HOY (Benjamín)
+        let textoBen = "-";
+        if (visita.campo) {
+            let campoHoy = visita.campo.find(c => c.dia === diaHoy);
+            if (campoHoy && (campoHoy.lugar || campoHoy.publicador)) {
+                textoBen = `${campoHoy.hora || ''} ${campoHoy.lugar || ''} ${campoHoy.publicador ? '('+campoHoy.publicador+')' : ''}`.trim();
+            }
+        }
+        
+        // 6. Armar texto del Campo de HOY (Beatriz)
+        let textoBety = "-";
+        if (visita.campoEsposa) {
+            let campoHoy = visita.campoEsposa.find(c => c.dia === diaHoy);
+            if (campoHoy && (campoHoy.lugar || campoHoy.publicador)) {
+                textoBety = `${campoHoy.hora || ''} ${campoHoy.lugar || ''} ${campoHoy.publicador ? '('+campoHoy.publicador+')' : ''}`.trim();
+            }
+        }
+        
+        // 7. Enviar los datos listos al widget
+        await Preferences.set({ key: 'comida_hoy', value: textoComida });
+        await Preferences.set({ key: 'grupo_benjamin', value: textoBen || "-" });
+        await Preferences.set({ key: 'grupo_beatriz', value: textoBety || "-" });
+    } catch (e) {
+        console.error("Error actualizando widget:", e);
+    }
+}
+  
 const nv=v=>parseFloat(v)||0;
 const avg=arr=>{const v=arr.map(nv).filter(x=>x>0);return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length):'—';};
 const avgNZ=arr=>{const v=arr.map(nv).filter(x=>x>0);return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):'—';};
@@ -1754,6 +1815,7 @@ async function copyPrompt(){
 /* ══ INICIO ══ */
 loadSortPref();
 renderHome();
+actualizarWidgetNativo(); // Actualiza el widget al abrir la app por si cambió de día
 </script>
 <!-- ═══════════════════════════════════════════════════════════
      FIREBASE COMPAT SDK — scripts normales <script src>, NO type=module
