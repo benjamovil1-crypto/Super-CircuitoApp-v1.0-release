@@ -93,7 +93,15 @@ jobs:
       #     Sin este paso la carpeta android/ nunca existe y todos los
       #     pasos siguientes (íconos, permisos, gradlew) fallan.
       # ─────────────────────────────────────────────────────────────
-      # 5d. Inyectar archivos del Widget nativo
+      
+      # ─────────────────────────────────────────────────────────────
+      # 5c. Plugin nativo: guardar en Descargas de verdad (MediaStore)
+      #     Filesystem.writeFile guarda en una carpeta privada de la app
+      #     (Android/data/...) que desde Android 11 el sistema OCULTA de
+      #     cualquier explorador de archivos — por diseño de Android, no      
+      # ─────────────────────────────────────────────────────────────
+
+# 5d. Inyectar archivos del Widget nativo
       # ─────────────────────────────────────────────────────────────
       - name: Inyectar archivos del Widget nativo
         run: |
@@ -132,12 +140,7 @@ jobs:
           echo "=== Verificando que gradlew exista ==="
           ls -la android/gradlew
 
-      # ─────────────────────────────────────────────────────────────
-      # 5c. Plugin nativo: guardar en Descargas de verdad (MediaStore)
-      #     Filesystem.writeFile guarda en una carpeta privada de la app
-      #     (Android/data/...) que desde Android 11 el sistema OCULTA de
-      #     cualquier explorador de archivos — por diseño de Android, no      
-      # ─────────────────────────────────────────────────────────────
+      
       # 6. Redimensionar y copiar íconos con Python + Pillow
       #    (garantiza los 5 tamaños correctos desde cualquier PNG)
       # ─────────────────────────────────────────────────────────────
