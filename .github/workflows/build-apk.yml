@@ -139,6 +139,49 @@ jobs:
       #     Filesystem.writeFile guarda en una carpeta privada de la app
       #     (Android/data/...) que desde Android 11 el sistema OCULTA de
       #     cualquier explorador de archivos — por diseño de Android, no
+
+      # ─────────────────────────────────────────────────────────────
+      # 5b. Generar/sincronizar el proyecto Android (Capacitor)
+      # ─────────────────────────────────────────────────────────────
+      - name: Generar proyecto Android
+        run: |
+          if [ ! -d "android" ]; then
+            echo "No existe android/ — creando plataforma con 'npx cap add android'"
+            npx cap add android
+          else
+            echo "android/ ya existe — sincronizando con 'npx cap sync android'"
+            npx cap sync android
+          fi
+          echo "=== Verificando que gradlew exista ==="
+          ls -la android/gradlew
+
+      # ─────────────────────────────────────────────────────────────
+      # 5d. Inyectar archivos del Widget nativo
+      # ─────────────────────────────────────────────────────────────
+      - name: Inyectar archivos del Widget nativo
+        run: |
+          echo "=== Inyectando archivos del widget ==="
+          
+          # 1. Crear directorios de destino
+          mkdir -p android/app/src/main/res/layout
+          mkdir -p android/app/src/main/res/xml
+          mkdir -p android/app/src/main/java/com/benjamovil/supercircuitoapp
+
+          # 2. Copiar archivos desde la carpeta widget-files
+          cp widget-files/widget_layout.xml android/app/src/main/res/layout/
+          cp widget-files/circuito_widget_info.xml android/app/src/main/res/xml/
+          cp widget-files/WidgetProvider.kt android/app/src/main/java/com/benjamovil/supercircuitoapp/
+
+          # 3. Registrar el Widget en el AndroidManifest.xml
+          M="android/app/src/main/AndroidManifest.xml"
+          WIDGET_RECEIVER='    <receiver android:name=".WidgetProvider" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/circuito_widget_info" /></receiver>'
+          
+          if ! grep -q "WidgetProvider" "$M"; then
+            sed -i "s|</application>|$WIDGET_RECEIVER\n</application>|" "$M"
+          fi
+          
+          echo "OK Widget inyectado correctamente"
+      
       # ─────────────────────────────────────────────────────────────
       # 6. Redimensionar y copiar íconos con Python + Pillow
       #    (garantiza los 5 tamaños correctos desde cualquier PNG)
