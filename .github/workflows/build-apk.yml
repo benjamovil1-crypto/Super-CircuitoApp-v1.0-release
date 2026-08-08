@@ -68,9 +68,7 @@ jobs:
           if [ "$SIZE" -lt 50000 ]; then
             echo "ERROR: index.html demasiado pequeño ($SIZE bytes)"
             exit 1
-          fi
-
-      # ─────────────────────────────────────────────────────────────
+          fi      # ─────────────────────────────────────────────────────────────
       # 5. Capacitor
       # ─────────────────────────────────────────────────────────────
       - name: Crear capacitor.config.json
@@ -90,44 +88,7 @@ jobs:
 
       # ─────────────────────────────────────────────────────────────
       # 5b. Generar/sincronizar el proyecto Android (Capacitor)
-      #     Sin este paso la carpeta android/ nunca existe y todos los
-      #     pasos siguientes (íconos, permisos, gradlew) fallan.
       # ─────────────────────────────────────────────────────────────
-      
-      # ─────────────────────────────────────────────────────────────
-      # 5c. Plugin nativo: guardar en Descargas de verdad (MediaStore)
-      #     Filesystem.writeFile guarda en una carpeta privada de la app
-      #     (Android/data/...) que desde Android 11 el sistema OCULTA de
-      #     cualquier explorador de archivos — por diseño de Android, no      
-      # ─────────────────────────────────────────────────────────────
-
-# 5d. Inyectar archivos del Widget nativo
-      # ─────────────────────────────────────────────────────────────
-      - name: Inyectar archivos del Widget nativo
-        run: |
-          echo "=== Inyectando archivos del widget ==="
-          
-          # 1. Crear directorios de destino
-          mkdir -p android/app/src/main/res/layout
-          mkdir -p android/app/src/main/res/xml
-          mkdir -p android/app/src/main/java/com/benjamovil/supercircuitoapp
-
-          # 2. Copiar archivos desde la carpeta widget-files
-          cp widget-files/widget_layout.xml android/app/src/main/res/layout/
-          cp widget-files/circuito_widget_info.xml android/app/src/main/res/xml/
-          cp widget-files/WidgetProvider.kt android/app/src/main/java/com/benjamovil/supercircuitoapp/
-
-          # 3. Registrar el Widget en el AndroidManifest.xml
-          M="android/app/src/main/AndroidManifest.xml"
-          WIDGET_RECEIVER='    <receiver android:name=".WidgetProvider" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/circuito_widget_info" /></receiver>'
-          
-          if ! grep -q "WidgetProvider" "$M"; then
-            sed -i "s|</application>|$WIDGET_RECEIVER\n</application>|" "$M"
-          fi
-          
-          echo "OK Widget inyectado correctamente"
-
-      
       - name: Generar proyecto Android
         run: |
           if [ ! -d "android" ]; then
@@ -140,9 +101,40 @@ jobs:
           echo "=== Verificando que gradlew exista ==="
           ls -la android/gradlew
 
-      
+      # ─────────────────────────────────────────────────────────────
+      # 5c. Plugin nativo: guardar en Descargas de verdad (MediaStore)
+      # ─────────────────────────────────────────────────────────────
+      # (Si tenías algún código extra en tu 5c original, va aquí, si no, puedes dejar este espacio)
+
+      # ─────────────────────────────────────────────────────────────
+      # 5d. Inyectar archivos del Widget nativo
+      # ─────────────────────────────────────────────────────────────
+      - name: Inyectar archivos del Widget nativo
+        run: |
+          echo "=== Inyectando archivos del widget ==="
+          
+          # 1. Crear directorios
+          mkdir -p android/app/src/main/res/layout
+          mkdir -p android/app/src/main/res/xml
+          mkdir -p android/app/src/main/java/com/benjamovil/supercircuitoapp
+
+          # 2. Copiar archivos
+          cp widget-files/widget_layout.xml android/app/src/main/res/layout/
+          cp widget-files/circuito_widget_info.xml android/app/src/main/res/xml/
+          cp widget-files/WidgetProvider.kt android/app/src/main/java/com/benjamovil/supercircuitoapp/
+
+          # 3. Registrar en AndroidManifest
+          M="android/app/src/main/AndroidManifest.xml"
+          WIDGET_RECEIVER='    <receiver android:name=".WidgetProvider" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/circuito_widget_info" /></receiver>'
+          
+          if ! grep -q "WidgetProvider" "$M"; then
+            sed -i "s|</application>|$WIDGET_RECEIVER\n</application>|" "$M"
+          fi
+          
+          echo "OK Widget inyectado correctamente"
+
+      # ─────────────────────────────────────────────────────────────
       # 6. Redimensionar y copiar íconos con Python + Pillow
-      #    (garantiza los 5 tamaños correctos desde cualquier PNG)
       # ─────────────────────────────────────────────────────────────
       - name: Instalar Pillow
         run: pip install Pillow --quiet
