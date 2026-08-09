@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<title>Super CircuitoApp — Vista Edition v7.5.2</title>
+<title>Super CircuitoApp — Vista Edition v7.5.3</title>
 <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -252,7 +252,7 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
     <div class="topbar-inner">
       <div class="topbar-logo">
         <div class="logo-icon">🔵</div>
-        <div><div>SUPER CIRCUITO APP</div><div class="logo-sub">Vista Edition v7.5.2</div></div>
+        <div><div>SUPER CIRCUITO APP</div><div class="logo-sub">Vista Edition v7.5.3</div></div>
       </div>
       <button class="gemini-btn" onclick="openGemini()"><span style="font-size:12px">✨</span> Gemini IA</button>
       <div class="sdot" id="sdot"></div>
@@ -684,7 +684,6 @@ function save(){
   const d=document.getElementById('sdot');d.classList.add('on');setTimeout(()=>d.classList.remove('on'),1200);
   if(window.guardarEnLaNube){window.guardarEnLaNube({congregaciones:data.congregaciones,_ts});}
   
-  // Actualizar el widget silenciosamente cada vez que se guarda algo
   actualizarWidgetNativo();
 }
 
@@ -693,21 +692,20 @@ async function actualizarWidgetNativo() {
     try {
         const { Preferences } = window.Capacitor.Plugins;
         
-        // 1. Buscar la congregación actual (Prioridad: 'En curso', luego la 'Abierta')
         let cong = data.congregaciones.find(c => c.enCurso);
         if (!cong && typeof cCid !== 'undefined' && cCid) cong = data.congregaciones.find(c => c.id === cCid);
         if (!cong) return;
         
-        // 2. Obtener la última visita registrada
+        const nombreCong = `📍 ${cong.nombre} (${cong.ciudad || 'Circuito'})`;
+        
         if (!cong.visitas || cong.visitas.length === 0) return;
         let visita = cong.visitas[cong.visitas.length - 1];
         
-        // 3. Obtener el día de la semana actual
+        const hoyIso = new Date().toISOString().slice(0, 10);
         const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
         const diaHoy = diasSemana[new Date().getDay()];
         
-        // 4. Armar texto de Comida de HOY
-        let textoComida = "Libre / Sin asignar";
+        let textoComida = "🍽️ Comida: Sin asignar";
         if (visita.alimentos) {
             let alimHoy = visita.alimentos.find(a => a.dia === diaHoy);
             if (alimHoy) {
@@ -715,28 +713,52 @@ async function actualizarWidgetNativo() {
                 if (alimHoy.desayuno) partes.push(`Des: ${alimHoy.desayuno}`);
                 if (alimHoy.comida) partes.push(`Com: ${alimHoy.comida}`);
                 if (alimHoy.cena) partes.push(`Cen: ${alimHoy.cena}`);
-                if (partes.length > 0) textoComida = partes.join(" | ");
+                if (partes.length > 0) textoComida = `🍽️ ${partes.join(" | ")}`;
             }
         }
         
-        // 5. Armar texto del Campo de HOY (Benjamín)
-        let textoBen = "-";
+        let textoPastoreo = "🏠 Pastoreo: Ninguno hoy";
+        if (visita.pastoreo) {
+            let pastHoy = visita.pastoreo.find(p => p.fecha === hoyIso);
+            if (pastHoy) {
+                textoPastoreo = `🏠 ${pastHoy.familia || 'Visita'} (${pastHoy.hora || 'Por definir'})`;
+            }
+        }
+        
+        let textoActividad = "🔔 Actividad: Ninguna";
+        if (visita.act_prog) {
+            let actHoy = visita.act_prog.find(a => a.dia === hoyIso && !a.done);
+            if (actHoy) {
+                textoActividad = `🔔 ${actHoy.label || 'Actividad'} (${actHoy.hora || ''})`;
+            }
+        }
+        
+        let textoBen = "Benjamín: -";
         if (visita.campo) {
             let campoHoy = visita.campo.find(c => c.dia === diaHoy);
             if (campoHoy && (campoHoy.lugar || campoHoy.publicador)) {
-                textoBen = `${campoHoy.hora || ''} ${campoHoy.lugar || ''} ${campoHoy.publicador ? '('+campoHoy.publicador+')' : ''}`.trim();
+                textoBen = `Benjamín: ${campoHoy.hora ? campoHoy.hora+' ' : ''}${campoHoy.lugar || ''} ${campoHoy.publicador ? '('+campoHoy.publicador+')' : ''}`.trim();
             }
         }
         
-        // 6. Armar texto del Campo de HOY (Beatriz)
-        let textoBety = "-";
+        let textoBety = "Beatriz: -";
         if (visita.campoEsposa) {
             let campoHoy = visita.campoEsposa.find(c => c.dia === diaHoy);
             if (campoHoy && (campoHoy.lugar || campoHoy.publicador)) {
-                textoBety = `${campoHoy.hora || ''} ${campoHoy.lugar || ''} ${campoHoy.publicador ? '('+campoHoy.publicador+')' : ''}`.trim();
+                textoBety = `Beatriz: ${campoHoy.hora ? campoHoy.hora+' ' : ''}${campoHoy.lugar || ''} ${campoHoy.publicador ? '('+campoHoy.publicador+')' : ''}`.trim();
             }
         }
         
+        await Preferences.set({ key: 'congregacion_nombre', value: nombreCong });
+        await Preferences.set({ key: 'comida_hoy', value: textoComida });
+        await Preferences.set({ key: 'pastoreo_hoy', value: textoPastoreo });
+        await Preferences.set({ key: 'actividad_hoy', value: textoActividad });
+        await Preferences.set({ key: 'grupo_benjamin', value: textoBen });
+        await Preferences.set({ key: 'grupo_beatriz', value: textoBety });
+    } catch (e) {
+        console.error("Error actualizando widget avanzado:", e);
+    }
+}      
         // 7. Enviar los datos listos al widget
         await Preferences.set({ key: 'comida_hoy', value: textoComida });
         await Preferences.set({ key: 'grupo_benjamin', value: textoBen || "-" });
