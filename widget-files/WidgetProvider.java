@@ -14,7 +14,6 @@ public class WidgetProvider extends AppWidgetProvider {
         try {
             SharedPreferences prefs = context.getSharedPreferences("CapacitorStorage", Context.MODE_PRIVATE);
             
-            // Extraer todos los datos del puente
             String congNombre = prefs.getString("congregacion_nombre", "Super CircuitoApp");
             String comida = prefs.getString("comida_hoy", "🍽️ Comida: Sin asignar");
             String pastoreo = prefs.getString("pastoreo_hoy", "🏠 Pastoreo: Ninguno hoy");
@@ -25,7 +24,6 @@ public class WidgetProvider extends AppWidgetProvider {
             for (int appWidgetId : appWidgetIds) {
                 RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_layout);
                 
-                // Inyectar en cada elemento visual
                 views.setTextViewText(R.id.tv_congregacion, congNombre);
                 views.setTextViewText(R.id.tv_comida, comida);
                 views.setTextViewText(R.id.tv_pastoreo, pastoreo);
@@ -33,7 +31,6 @@ public class WidgetProvider extends AppWidgetProvider {
                 views.setTextViewText(R.id.tv_grupo_benjamin, grupoBenjamin);
                 views.setTextViewText(R.id.tv_grupo_beatriz, grupoBeatriz);
 
-                // Acción de toque para abrir app
                 Intent intent = new Intent(context, MainActivity.class);
                 int flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
                 PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, flags);
