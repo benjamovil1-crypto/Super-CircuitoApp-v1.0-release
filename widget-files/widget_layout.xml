@@ -19,7 +19,8 @@
         android:ellipsize="end"
         android:maxLines="1" />
 
-    <View
+    <!-- Línea divisoria: LinearLayout en vez de View plano (View no es compatible con RemoteViews/widgets) -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="#264888"
