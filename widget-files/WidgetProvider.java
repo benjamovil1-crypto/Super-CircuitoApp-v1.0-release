@@ -11,25 +11,29 @@ import android.widget.RemoteViews;
 public class WidgetProvider extends AppWidgetProvider {
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
-        // El bloque try-catch actúa como escudo anti-cierres
         try {
-            // 1. Conectar con el puente de datos
             SharedPreferences prefs = context.getSharedPreferences("CapacitorStorage", Context.MODE_PRIVATE);
             
-            // 2. Extraer datos
-            String comida = prefs.getString("comida_hoy", "Sin alimento registrado");
-            String grupoBenjamin = prefs.getString("grupo_benjamin", "Sin registro");
-            String grupoBeatriz = prefs.getString("grupo_beatriz", "Sin registro");
+            // Extraer todos los datos del puente
+            String congNombre = prefs.getString("congregacion_nombre", "Super CircuitoApp");
+            String comida = prefs.getString("comida_hoy", "🍽️ Comida: Sin asignar");
+            String pastoreo = prefs.getString("pastoreo_hoy", "🏠 Pastoreo: Ninguno hoy");
+            String actividad = prefs.getString("actividad_hoy", "🔔 Actividad: Ninguna");
+            String grupoBenjamin = prefs.getString("grupo_benjamin", "Benjamín: -");
+            String grupoBeatriz = prefs.getString("grupo_beatriz", "Beatriz: -");
 
             for (int appWidgetId : appWidgetIds) {
                 RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_layout);
                 
-                // 3. Inyectar textos
+                // Inyectar en cada elemento visual
+                views.setTextViewText(R.id.tv_congregacion, congNombre);
                 views.setTextViewText(R.id.tv_comida, comida);
+                views.setTextViewText(R.id.tv_pastoreo, pastoreo);
+                views.setTextViewText(R.id.tv_actividad, actividad);
                 views.setTextViewText(R.id.tv_grupo_benjamin, grupoBenjamin);
                 views.setTextViewText(R.id.tv_grupo_beatriz, grupoBeatriz);
 
-                // 4. Acción de toque para abrir app
+                // Acción de toque para abrir app
                 Intent intent = new Intent(context, MainActivity.class);
                 int flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
                 PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, flags);
@@ -38,7 +42,7 @@ public class WidgetProvider extends AppWidgetProvider {
                 appWidgetManager.updateAppWidget(appWidgetId, views);
             }
         } catch (Exception e) {
-            e.printStackTrace(); // Si hay error interno, lo ignora silenciosamente
+            e.printStackTrace();
         }
     }
 }
