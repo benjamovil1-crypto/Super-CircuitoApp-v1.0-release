@@ -4,88 +4,91 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:padding="12dp"
     android:background="#121212">
 
-    <!-- Sección de Comida -->
+    <!-- Nombre de la Congregación en el Encabezado -->
     <TextView
-        android:layout_width="wrap_content"
+        android:id="@+id/tv_congregacion"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="🍽️ Programa de Comida"
-        android:textColor="#81D4FA"
+        android:text="Super CircuitoApp"
+        android:textColor="#4DA3E8"
         android:textStyle="bold"
-        android:textSize="14sp" />
-        
+        android:textSize="14sp"
+        android:ellipsize="end"
+        android:maxLines="1" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#264888"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="6dp" />
+
+    <!-- Programa de Comida -->
     <TextView
         android:id="@+id/tv_comida"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Sin asignar"
+        android:text="🍽️ Comida: Sin asignar"
         android:textColor="#FFFFFF"
-        android:textSize="16sp"
-        android:layout_marginTop="2dp"
-        android:layout_marginBottom="12dp" />
+        android:textSize="12sp"
+        android:layout_marginBottom="4dp"
+        android:maxLines="1"
+        android:ellipsize="end" />
 
-    <!-- Sección de Servicio -->
+    <!-- Visita de Pastoreo del día -->
     <TextView
-        android:layout_width="wrap_content"
+        android:id="@+id/tv_pastoreo"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="💼 Servicio del Campo"
-        android:textColor="#FFB74D"
-        android:textStyle="bold"
-        android:textSize="14sp" />
+        android:text="🏠 Pastoreo: Ninguno hoy"
+        android:textColor="#5CE875"
+        android:textSize="12sp"
+        android:layout_marginBottom="4dp"
+        android:maxLines="1"
+        android:ellipsize="end" />
 
+    <!-- Actividad programada del día -->
+    <TextView
+        android:id="@+id/tv_actividad"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🔔 Actividad: Ninguna"
+        android:textColor="#FFD060"
+        android:textSize="12sp"
+        android:layout_marginBottom="4dp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <!-- Servicio del Campo (Benjamín y Beatriz) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="4dp">
+        android:orientation="horizontal">
 
-        <!-- Grupo de Benjamín -->
-        <LinearLayout
+        <TextView
+            android:id="@+id/tv_grupo_benjamin"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical">
-            
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Benjamín:"
-                android:textColor="#B0BEC5"
-                android:textSize="12sp" />
-                
-            <TextView
-                android:id="@+id/tv_grupo_benjamin"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="-"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp" />
-        </LinearLayout>
+            android:text="Benjamín: -"
+            android:textColor="#B0BEC5"
+            android:textSize="10.5sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
 
-        <!-- Grupo de Beatriz -->
-        <LinearLayout
+        <TextView
+            android:id="@+id/tv_grupo_beatriz"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical"
-            android:paddingStart="8dp">
-            
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Beatriz:"
-                android:textColor="#B0BEC5"
-                android:textSize="12sp" />
-                
-            <TextView
-                android:id="@+id/tv_grupo_beatriz"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="-"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp" />
-        </LinearLayout>
+            android:text="Beatriz: -"
+            android:textColor="#B0BEC5"
+            android:textSize="10.5sp"
+            android:paddingStart="4dp"
+            android:maxLines="1"
+            android:ellipsize="end" />
     </LinearLayout>
 </LinearLayout>
