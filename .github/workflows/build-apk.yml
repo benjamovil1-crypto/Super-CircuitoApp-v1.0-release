@@ -280,7 +280,44 @@ jobs:
             ~/.gradle/wrapper
           key: gradle-${{ hashFiles('android/**/*.gradle*', 'android/**/gradle-wrapper.properties') }}
           restore-keys: gradle-
-
+            # ─────────────────────────────────────────────────────────────
+      # Inyección final del Widget nativo antes de compilar
+      # ─────────────────────────────────────────────────────────────
+      - name: Inyectar archivos del Widget nativo
+        run: |
+          echo "Creando carpetas necesarias..."
+          mkdir -p android/app/src/main/res/layout
+          mkdir -p android/app/src/main/res/xml
+          mkdir -p android/app/src/main/java/com/benjamovil/supercircuitoapp
+          
+          echo "Copiando archivos del widget..."
+          cp widget-files/widget_layout.xml android/app/src/main/res/layout/
+          cp widget-files/circuito_widget_info.xml android/app/src/main/res/xml/
+          cp widget-files/WidgetProvider.java android/app/src/main/java/com/benjamovil/supercircuitoapp/
+          
+          echo "Registrando en AndroidManifest.xml de forma segura..."
+          cat << 'EOF' > patch_widget.js
+          const fs = require('fs');
+          const file = 'android/app/src/main/AndroidManifest.xml';
+          if(fs.existsSync(file)){
+            let content = fs.readFileSync(file, 'utf8');
+            if(!content.includes('.WidgetProvider')) {
+              const receiver = `
+              <receiver android:name=".WidgetProvider" android:exported="true">
+                  <intent-filter>
+                      <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                  </intent-filter>
+                  <meta-data android:name="android.appwidget.provider" android:resource="@xml/circuito_widget_info" />
+              </receiver>
+          </application>`;
+              content = content.replace('</application>', receiver);
+              fs.writeFileSync(file, content);
+              console.log('✅ Widget registrado con éxito en el Manifest');
+            }
+          }
+          EOF
+          node patch_widget.js
+          
       # ─────────────────────────────────────────────────────────────
       # 13. Build APK (debug — funciona sin keystore, se instala igual)
       # ─────────────────────────────────────────────────────────────
