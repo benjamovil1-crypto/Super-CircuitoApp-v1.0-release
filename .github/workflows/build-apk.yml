@@ -89,19 +89,7 @@ jobs:
       # ─────────────────────────────────────────────────────────────
       # 5b. Generar/sincronizar el proyecto Android (Capacitor)
       # ─────────────────────────────────────────────────────────────
-      - name: Generar proyecto Android
-        run: |
-          if [ ! -d "android" ]; then
-            echo "No existe android/ — creando plataforma con 'npx cap add android'"
-            npx cap add android
-          else
-            echo "android/ ya existe — sincronizando con 'npx cap sync android'"
-            npx cap sync android
-          fi
-          echo "=== Verificando que gradlew exista ==="
-          ls -la android/gradlew
-                # ─────────────────────────────────────────────────────────────
-            - name: Inyectar archivos y registrar el Widget
+      - name: Inyectar archivos y registrar el Widget
         run: |
           echo "Creando carpetas necesarias..."
           mkdir -p android/app/src/main/res/layout
