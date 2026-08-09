@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<title>Super CircuitoApp — Vista Edition v7.5.3</title>
+<title>Super CircuitoApp — Vista Edition v7.5.4</title>
 <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -252,7 +252,7 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
     <div class="topbar-inner">
       <div class="topbar-logo">
         <div class="logo-icon">🔵</div>
-        <div><div>SUPER CIRCUITO APP</div><div class="logo-sub">Vista Edition v7.5.3</div></div>
+        <div><div>SUPER CIRCUITO APP</div><div class="logo-sub">Vista Edition v7.5.4</div></div>
       </div>
       <button class="gemini-btn" onclick="openGemini()"><span style="font-size:12px">✨</span> Gemini IA</button>
       <div class="sdot" id="sdot"></div>
@@ -687,6 +687,15 @@ function save(){
   actualizarWidgetNativo();
 }
 
+function save(){
+  const _ts=Date.now();
+  try{localStorage.setItem(SK,JSON.stringify(data));localStorage.setItem('sca_ts',_ts);}catch(e){}
+  const d=document.getElementById('sdot');d.classList.add('on');setTimeout(()=>d.classList.remove('on'),1200);
+  if(window.guardarEnLaNube){window.guardarEnLaNube({congregaciones:data.congregaciones,_ts});}
+  
+  actualizarWidgetNativo();
+}
+
 async function actualizarWidgetNativo() {
     if (!window.Capacitor || !window.Capacitor.Plugins.Preferences) return;
     try {
@@ -758,16 +767,7 @@ async function actualizarWidgetNativo() {
     } catch (e) {
         console.error("Error actualizando widget avanzado:", e);
     }
-}      
-        // 7. Enviar los datos listos al widget
-        await Preferences.set({ key: 'comida_hoy', value: textoComida });
-        await Preferences.set({ key: 'grupo_benjamin', value: textoBen || "-" });
-        await Preferences.set({ key: 'grupo_beatriz', value: textoBety || "-" });
-    } catch (e) {
-        console.error("Error actualizando widget:", e);
-    }
 }
-  
 const nv=v=>parseFloat(v)||0;
 const avg=arr=>{const v=arr.map(nv).filter(x=>x>0);return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length):'—';};
 const avgNZ=arr=>{const v=arr.map(nv).filter(x=>x>0);return v.length?(v.reduce((a,b)=>a+b,0)/v.length).toFixed(1):'—';};
