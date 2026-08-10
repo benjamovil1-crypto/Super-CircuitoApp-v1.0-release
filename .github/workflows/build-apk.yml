@@ -114,7 +114,7 @@ jobs:
           echo "Copiando archivos del widget..."
           cp widget-files/widget_layout.xml android/app/src/main/res/layout/
           cp widget-files/circuito_widget_info.xml android/app/src/main/res/xml/
-          cp widget-files/WidgetProvider.java android/app/src/main/java/com/benjamovil/supercircuitoapp/
+          cp widget-files/MainActivity.java android/app/src/main/java/com/benjamovil/supercircuitoapp/
           
           echo "Registrando en AndroidManifest.xml de forma segura..."
           cat << 'EOF' > patch_widget.js
