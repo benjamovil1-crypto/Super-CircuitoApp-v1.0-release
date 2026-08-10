@@ -15,13 +15,13 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    protected void onResume() {
+    public void onResume() {
         super.onResume();
         actualizarWidget();
     }
 
     @Override
-    protected void onPause() {
+    public void onPause() {
         super.onPause();
         actualizarWidget();
     }
