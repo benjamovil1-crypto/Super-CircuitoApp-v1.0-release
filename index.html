@@ -742,22 +742,33 @@ async function actualizarWidgetNativo() {
             }
         }
         
-        let textoBen = "Benjamín: -";
+                // 5. Campo Benjamín
+        let textoBen = "🚶‍♂️ Benjamín:\n-";
         if (visita.campo) {
             let campoHoy = visita.campo.find(c => c.dia === diaHoy);
-            if (campoHoy && (campoHoy.lugar || campoHoy.publicador)) {
-                textoBen = `Benjamín: ${campoHoy.hora ? campoHoy.hora+' ' : ''}${campoHoy.lugar || ''} ${campoHoy.publicador ? '('+campoHoy.publicador+')' : ''}`.trim();
+            if (campoHoy && (campoHoy.lugar || campoHoy.publicador || campoHoy.actividad)) {
+                let lineas = ["🚶‍♂️ Benjamín:"];
+                if (campoHoy.publicador) lineas.push(`👤 ${campoHoy.publicador}`);
+                if (campoHoy.actividad) lineas.push(`📖 ${campoHoy.actividad}`);
+                let horaLugar = `${campoHoy.hora || ''} ${campoHoy.lugar || ''}`.trim();
+                if (horaLugar) lineas.push(`🕒 ${horaLugar}`);
+                textoBen = lineas.join('\n');
             }
         }
         
-        let textoBety = "Beatriz: -";
+        // 6. Campo Beatriz
+        let textoBety = "🚶‍♀️ Beatriz:\n-";
         if (visita.campoEsposa) {
             let campoHoy = visita.campoEsposa.find(c => c.dia === diaHoy);
-            if (campoHoy && (campoHoy.lugar || campoHoy.publicador)) {
-                textoBety = `Beatriz: ${campoHoy.hora ? campoHoy.hora+' ' : ''}${campoHoy.lugar || ''} ${campoHoy.publicador ? '('+campoHoy.publicador+')' : ''}`.trim();
+            if (campoHoy && (campoHoy.lugar || campoHoy.publicador || campoHoy.actividad)) {
+                let lineas = ["🚶‍♀️ Beatriz:"];
+                if (campoHoy.publicador) lineas.push(`👤 ${campoHoy.publicador}`);
+                if (campoHoy.actividad) lineas.push(`📖 ${campoHoy.actividad}`);
+                let horaLugar = `${campoHoy.hora || ''} ${campoHoy.lugar || ''}`.trim();
+                if (horaLugar) lineas.push(`🕒 ${horaLugar}`);
+                textoBety = lineas.join('\n');
             }
         }
-        
         await Preferences.set({ key: 'congregacion_nombre', value: nombreCong });
         await Preferences.set({ key: 'comida_hoy', value: textoComida });
         await Preferences.set({ key: 'pastoreo_hoy', value: textoPastoreo });
