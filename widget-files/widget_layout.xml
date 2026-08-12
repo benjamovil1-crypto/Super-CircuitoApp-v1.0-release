@@ -48,7 +48,7 @@
         android:textColor="#5CE875"
         android:textSize="12sp"
         android:layout_marginBottom="4dp"
-        android:maxLines="1"
+        android:maxLines="2"
         android:ellipsize="end" />
 
     <!-- Actividad programada del día -->
@@ -60,7 +60,7 @@
         android:textColor="#FFD060"
         android:textSize="12sp"
         android:layout_marginBottom="4dp"
-        android:maxLines="1"
+        android:maxLines="2"
         android:ellipsize="end" />
 
     <!-- Servicio del Campo (Benjamín y Beatriz) -->
@@ -77,7 +77,7 @@
             android:text="Benjamín: -"
             android:textColor="#B0BEC5"
             android:textSize="10.5sp"
-            android:maxLines="1"
+            android:maxLines="4"
             android:ellipsize="end" />
 
         <TextView
@@ -89,7 +89,7 @@
             android:textColor="#B0BEC5"
             android:textSize="10.5sp"
             android:paddingStart="4dp"
-            android:maxLines="1"
+            android:maxLines="4"
             android:ellipsize="end" />
     </LinearLayout>
 </LinearLayout>
