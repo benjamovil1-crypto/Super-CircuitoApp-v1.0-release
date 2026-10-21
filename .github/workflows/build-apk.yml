@@ -318,6 +318,24 @@ jobs:
           }
           EOF
           node patch_widget.js
+                # ─────────────────────────────────────────────────────────────
+      # 12b. Permiso para guardar el respaldo en la carpeta Descargas
+      #      (MANAGE_EXTERNAL_STORAGE = "Acceso a todos los archivos")
+      # ─────────────────────────────────────────────────────────────
+      - name: Permiso acceso a todos los archivos
+        run: |
+          python3 - << 'PYEOF'
+          p = 'android/app/src/main/AndroidManifest.xml'
+          s = open(p, encoding='utf-8').read()
+          perm = 'android.permission.MANAGE_EXTERNAL_STORAGE'
+          if perm in s:
+              print('Ya existe el permiso')
+          else:
+              s = s.replace('<application', '<uses-permission android:name="' + perm + '" />\n    <application', 1)
+              open(p, 'w', encoding='utf-8').write(s)
+              print('Permiso agregado')
+          PYEOF
+          grep -n "MANAGE_EXTERNAL_STORAGE" android/app/src/main/AndroidManifest.xml
           
       # ─────────────────────────────────────────────────────────────
       # 13. Build APK (debug — funciona sin keystore, se instala igual)
