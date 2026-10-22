@@ -2051,5 +2051,414 @@ actualizarWidgetNativo(); // Actualiza el widget al abrir la app por si cambió 
       });
   };
 </script>
+  <!-- ══ MÓDULO ESCÁNER DE IMÁGENES (IA + COLA OFFLINE) ══ -->
+<div class="mo" id="modal-scanner">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-titlebar">
+      <div class="modal-title">📷 Escanear Hoja de Visita</div>
+      <button class="btn btn-o btn-sm" style="padding:2px 8px" onclick="closeScannerModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:11px;color:var(--text-dim);line-height:1.5;margin-bottom:10px">
+        Sube o toma foto del programa de comidas, salidas al campo, asignaciones de reunión, asistencia o cuentas. Solo se rellenarán los datos que aparezcan en la imagen.
+      </p>
+
+      <div style="background:rgba(0,4,22,0.55);border:1px solid rgba(68,128,192,0.28);border-radius:6px;padding:8px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <label style="margin:0;color:var(--gold);font-size:10px">🔑 Clave gratuita Gemini API (se guarda sola)</label>
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-size:9.5px;color:var(--aero-bright);text-decoration:underline">Obtener clave gratis</a>
+        </div>
+        <input type="password" id="scan-api-key" placeholder="Pega aquí tu clave AIzaSy..." onchange="saveScanKey(this.value)" style="font-size:11px;font-family:monospace"/>
+      </div>
+
+      <input type="file" id="scan-file-input" accept="image/*" multiple style="display:none" onchange="handleScanFiles(this)"/>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button class="btn btn-p" style="flex:1;justify-content:center" onclick="document.getElementById('scan-file-input').click()">📸 Elegir foto / Cámara</button>
+      </div>
+
+      <div id="scan-preview-wrap" style="display:none;margin-bottom:10px;text-align:center;background:rgba(0,0,0,0.4);padding:8px;border-radius:6px;border:1px solid rgba(68,128,212,0.25)">
+        <div id="scan-thumbs" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;justify-content:center"></div>
+        <div id="scan-count-lbl" style="font-size:10px;color:var(--aero-glow);margin-top:4px"></div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn btn-s" id="btn-run-scan" style="flex:1;justify-content:center" onclick="procesarImagenesAhora()">✨ Analizar y Rellenar</button>
+          <button class="btn btn-warn btn-sm" onclick="guardarEnColaOffline()">📥 Guardar sin internet</button>
+        </div>
+      </div>
+
+      <div id="scan-queue-box" style="display:none;background:rgba(200,140,0,0.12);border:1px solid rgba(255,200,50,0.35);border-radius:6px;padding:9px;margin-bottom:10px">
+        <div style="font-size:10.5px;color:var(--gold);font-weight:700;margin-bottom:5px" id="scan-queue-lbl">📦 Fotos guardadas sin internet: 0</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-p btn-sm" style="flex:1;justify-content:center" onclick="procesarColaOffline()">🔄 Procesar pendientes ahora</button>
+          <button class="btn btn-d btn-sm" onclick="limpiarColaOffline()">🗑️</button>
+        </div>
+      </div>
+
+      <div id="scan-status" style="display:none;font-size:11px;padding:9px;border-radius:6px;background:rgba(13,48,128,0.35);border:1px solid rgba(88,168,255,0.3);color:#fff;line-height:1.5;white-space:pre-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function initImageScanner(){
+  var btnGuardar = document.querySelector('#page-visita button[onclick="saveVisita()"]');
+  if (btnGuardar && !document.getElementById('btn-open-scanner')) {
+    var btnScan = document.createElement('button');
+    btnScan.id = 'btn-open-scanner';
+    btnScan.className = 'btn btn-warn btn-sm';
+    btnScan.innerHTML = '📷 Escanear';
+    btnScan.onclick = function(){ openScannerModal(); };
+    btnGuardar.parentNode.insertBefore(btnScan, btnGuardar);
+  }
+})();
+
+var _scanImagesBase64 = [];
+
+function saveScanKey(val){
+  try { localStorage.setItem('sca_gemini_key', val.trim()); } catch(e){}
+}
+
+function getScanKey(){
+  try { return localStorage.getItem('sca_gemini_key') || ''; } catch(e){ return ''; }
+}
+
+function openScannerModal(){
+  var k = getScanKey();
+  var inp = document.getElementById('scan-api-key');
+  if (inp) inp.value = k;
+  _scanImagesBase64 = [];
+  document.getElementById('scan-preview-wrap').style.display = 'none';
+  document.getElementById('scan-status').style.display = 'none';
+  actualizarVistaCola();
+  document.getElementById('modal-scanner').classList.add('open');
+}
+
+function closeScannerModal(){
+  document.getElementById('modal-scanner').classList.remove('open');
+}
+
+function comprimirImagen(file, callback){
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var img = new Image();
+    img.onload = function(){
+      var maxW = 1280;
+      var w = img.width, h = img.height;
+      if (w > maxW) { h = Math.round(h * (maxW / w)); w = maxW; }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.78);
+      callback(dataUrl.split(',')[1], dataUrl);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleScanFiles(input){
+  var files = input.files;
+  if (!files || !files.length) return;
+  _scanImagesBase64 = [];
+  var thumbs = document.getElementById('scan-thumbs');
+  thumbs.innerHTML = '';
+  var total = files.length, cargadas = 0;
+
+  for (var i = 0; i < total; i++) {
+    comprimirImagen(files[i], function(b64, fullUrl){
+      _scanImagesBase64.push(b64);
+      var im = document.createElement('img');
+      im.src = fullUrl;
+      im.style.cssText = 'height:64px;border-radius:4px;border:1px solid rgba(138,205,255,0.5)';
+      thumbs.appendChild(im);
+      cargadas++;
+      if (cargadas === total) {
+        document.getElementById('scan-preview-wrap').style.display = 'block';
+        document.getElementById('scan-count-lbl').textContent = total + ' imagen(es) lista(s)';
+      }
+    });
+  }
+  input.value = '';
+}
+
+function guardarEnColaOffline(){
+  var v = gv();
+  if (!v || !_scanImagesBase64.length) return;
+  if (!v.scans_pendientes) v.scans_pendientes = [];
+  for (var i = 0; i < _scanImagesBase64.length; i++) {
+    v.scans_pendientes.push(_scanImagesBase64[i]);
+  }
+  _scanImagesBase64 = [];
+  save();
+  document.getElementById('scan-preview-wrap').style.display = 'none';
+  actualizarVistaCola();
+  mostrarEstadoScan('📦 Foto(s) guardada(s) en la visita. Cuando tengas internet, toca "Procesar pendientes ahora".', 'var(--gold)');
+}
+
+function actualizarVistaCola(){
+  var v = gv();
+  var box = document.getElementById('scan-queue-box');
+  var lbl = document.getElementById('scan-queue-lbl');
+  if (!v || !v.scans_pendientes || !v.scans_pendientes.length) {
+    if (box) box.style.display = 'none';
+    return;
+  }
+  box.style.display = 'block';
+  lbl.textContent = '📦 Fotos guardadas sin internet: ' + v.scans_pendientes.length;
+}
+
+function limpiarColaOffline(){
+  var v = gv();
+  if (!v) return;
+  v.scans_pendientes = [];
+  save();
+  actualizarVistaCola();
+}
+
+async function procesarColaOffline(){
+  var v = gv();
+  if (!v || !v.scans_pendientes || !v.scans_pendientes.length) return;
+  _scanImagesBase64 = v.scans_pendientes.slice();
+  var exito = await procesarImagenesAhora(true);
+  if (exito) {
+    v.scans_pendientes = [];
+    save();
+    actualizarVistaCola();
+  }
+}
+
+function mostrarEstadoScan(txt, color){
+  var st = document.getElementById('scan-status');
+  if (!st) return;
+  st.style.display = 'block';
+  st.style.color = color || '#fff';
+  st.textContent = txt;
+}
+
+async function procesarImagenesAhora(desdeCola){
+  var apiKey = document.getElementById('scan-api-key').value.trim();
+  if (!apiKey) {
+    mostrarEstadoScan('⚠️ Primero pega tu clave gratuita de Gemini API en el recuadro de arriba. Si no tienes internet ahorita, toca "📥 Guardar sin internet".', 'var(--gold)');
+    return false;
+  }
+  saveScanKey(apiKey);
+  if (!_scanImagesBase64.length) {
+    mostrarEstadoScan('⚠️ Selecciona al menos una foto primero.', 'var(--gold)');
+    return false;
+  }
+  if (!navigator.onLine) {
+    if (!desdeCola) guardarEnColaOffline();
+    else mostrarEstadoScan('⚠️ Aún no hay conexión a internet.', 'var(--danger)');
+    return false;
+  }
+
+  mostrarEstadoScan('⏳ Analizando imagen y extrayendo datos de la visita...', 'var(--aero-bright)');
+
+  var promptSistema = 'Extrae todos los datos visibles en la imagen para rellenar el registro de visita a la congregacion. Devuelve UNICAMENTE un objeto JSON valido (sin bloques markdown) con las claves que aparezcan en la imagen (omite o deja null las que no aparezcan):\n' +
+  '{\n' +
+  '  "alimentos": [{"dia":"Martes|Miércoles|Jueves|Viernes|Sábado|Domingo","desayuno":"","comida":"","cena":""}],\n' +
+  '  "campo": [{"dia":"","lugar":"","hora":"HH:MM","publicador":"","actividad":""}],\n' +
+  '  "campoEsposa": [{"dia":"","lugar":"","hora":"HH:MM","publicador":"","actividad":""}],\n' +
+  '  "hospedaje": {"nombre":"","dir":"","tel":""},\n' +
+  '  "reunion_vm": {"dia":"Martes|Miércoles|Jueves|Viernes","hora":"HH:MM","pres":"","can1":"","can2":"","can3":"","oracion":"","asignaciones":[{"nombre":"","tema":"","tiempo":""}]},\n' +
+  '  "reunion_rp": {"dia":"Domingo|Sábado","hora":"HH:MM","pres":"","can":"","can2":"","oracion":"","asignaciones":[{"nombre":"","tema":"","tiempo":""}]},\n' +
+  '  "pastoreo": [{"familia":"","fecha":"YYYY-MM-DD","hora":"HH:MM","acompanante":"","nota":""}],\n' +
+  '  "asistencia": {"semvis_entresem":"","semvis_meta":"","semvis_finde":"","eb":[],"rp":[]},\n' +
+  '  "predicacion": [{"cursos":"","informan":""}],\n' +
+  '  "precursores": [{"cursos":"","informan":"","horas":""}],\n' +
+  '  "finanzas": {"saldo_ini":"","meses":[{"ok":"","cg":"","gs":""}]},\n' +
+  '  "mantenimiento": {"saldo_ini":"","meses":[{"ing":"","gs":"","desc":""}]}\n' +
+  '}';
+
+  var parts = [{ text: promptSistema }];
+  for (var i = 0; i < _scanImagesBase64.length; i++) {
+    parts.push({ inline_data: { mime_type: 'image/jpeg', data: _scanImagesBase64[i] } });
+  }
+
+  var modelos = ['gemini-2.5-flash', 'gemini-2.0-flash'];
+  var respuestaJson = null;
+  var ultimoError = '';
+
+  for (var m = 0; m < modelos.length; m++) {
+    try {
+      var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + modelos[m] + ':generateContent?key=' + encodeURIComponent(apiKey);
+      var resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: parts }],
+          generationConfig: { responseMimeType: 'application/json', temperature: 0.1 }
+        })
+      });
+      if (!resp.ok) {
+        var errData = await resp.json().catch(function(){ return {}; });
+        ultimoError = (errData.error && errData.error.message) ? errData.error.message : ('HTTP ' + resp.status);
+        continue;
+      }
+      var resData = await resp.json();
+      var rawText = resData.candidates && resData.candidates[0] && resData.candidates[0].content && resData.candidates[0].content.parts[0].text;
+      if (rawText) {
+        var limpio = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        respuestaJson = JSON.parse(limpio);
+        break;
+      }
+    } catch (e) {
+      ultimoError = e.message || String(e);
+    }
+  }
+
+  if (!respuestaJson) {
+    mostrarEstadoScan('❌ No se pudo analizar: ' + ultimoError + '\nPuedes guardarla con "📥 Guardar sin internet" para intentarlo más tarde.', 'var(--danger)');
+    return false;
+  }
+
+  var resumenAplicado = aplicarDatosEscaneados(respuestaJson);
+  _scanImagesBase64 = [];
+  document.getElementById('scan-preview-wrap').style.display = 'none';
+  mostrarEstadoScan('✅ ¡Datos rellenados con éxito!\n' + resumenAplicado, 'var(--green)');
+  return true;
+}
+
+function aplicarDatosEscaneados(d){
+  var v = gv();
+  if (!v || !d) return 'Sin cambios';
+  var log = [];
+
+  if (d.alimentos && d.alimentos.length) {
+    if (!v.alimentos || !v.alimentos.length) v.alimentos = [];
+    d.alimentos.forEach(function(item){
+      if (!item.dia) return;
+      if (item.desayuno) v.show_des = true;
+      if (item.cena) v.show_cen = true;
+      var existente = v.alimentos.find(function(a){ return a.dia.toLowerCase() === item.dia.toLowerCase(); });
+      if (existente) {
+        if (item.desayuno) existente.desayuno = String(item.desayuno);
+        if (item.comida) existente.comida = String(item.comida);
+        if (item.cena) existente.cena = String(item.cena);
+      } else {
+        v.alimentos.push({
+          dia: item.dia,
+          desayuno: item.desayuno ? String(item.desayuno) : '',
+          comida: item.comida ? String(item.comida) : '',
+          cena: item.cena ? String(item.cena) : ''
+        });
+      }
+    });
+    log.push('• Alimentos (' + d.alimentos.length + ' días)');
+  }
+
+  if (d.campo && d.campo.length) {
+    v.campo = d.campo.map(function(c){
+      return { dia: c.dia||'', lugar: c.lugar||'', hora: c.hora||'', publicador: c.publicador||'', actividad: c.actividad||'' };
+    });
+    log.push('• Servicio del campo (' + d.campo.length + ' salidas)');
+  }
+
+  if (d.campoEsposa && d.campoEsposa.length) {
+    v.campoEsposa = d.campoEsposa.map(function(c){
+      return { dia: c.dia||'', lugar: c.lugar||'', hora: c.hora||'', publicador: c.publicador||'', actividad: c.actividad||'' };
+    });
+    log.push('• Campo esposa (' + d.campoEsposa.length + ' salidas)');
+  }
+
+  if (d.hospedaje && (d.hospedaje.nombre || d.hospedaje.dir || d.hospedaje.tel)) {
+    if (d.hospedaje.nombre) v.hosp_nombre = String(d.hospedaje.nombre);
+    if (d.hospedaje.dir) v.hosp_dir = String(d.hospedaje.dir);
+    if (d.hospedaje.tel) v.hosp_tel = String(d.hospedaje.tel);
+    log.push('• Hospedaje');
+  }
+
+  if (d.reunion_vm) {
+    var vm = d.reunion_vm;
+    if (vm.dia) v.reu_vm_dia = vm.dia;
+    if (vm.hora) v.reu_vm_hora = vm.hora;
+    if (vm.pres) v.reu_vm_pres = vm.pres;
+    if (vm.can1) v.reu_vm_can1 = String(vm.can1);
+    if (vm.can2) v.reu_vm_can2 = String(vm.can2);
+    if (vm.can3) v.reu_vm_can3 = String(vm.can3);
+    if (vm.oracion) v.reu_vm_oracion = vm.oracion;
+    if (vm.asignaciones && vm.asignaciones.length) {
+      v.asig_vm = vm.asignaciones.map(function(a){
+        return { nombre: a.nombre||'', tema: a.tema||'', tiempo: a.tiempo||'', hora: '' };
+      });
+      log.push('• Reunión VMC (' + vm.asignaciones.length + ' asignaciones)');
+    }
+  }
+
+  if (d.reunion_rp) {
+    var rp = d.reunion_rp;
+    if (rp.dia) v.reu_rp_dia = rp.dia;
+    if (rp.hora) v.reu_rp_hora = rp.hora;
+    if (rp.pres) v.reu_rp_pres = rp.pres;
+    if (rp.can) v.reu_rp_can = String(rp.can);
+    if (rp.can2) v.reu_rp_can2 = String(rp.can2);
+    if (rp.oracion) v.reu_rp_oracion = rp.oracion;
+    if (rp.asignaciones && rp.asignaciones.length) {
+      v.asig_rp = rp.asignaciones.map(function(a){
+        return { nombre: a.nombre||'', tema: a.tema||'', tiempo: a.tiempo||'', hora: '' };
+      });
+      log.push('• Reunión Pública (' + rp.asignaciones.length + ' asignaciones)');
+    }
+  }
+
+  if (d.pastoreo && d.pastoreo.length) {
+    if (!v.pastoreo) v.pastoreo = [];
+    d.pastoreo.forEach(function(p){
+      v.pastoreo.push({ familia: p.familia||'', fecha: p.fecha||'', hora: p.hora||'', acompanante: p.acompanante||'', nota: p.nota||'' });
+    });
+    log.push('• Visitas de pastoreo (' + d.pastoreo.length + ')');
+  }
+
+  if (d.asistencia) {
+    var as = d.asistencia;
+    if (as.semvis_entresem) v.semvis_entresem = String(as.semvis_entresem);
+    if (as.semvis_meta) v.semvis_meta = String(as.semvis_meta);
+    if (as.semvis_finde) v.semvis_finde = String(as.semvis_finde);
+    if (as.eb && as.eb.length) {
+      v.eb = as.eb.map(function(x){ return x !== null && x !== undefined ? String(x) : ''; });
+      v.semanas = Math.max(v.eb.length, (v.rp||[]).length, 6);
+    }
+    if (as.rp && as.rp.length) {
+      v.rp = as.rp.map(function(x){ return x !== null && x !== undefined ? String(x) : ''; });
+      v.semanas = Math.max((v.eb||[]).length, v.rp.length, 6);
+    }
+    if (as.eb || as.rp || as.semvis_entresem || as.semvis_finde) log.push('• Datos de Asistencia');
+  }
+
+  if (d.predicacion && d.predicacion.length) {
+    v.act = d.predicacion.map(function(r){ return { cursos: r.cursos ? String(r.cursos) : '', informan: r.informan ? String(r.informan) : '' }; });
+    log.push('• Predicación (' + d.predicacion.length + ' meses)');
+  }
+
+  if (d.precursores && d.precursores.length) {
+    v.prec = d.precursores.map(function(r){ return { cursos: r.cursos ? String(r.cursos) : '', informan: r.informan ? String(r.informan) : '', horas: r.horas ? String(r.horas) : '' }; });
+    log.push('• Precursores Regulares (' + d.precursores.length + ' meses)');
+  }
+
+  if (d.finanzas && (d.finanzas.saldo_ini || (d.finanzas.meses && d.finanzas.meses.length))) {
+    if (d.finanzas.saldo_ini) v.fin_saldo_ini = String(d.finanzas.saldo_ini);
+    if (d.finanzas.meses && d.finanzas.meses.length) {
+      v.fin = d.finanzas.meses.map(function(m){ return { ok: m.ok ? String(m.ok) : '', cg: m.cg ? String(m.cg) : '', gs: m.gs ? String(m.gs) : '' }; });
+    }
+    log.push('• Finanzas de Congregación');
+  }
+
+  if (d.mantenimiento && (d.mantenimiento.saldo_ini || (d.mantenimiento.meses && d.mantenimiento.meses.length))) {
+    if (d.mantenimiento.saldo_ini) v.mant_saldo_ini = String(d.mantenimiento.saldo_ini);
+    if (d.mantenimiento.meses && d.mantenimiento.meses.length) {
+      v.mant = d.mantenimiento.meses.map(function(m){ return { ing: m.ing ? String(m.ing) : '', gs: m.gs ? String(m.gs) : '', desc: m.desc ? String(m.desc) : '' }; });
+    }
+    log.push('• Cuentas de Mantenimiento');
+  }
+
+  save();
+  renderWeeks(); calcCumplSemVis(); renderActTable(); renderPrecTable();
+  renderFinRows(); renderMantRows(); renderAnalisis(v); renderReunion(v); renderActividades(v);
+
+  return log.length ? log.join('\n') : 'No se identificaron tablas claras en la foto.';
+}
+</script>
+<!-- ══ FIN MÓDULO ESCÁNER ══ -->
+
 </body>
   </html>
