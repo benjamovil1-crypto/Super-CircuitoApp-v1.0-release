@@ -287,7 +287,8 @@ input[type=number]{font-family:monospace;}textarea{resize:vertical;line-height:1
             <input type="date" id="v-fecha" onchange="setVF('fecha',this.value)" style="display:inline;width:auto;padding:2px 5px;font-size:10.5px;"/>
           </div>
         </div>
-        <button class="btn btn-s btn-sm" onclick="saveVisita()">💾 Guardar</button>
+        <button class="btn btn-warn btn-sm" onclick="openScannerModal()">📷 Escanear</button>
+<button class="btn btn-s btn-sm" onclick="saveVisita()">💾 Guardar</button>
       </div>
       <div class="ftabs">
         <div class="tp active" onclick="stab('asistencia',this)">📋 Asistencia</div>
@@ -2304,6 +2305,58 @@ async function procesarImagenesAhora(desdeCola){
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: parts }],
+async function procesarImagenesAhora(desdeCola){
+  var apiKey = document.getElementById('scan-api-key').value.trim();
+  if (!apiKey) {
+    mostrarEstadoScan('⚠️ Primero pega tu clave gratuita de Gemini API en el recuadro de arriba. Si no tienes internet ahorita, toca "📥 Guardar sin internet".', 'var(--gold)');
+    return false;
+  }
+  saveScanKey(apiKey);
+  if (!_scanImagesBase64.length) {
+    mostrarEstadoScan('⚠️ Selecciona al menos una foto primero.', 'var(--gold)');
+    return false;
+  }
+  if (!navigator.onLine) {
+    if (!desdeCola) guardarEnColaOffline();
+    else mostrarEstadoScan('⚠️ Aún no hay conexión a internet.', 'var(--danger)');
+    return false;
+  }
+
+  mostrarEstadoScan('⏳ Analizando imagen y extrayendo datos de la visita...', 'var(--aero-bright)');
+
+  var promptSistema = 'Extrae todos los datos visibles en la imagen para rellenar el registro de visita a la congregacion. Devuelve UNICAMENTE un objeto JSON valido (sin bloques markdown) con las claves que aparezcan en la imagen (omite o deja null las que no aparezcan):\n' +
+  '{\n' +
+  '  "alimentos": [{"dia":"Martes|Miércoles|Jueves|Viernes|Sábado|Domingo","desayuno":"","comida":"","cena":""}],\n' +
+  '  "campo": [{"dia":"","lugar":"","hora":"HH:MM","publicador":"","actividad":""}],\n' +
+  '  "campoEsposa": [{"dia":"","lugar":"","hora":"HH:MM","publicador":"","actividad":""},\n' +
+  '  "hospedaje": {"nombre":"","dir":"","tel":""},\n' +
+  '  "reunion_vm": {"dia":"Martes|Miércoles|Jueves|Viernes","hora":"HH:MM","pres":"","can1":"","can2":"","can3":"","oracion":"","asignaciones":[{"nombre":"","tema":"","tiempo":""}]},\n' +
+  '  "reunion_rp": {"dia":"Domingo|Sábado","hora":"HH:MM","pres":"","can":"","can2":"","oracion":"","asignaciones":[{"nombre":"","tema":"","tiempo":""}]},\n' +
+  '  "pastoreo": [{"familia":"","fecha":"YYYY-MM-DD","hora":"HH:MM","acompanante":"","nota":""}],\n' +
+  '  "asistencia": {"semvis_entresem":"","semvis_meta":"","semvis_finde":"","eb":[],"rp":[]},\n' +
+  '  "predicacion": [{"cursos":"","informan":""}],\n' +
+  '  "precursores": [{"cursos":"","informan":"","horas":""}],\n' +
+  '  "finanzas": {"saldo_ini":"","meses":[{"ok":"","cg":"","gs":""}]},\n' +
+  '  "mantenimiento": {"saldo_ini":"","meses":[{"ing":"","gs":"","desc":""}]}\n' +
+  '}';
+
+  var parts = [{ text: promptSistema }];
+  for (var i = 0; i < _scanImagesBase64.length; i++) {
+    parts.push({ inline_data: { mime_type: 'image/jpeg', data: _scanImagesBase64[i] } });
+  }
+
+  var modelos = ['gemini-3.0-flash', 'gemini-flash-latest', 'gemini-2.5-flash'];
+  var respuestaJson = null;
+  var ultimoError = '';
+
+  for (var m = 0; m < modelos.length; m++) {
+    try {
+      var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + modelos[m] + ':generateContent?key=' + encodeURIComponent(apiKey);
+      var resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: parts }],
           generationConfig: { responseMimeType: 'application/json', temperature: 0.1 }
         })
       });
@@ -2335,6 +2388,7 @@ async function procesarImagenesAhora(desdeCola){
   mostrarEstadoScan('✅ ¡Datos rellenados con éxito!\n' + resumenAplicado, 'var(--green)');
   return true;
 }
+
 
 
   var resumenAplicado = aplicarDatosEscaneados(respuestaJson);
