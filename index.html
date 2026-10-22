@@ -2053,7 +2053,7 @@ actualizarWidgetNativo(); // Actualiza el widget al abrir la app por si cambió 
   };
 </script>
 
-  <!-- ══ MÓDULO ESCÁNER DE IMÁGENES (IA + COLA OFFLINE) ══ -->
+  <!-- ══ MÓDULO ESCÁNER DE IMÁGENES (IA + COLA OFFLINE CON MÚLTIPLES MODELOS DE RESPALDO) ══ -->
 <div class="mo" id="modal-scanner">
   <div class="modal" style="max-width:500px">
     <div class="modal-titlebar">
@@ -2082,7 +2082,7 @@ actualizarWidgetNativo(); // Actualiza el widget al abrir la app por si cambió 
         <div id="scan-thumbs" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;justify-content:center"></div>
         <div id="scan-count-lbl" style="font-size:10px;color:var(--aero-glow);margin-top:4px"></div>
         <div style="display:flex;gap:6px;margin-top:8px">
-          <button class="btn btn-s" id="btn-run-scan" style="flex:1;justify-content:center" onclick="procesarImagenesAhora()">✨ Analizar y Rellenar</button>
+          <button class="btn btn-s" id="btn-run-scan" style="flex:1;justify-content:center" onclick="procesarImagenesAhora(false)">✨ Analizar y Rellenar</button>
           <button class="btn btn-warn btn-sm" onclick="guardarEnColaOffline()">📥 Guardar sin internet</button>
         </div>
       </div>
@@ -2101,44 +2101,36 @@ actualizarWidgetNativo(); // Actualiza el widget al abrir la app por si cambió 
 </div>
 
 <script>
-(function initImageScanner(){
-  var btnGuardar = document.querySelector('#page-visita button[onclick="saveVisita()"]');
-  if (btnGuardar && !document.getElementById('btn-open-scanner')) {
-    var btnScan = document.createElement('button');
-    btnScan.id = 'btn-open-scanner';
-    btnScan.className = 'btn btn-warn btn-sm';
-    btnScan.innerHTML = '📷 Escanear';
-    btnScan.onclick = function(){ openScannerModal(); };
-    btnGuardar.parentNode.insertBefore(btnScan, btnGuardar);
-  }
-})();
+window._scanImagesBase64 = [];
 
-var _scanImagesBase64 = [];
+window.saveScanKey = function(val){
+  try { localStorage.setItem('sca_gemini_key', (val || '').trim()); } catch(e){}
+};
 
-function saveScanKey(val){
-  try { localStorage.setItem('sca_gemini_key', val.trim()); } catch(e){}
-}
-
-function getScanKey(){
+window.getScanKey = function(){
   try { return localStorage.getItem('sca_gemini_key') || ''; } catch(e){ return ''; }
-}
+};
 
-function openScannerModal(){
-  var k = getScanKey();
+window.openScannerModal = function(){
+  var modal = document.getElementById('modal-scanner');
+  if (!modal) return;
   var inp = document.getElementById('scan-api-key');
-  if (inp) inp.value = k;
-  _scanImagesBase64 = [];
-  document.getElementById('scan-preview-wrap').style.display = 'none';
-  document.getElementById('scan-status').style.display = 'none';
-  actualizarVistaCola();
-  document.getElementById('modal-scanner').classList.add('open');
-}
+  if (inp) inp.value = window.getScanKey();
+  window._scanImagesBase64 = [];
+  var prev = document.getElementById('scan-preview-wrap');
+  if (prev) prev.style.display = 'none';
+  var st = document.getElementById('scan-status');
+  if (st) st.style.display = 'none';
+  window.actualizarVistaCola();
+  modal.classList.add('open');
+};
 
-function closeScannerModal(){
-  document.getElementById('modal-scanner').classList.remove('open');
-}
+window.closeScannerModal = function(){
+  var modal = document.getElementById('modal-scanner');
+  if (modal) modal.classList.remove('open');
+};
 
-function comprimirImagen(file, callback){
+window.comprimirImagen = function(file, callback){
   var reader = new FileReader();
   reader.onload = function(e){
     var img = new Image();
@@ -2156,105 +2148,111 @@ function comprimirImagen(file, callback){
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
-}
+};
 
-function handleScanFiles(input){
+window.handleScanFiles = function(input){
   var files = input.files;
   if (!files || !files.length) return;
-  _scanImagesBase64 = [];
+  window._scanImagesBase64 = [];
   var thumbs = document.getElementById('scan-thumbs');
-  thumbs.innerHTML = '';
+  if (thumbs) thumbs.innerHTML = '';
   var total = files.length, cargadas = 0;
 
   for (var i = 0; i < total; i++) {
-    comprimirImagen(files[i], function(b64, fullUrl){
-      _scanImagesBase64.push(b64);
-      var im = document.createElement('img');
-      im.src = fullUrl;
-      im.style.cssText = 'height:64px;border-radius:4px;border:1px solid rgba(138,205,255,0.5)';
-      thumbs.appendChild(im);
+    window.comprimirImagen(files[i], function(b64, fullUrl){
+      window._scanImagesBase64.push(b64);
+      if (thumbs) {
+        var im = document.createElement('img');
+        im.src = fullUrl;
+        im.style.cssText = 'height:64px;border-radius:4px;border:1px solid rgba(138,205,255,0.5)';
+        thumbs.appendChild(im);
+      }
       cargadas++;
       if (cargadas === total) {
-        document.getElementById('scan-preview-wrap').style.display = 'block';
-        document.getElementById('scan-count-lbl').textContent = total + ' imagen(es) lista(s)';
+        var pw = document.getElementById('scan-preview-wrap');
+        if (pw) pw.style.display = 'block';
+        var cl = document.getElementById('scan-count-lbl');
+        if (cl) cl.textContent = total + ' imagen(es) lista(s)';
       }
     });
   }
   input.value = '';
-}
+};
 
-function guardarEnColaOffline(){
-  var v = gv();
-  if (!v || !_scanImagesBase64.length) return;
+window.guardarEnColaOffline = function(){
+  var v = (typeof gv === 'function') ? gv() : null;
+  if (!v || !window._scanImagesBase64.length) return;
   if (!v.scans_pendientes) v.scans_pendientes = [];
-  for (var i = 0; i < _scanImagesBase64.length; i++) {
-    v.scans_pendientes.push(_scanImagesBase64[i]);
+  for (var i = 0; i < window._scanImagesBase64.length; i++) {
+    v.scans_pendientes.push(window._scanImagesBase64[i]);
   }
-  _scanImagesBase64 = [];
-  save();
-  document.getElementById('scan-preview-wrap').style.display = 'none';
-  actualizarVistaCola();
-  mostrarEstadoScan('📦 Foto(s) guardada(s) en la visita. Cuando tengas internet, toca "Procesar pendientes ahora".', 'var(--gold)');
-}
+  window._scanImagesBase64 = [];
+  if (typeof save === 'function') save();
+  var pw = document.getElementById('scan-preview-wrap');
+  if (pw) pw.style.display = 'none';
+  window.actualizarVistaCola();
+  window.mostrarEstadoScan('📦 Foto(s) guardada(s) en la visita. Cuando tengas internet, toca "Procesar pendientes ahora".', 'var(--gold)');
+};
 
-function actualizarVistaCola(){
-  var v = gv();
+window.actualizarVistaCola = function(){
+  var v = (typeof gv === 'function') ? gv() : null;
   var box = document.getElementById('scan-queue-box');
   var lbl = document.getElementById('scan-queue-lbl');
   if (!v || !v.scans_pendientes || !v.scans_pendientes.length) {
     if (box) box.style.display = 'none';
     return;
   }
-  box.style.display = 'block';
-  lbl.textContent = '📦 Fotos guardadas sin internet: ' + v.scans_pendientes.length;
-}
+  if (box) box.style.display = 'block';
+  if (lbl) lbl.textContent = '📦 Fotos guardadas sin internet: ' + v.scans_pendientes.length;
+};
 
-function limpiarColaOffline(){
-  var v = gv();
+window.limpiarColaOffline = function(){
+  var v = (typeof gv === 'function') ? gv() : null;
   if (!v) return;
   v.scans_pendientes = [];
-  save();
-  actualizarVistaCola();
-}
+  if (typeof save === 'function') save();
+  window.actualizarVistaCola();
+};
 
-async function procesarColaOffline(){
-  var v = gv();
+window.procesarColaOffline = async function(){
+  var v = (typeof gv === 'function') ? gv() : null;
   if (!v || !v.scans_pendientes || !v.scans_pendientes.length) return;
-  _scanImagesBase64 = v.scans_pendientes.slice();
-  var exito = await procesarImagenesAhora(true);
+  window._scanImagesBase64 = v.scans_pendientes.slice();
+  var exito = await window.procesarImagenesAhora(true);
   if (exito) {
     v.scans_pendientes = [];
-    save();
-    actualizarVistaCola();
+    if (typeof save === 'function') save();
+    window.actualizarVistaCola();
   }
-}
+};
 
-function mostrarEstadoScan(txt, color){
+window.mostrarEstadoScan = function(txt, color){
   var st = document.getElementById('scan-status');
   if (!st) return;
   st.style.display = 'block';
   st.style.color = color || '#fff';
   st.textContent = txt;
-}
+};
 
-async function procesarImagenesAhora(desdeCola){
-  var apiKey = document.getElementById('scan-api-key').value.trim();
+window.procesarImagenesAhora = async function(desdeCola){
+  var inpKey = document.getElementById('scan-api-key');
+  var apiKey = inpKey ? inpKey.value.trim() : window.getScanKey();
   if (!apiKey) {
-    mostrarEstadoScan('⚠️ Primero pega tu clave gratuita de Gemini API en el recuadro de arriba. Si no tienes internet ahorita, toca "📥 Guardar sin internet".', 'var(--gold)');
+    window.mostrarEstadoScan('⚠️ Primero pega tu clave gratuita de Gemini API en el recuadro de arriba. Si no tienes internet ahorita, toca "📥 Guardar sin internet".', 'var(--gold)');
     return false;
   }
-  saveScanKey(apiKey);
-  if (!_scanImagesBase64.length) {
-    mostrarEstadoScan('⚠️ Selecciona al menos una foto primero.', 'var(--gold)');
+  window.saveScanKey(apiKey);
+  if (!window._scanImagesBase64.length) {
+    window.mostrarEstadoScan('⚠️ Selecciona al menos una foto primero.', 'var(--gold)');
     return false;
   }
   if (!navigator.onLine) {
-    if (!desdeCola) guardarEnColaOffline();
-    else mostrarEstadoScan('⚠️ Aún no hay conexión a internet.', 'var(--danger)');
+    if (!desdeCola) window.guardarEnColaOffline();
+    else window.mostrarEstadoScan('⚠️ Aún no hay conexión a internet.', 'var(--danger)');
     return false;
   }
 
-  mostrarEstadoScan('⏳ Analizando imagen y extrayendo datos de la visita...', 'var(--aero-bright)');
+  window.mostrarEstadoScan('⏳ Analizando imagen y extrayendo datos de la visita...', 'var(--aero-bright)');
 
   var promptSistema = 'Extrae todos los datos visibles en la imagen para rellenar el registro de visita a la congregacion. Devuelve UNICAMENTE un objeto JSON valido (sin bloques markdown) con las claves que aparezcan en la imagen (omite o deja null las que no aparezcan):\n' +
   '{\n' +
@@ -2273,11 +2271,12 @@ async function procesarImagenesAhora(desdeCola){
   '}';
 
   var parts = [{ text: promptSistema }];
-  for (var i = 0; i < _scanImagesBase64.length; i++) {
-    parts.push({ inline_data: { mime_type: 'image/jpeg', data: _scanImagesBase64[i] } });
+  for (var i = 0; i < window._scanImagesBase64.length; i++) {
+    parts.push({ inline_data: { mime_type: 'image/jpeg', data: window._scanImagesBase64[i] } });
   }
 
-  var modelos = ['gemini-3.0-flash', 'gemini-flash-latest'];
+  // Lista amplia con varios modelos de respaldo para evitar saturación
+  var modelos = ['gemini-3.0-flash', 'gemini-flash-latest', 'gemini-1.5-flash', 'gemini-1.5-pro'];
   var respuestaJson = null;
   var ultimoError = '';
 
@@ -2310,19 +2309,20 @@ async function procesarImagenesAhora(desdeCola){
   }
 
   if (!respuestaJson) {
-    mostrarEstadoScan('❌ No se pudo analizar: ' + ultimoError + '\nPuedes guardarla con "📥 Guardar sin internet" para intentarlo más tarde.', 'var(--danger)');
+    window.mostrarEstadoScan('❌ Servidores saturados temporalmente. Inténtalo de nuevo en unos segundos o guárdala sin internet.', 'var(--danger)');
     return false;
   }
 
-  var resumenAplicado = aplicarDatosEscaneados(respuestaJson);
-  _scanImagesBase64 = [];
-  document.getElementById('scan-preview-wrap').style.display = 'none';
-  mostrarEstadoScan('✅ ¡Datos rellenados con éxito!\n' + resumenAplicado, 'var(--green)');
+  var resumenAplicado = window.aplicarDatosEscaneados(respuestaJson);
+  window._scanImagesBase64 = [];
+  var pw = document.getElementById('scan-preview-wrap');
+  if (pw) pw.style.display = 'none';
+  window.mostrarEstadoScan('✅ ¡Datos rellenados con éxito!\n' + resumenAplicado, 'var(--green)');
   return true;
-}
+};
 
-function aplicarDatosEscaneados(d){
-  var v = gv();
+window.aplicarDatosEscaneados = function(d){
+  var v = (typeof gv === 'function') ? gv() : null;
   if (!v || !d) return 'Sin cambios';
   var log = [];
 
@@ -2453,14 +2453,38 @@ function aplicarDatosEscaneados(d){
     log.push('• Cuentas de Mantenimiento');
   }
 
-  save();
-  renderWeeks(); calcCumplSemVis(); renderActTable(); renderPrecTable();
-  renderFinRows(); renderMantRows(); renderAnalisis(v); renderReunion(v); renderActividades(v);
+  if (typeof save === 'function') save();
+  if (typeof renderWeeks === 'function') renderWeeks();
+  if (typeof calcCumplSemVis === 'function') calcCumplSemVis();
+  if (typeof renderActTable === 'function') renderActTable();
+  if (typeof renderPrecTable === 'function') renderPrecTable();
+  if (typeof renderFinRows === 'function') renderFinRows();
+  if (typeof renderMantRows === 'function') renderMantRows();
+  if (typeof renderAnalisis === 'function') renderAnalisis(v);
+  if (typeof renderReunion === 'function') renderReunion(v);
+  if (typeof renderActividades === 'function') renderActividades(v);
 
   return log.length ? log.join('\n') : 'No se identificaron tablas claras en la foto.';
-}
+};
+
+// Inyectar el botón de escanear al lado de Guardar en la visita
+(function initScannerButton(){
+  var checkInterval = setInterval(function(){
+    var btnGuardar = document.querySelector('#page-visita button[onclick="saveVisita()"]');
+    if (btnGuardar && !document.getElementById('btn-open-scanner')) {
+      var btnScan = document.createElement('button');
+      btnScan.id = 'btn-open-scanner';
+      btnScan.className = 'btn btn-warn btn-sm';
+      btnScan.innerHTML = '📷 Escanear';
+      btnScan.style.marginRight = '4px';
+      btnScan.onclick = function(){ window.openScannerModal(); };
+      btnGuardar.parentNode.insertBefore(btnScan, btnGuardar);
+    }
+  }, 1000);
+})();
 </script>
 <!-- ══ FIN MÓDULO ESCÁNER ══ -->
+
   
 </body>
   </html>
