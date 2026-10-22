@@ -2441,6 +2441,337 @@ function aplicarDatosEscaneados(d){
   }
 
   if (d.hospedaje && (d.hospedaje.nombre || d.hospedaje.dir || d.hospedaje.tel)) {
+<!-- ══ MÓDULO ESCÁNER DE IMÁGENES COMPLETO (IA + COLA OFFLINE) ══ -->
+<div class="mo" id="modal-scanner">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-titlebar">
+      <div class="modal-title">📷 Escanear Hoja de Visita</div>
+      <button class="btn btn-o btn-sm" style="padding:2px 8px" onclick="closeScannerModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:11px;color:var(--text-dim);line-height:1.5;margin-bottom:10px">
+        Sube o toma foto del programa de comidas, salidas al campo, asignaciones de reunión, asistencia o cuentas. Solo se rellenarán los datos que aparezcan en la imagen.
+      </p>
+
+      <div style="background:rgba(0,4,22,0.55);border:1px solid rgba(68,128,192,0.28);border-radius:6px;padding:8px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <label style="margin:0;color:var(--gold);font-size:10px">🔑 Clave gratuita Gemini API (se guarda sola)</label>
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-size:9.5px;color:var(--aero-bright);text-decoration:underline">Obtener clave gratis</a>
+        </div>
+        <input type="password" id="scan-api-key" placeholder="Pega aquí tu clave AIzaSy..." onchange="saveScanKey(this.value)" style="font-size:11px;font-family:monospace"/>
+      </div>
+
+      <input type="file" id="scan-file-input" accept="image/*" multiple style="display:none" onchange="handleScanFiles(this)"/>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <button class="btn btn-p" style="flex:1;justify-content:center" onclick="document.getElementById('scan-file-input').click()">📸 Elegir foto / Cámara</button>
+      </div>
+
+      <div id="scan-preview-wrap" style="display:none;margin-bottom:10px;text-align:center;background:rgba(0,0,0,0.4);padding:8px;border-radius:6px;border:1px solid rgba(68,128,212,0.25)">
+        <div id="scan-thumbs" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;justify-content:center"></div>
+        <div id="scan-count-lbl" style="font-size:10px;color:var(--aero-glow);margin-top:4px"></div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn btn-s" id="btn-run-scan" style="flex:1;justify-content:center" onclick="procesarImagenesAhora(false)">✨ Analizar y Rellenar</button>
+          <button class="btn btn-warn btn-sm" onclick="guardarEnColaOffline()">📥 Guardar sin internet</button>
+        </div>
+      </div>
+
+      <div id="scan-queue-box" style="display:none;background:rgba(200,140,0,0.12);border:1px solid rgba(255,200,50,0.35);border-radius:6px;padding:9px;margin-bottom:10px">
+        <div style="font-size:10.5px;color:var(--gold);font-weight:700;margin-bottom:5px" id="scan-queue-lbl">📦 Fotos guardadas sin internet: 0</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-p btn-sm" style="flex:1;justify-content:center" onclick="procesarColaOffline()">🔄 Procesar pendientes ahora</button>
+          <button class="btn btn-d btn-sm" onclick="limpiarColaOffline()">🗑️</button>
+        </div>
+      </div>
+
+      <div id="scan-status" style="display:none;font-size:11px;padding:9px;border-radius:6px;background:rgba(13,48,128,0.35);border:1px solid rgba(88,168,255,0.3);color:#fff;line-height:1.5;white-space:pre-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+window._scanImagesBase64 = [];
+
+window.saveScanKey = function(val){
+  try { localStorage.setItem('sca_gemini_key', (val || '').trim()); } catch(e){}
+};
+
+window.getScanKey = function(){
+  try { return localStorage.getItem('sca_gemini_key') || ''; } catch(e){ return ''; }
+};
+
+window.openScannerModal = function(){
+  var modal = document.getElementById('modal-scanner');
+  if (!modal) {
+    alert('Error: No se encontró la ventana del escáner (#modal-scanner).');
+    return;
+  }
+  var inp = document.getElementById('scan-api-key');
+  if (inp) inp.value = window.getScanKey();
+  window._scanImagesBase64 = [];
+  var prev = document.getElementById('scan-preview-wrap');
+  if (prev) prev.style.display = 'none';
+  var st = document.getElementById('scan-status');
+  if (st) st.style.display = 'none';
+  window.actualizarVistaCola();
+  modal.classList.add('open');
+};
+
+window.closeScannerModal = function(){
+  var modal = document.getElementById('modal-scanner');
+  if (modal) modal.classList.remove('open');
+};
+
+window.comprimirImagen = function(file, callback){
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var img = new Image();
+    img.onload = function(){
+      var maxW = 1280;
+      var w = img.width, h = img.height;
+      if (w > maxW) { h = Math.round(h * (maxW / w)); w = maxW; }
+      var canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.78);
+      callback(dataUrl.split(',')[1], dataUrl);
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+window.handleScanFiles = function(input){
+  var files = input.files;
+  if (!files || !files.length) return;
+  window._scanImagesBase64 = [];
+  var thumbs = document.getElementById('scan-thumbs');
+  if (thumbs) thumbs.innerHTML = '';
+  var total = files.length, cargadas = 0;
+
+  for (var i = 0; i < total; i++) {
+    window.comprimirImagen(files[i], function(b64, fullUrl){
+      window._scanImagesBase64.push(b64);
+      if (thumbs) {
+        var im = document.createElement('img');
+        im.src = fullUrl;
+        im.style.cssText = 'height:64px;border-radius:4px;border:1px solid rgba(138,205,255,0.5)';
+        thumbs.appendChild(im);
+      }
+      cargadas++;
+      if (cargadas === total) {
+        var pw = document.getElementById('scan-preview-wrap');
+        if (pw) pw.style.display = 'block';
+        var cl = document.getElementById('scan-count-lbl');
+        if (cl) cl.textContent = total + ' imagen(es) lista(s)';
+      }
+    });
+  }
+  input.value = '';
+};
+
+window.guardarEnColaOffline = function(){
+  var v = (typeof gv === 'function') ? gv() : null;
+  if (!v || !window._scanImagesBase64.length) return;
+  if (!v.scans_pendientes) v.scans_pendientes = [];
+  for (var i = 0; i < window._scanImagesBase64.length; i++) {
+    v.scans_pendientes.push(window._scanImagesBase64[i]);
+  }
+  window._scanImagesBase64 = [];
+  if (typeof save === 'function') save();
+  var pw = document.getElementById('scan-preview-wrap');
+  if (pw) pw.style.display = 'none';
+  window.actualizarVistaCola();
+  window.mostrarEstadoScan('📦 Foto(s) guardada(s) en la visita. Cuando tengas internet, toca "Procesar pendientes ahora".', 'var(--gold)');
+};
+
+window.actualizarVistaCola = function(){
+  var v = (typeof gv === 'function') ? gv() : null;
+  var box = document.getElementById('scan-queue-box');
+  var lbl = document.getElementById('scan-queue-lbl');
+  if (!v || !v.scans_pendientes || !v.scans_pendientes.length) {
+    if (box) box.style.display = 'none';
+    return;
+  }
+  if (box) box.style.display = 'block';
+  if (lbl) lbl.textContent = '📦 Fotos guardadas sin internet: ' + v.scans_pendientes.length;
+};
+
+window.limpiarColaOffline = function(){
+  var v = (typeof gv === 'function') ? gv() : null;
+  if (!v) return;
+  v.scans_pendientes = [];
+  if (typeof save === 'function') save();
+  window.actualizarVistaCola();
+};
+
+window.procesarColaOffline = async function(){
+  var v = (typeof gv === 'function') ? gv() : null;
+  if (!v || !v.scans_pendientes || !v.scans_pendientes.length) return;
+  window._scanImagesBase64 = v.scans_pendientes.slice();
+  var exito = await window.procesarImagenesAhora(true);
+  if (exito) {
+    v.scans_pendientes = [];
+    if (typeof save === 'function') save();
+    window.actualizarVistaCola();
+  }
+};
+
+window.mostrarEstadoScan = function(txt, color){
+  var st = document.getElementById('scan-status');
+  if (!st) return;
+  st.style.display = 'block';
+  st.style.color = color || '#fff';
+  st.textContent = txt;
+};
+
+window.procesarImagenesAhora = async function(desdeCola){
+  var inpKey = document.getElementById('scan-api-key');
+  var apiKey = inpKey ? inpKey.value.trim() : window.getScanKey();
+  if (!apiKey) {
+    window.mostrarEstadoScan('⚠️ Primero pega tu clave gratuita de Gemini API en el recuadro de arriba. Si no tienes internet ahorita, toca "📥 Guardar sin internet".', 'var(--gold)');
+    return false;
+  }
+  window.saveScanKey(apiKey);
+  if (!window._scanImagesBase64.length) {
+    window.mostrarEstadoScan('⚠️ Selecciona al menos una foto primero.', 'var(--gold)');
+    return false;
+  }
+  if (!navigator.onLine) {
+    if (!desdeCola) window.guardarEnColaOffline();
+    else window.mostrarEstadoScan('⚠️ Aún no hay conexión a internet.', 'var(--danger)');
+    return false;
+  }
+
+  window.mostrarEstadoScan('⏳ Analizando imagen y extrayendo datos de la visita...', 'var(--aero-bright)');
+
+  var promptSistema = 'Extrae todos los datos visibles en la imagen para rellenar el registro de visita a la congregacion. Devuelve UNICAMENTE un objeto JSON valido (sin bloques markdown) con las claves que aparezcan en la imagen (omite o deja null las que no aparezcan):\n' +
+  '{\n' +
+  '  "alimentos": [{"dia":"Martes|Miércoles|Jueves|Viernes|Sábado|Domingo","desayuno":"","comida":"","cena":""}],\n' +
+  '  "campo": [{"dia":"","lugar":"","hora":"HH:MM","publicador":"","actividad":""}],\n' +
+  '  "campoEsposa": [{"dia":"","lugar":"","hora":"HH:MM","publicador":"","actividad":""}],\n' +
+  '  "hospedaje": {"nombre":"","dir":"","tel":""},\n' +
+  '  "reunion_vm": {"dia":"Martes|Miércoles|Jueves|Viernes","hora":"HH:MM","pres":"","can1":"","can2":"","can3":"","oracion":"","asignaciones":[{"nombre":"","tema":"","tiempo":""}]},\n' +
+  '  "reunion_rp": {"dia":"Domingo|Sábado","hora":"HH:MM","pres":"","can":"","can2":"","oracion":"","asignaciones":[{"nombre":"","tema":"","tiempo":""}]},\n' +
+  '  "pastoreo": [{"familia":"","fecha":"YYYY-MM-DD","hora":"HH:MM","acompanante":"","nota":""}],\n' +
+  '  "asistencia": {"semvis_entresem":"","semvis_meta":"","semvis_finde":"","eb":[],"rp":[]},\n' +
+  '  "predicacion": [{"cursos":"","informan":""}],\n' +
+  '  "precursores": [{"cursos":"","informan":"","horas":""}],\n' +
+  '  "finanzas": {"saldo_ini":"","meses":[{"ok":"","cg":"","gs":""}]},\n' +
+  '  "mantenimiento": {"saldo_ini":"","meses":[{"ing":"","gs":"","desc":""}]}\n' +
+  '}';
+
+  var parts = [{ text: promptSistema }];
+  for (var i = 0; i < window._scanImagesBase64.length; i++) {
+    parts.push({ inline_data: { mime_type: 'image/jpeg', data: window._scanImagesBase64[i] } });
+  }
+
+  var modelos = ['gemini-3.0-flash', 'gemini-flash-latest', 'gemini-3-flash-preview', 'gemini-2.5-flash'];
+
+  try {
+    var listResp = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(apiKey));
+    if (listResp.ok) {
+      var listData = await listResp.json();
+      if (listData && listData.models) {
+        for (var k = 0; k < listData.models.length; k++) {
+          var mod = listData.models[k];
+          var name = (mod.name || '').replace('models/', '');
+          var metodos = mod.supportedGenerationMethods || [];
+          if (name.indexOf('gemini-3') !== -1 && name.indexOf('flash') !== -1 && metodos.indexOf('generateContent') !== -1) {
+            if (modelos.indexOf(name) === -1) modelos.unshift(name);
+          }
+        }
+      }
+    }
+  } catch (e) {}
+
+  var respuestaJson = null;
+  var ultimoError = '';
+
+  for (var m = 0; m < modelos.length; m++) {
+    try {
+      var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + modelos[m] + ':generateContent?key=' + encodeURIComponent(apiKey);
+      var resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: parts }],
+          generationConfig: { responseMimeType: 'application/json', temperature: 0.1 }
+        })
+      });
+      if (!resp.ok) {
+        var errData = await resp.json().catch(function(){ return {}; });
+        ultimoError = (errData.error && errData.error.message) ? errData.error.message : ('HTTP ' + resp.status);
+        continue;
+      }
+      var resData = await resp.json();
+      var rawText = resData.candidates && resData.candidates[0] && resData.candidates[0].content && resData.candidates[0].content.parts[0].text;
+      if (rawText) {
+        var limpio = rawText.replace(/\x60\x60\x60json/gi, '').replace(/\x60\x60\x60/g, '').trim();
+        respuestaJson = JSON.parse(limpio);
+        break;
+      }
+    } catch (e) {
+      ultimoError = e.message || String(e);
+    }
+  }
+
+  if (!respuestaJson) {
+    window.mostrarEstadoScan('❌ No se pudo analizar: ' + ultimoError + '\nPuedes guardarla con "📥 Guardar sin internet" para intentarlo más tarde.', 'var(--danger)');
+    return false;
+  }
+
+  var resumenAplicado = window.aplicarDatosEscaneados(respuestaJson);
+  window._scanImagesBase64 = [];
+  var pw = document.getElementById('scan-preview-wrap');
+  if (pw) pw.style.display = 'none';
+  window.mostrarEstadoScan('✅ ¡Datos rellenados con éxito!\n' + resumenAplicado, 'var(--green)');
+  return true;
+};
+
+window.aplicarDatosEscaneados = function(d){
+  var v = (typeof gv === 'function') ? gv() : null;
+  if (!v || !d) return 'Sin cambios';
+  var log = [];
+
+  if (d.alimentos && d.alimentos.length) {
+    if (!v.alimentos || !v.alimentos.length) v.alimentos = [];
+    d.alimentos.forEach(function(item){
+      if (!item.dia) return;
+      if (item.desayuno) v.show_des = true;
+      if (item.cena) v.show_cen = true;
+      var existente = v.alimentos.find(function(a){ return a.dia.toLowerCase() === item.dia.toLowerCase(); });
+      if (existente) {
+        if (item.desayuno) existente.desayuno = String(item.desayuno);
+        if (item.comida) existente.comida = String(item.comida);
+        if (item.cena) existente.cena = String(item.cena);
+      } else {
+        v.alimentos.push({
+          dia: item.dia,
+          desayuno: item.desayuno ? String(item.desayuno) : '',
+          comida: item.comida ? String(item.comida) : '',
+          cena: item.cena ? String(item.cena) : ''
+        });
+      }
+    });
+    log.push('• Alimentos (' + d.alimentos.length + ' días)');
+  }
+
+  if (d.campo && d.campo.length) {
+    v.campo = d.campo.map(function(c){
+      return { dia: c.dia||'', lugar: c.lugar||'', hora: c.hora||'', publicador: c.publicador||'', actividad: c.actividad||'' };
+    });
+    log.push('• Servicio del campo (' + d.campo.length + ' salidas)');
+  }
+
+  if (d.campoEsposa && d.campoEsposa.length) {
+    v.campoEsposa = d.campoEsposa.map(function(c){
+      return { dia: c.dia||'', lugar: c.lugar||'', hora: c.hora||'', publicador: c.publicador||'', actividad: c.actividad||'' };
+    });
+    log.push('• Campo esposa (' + d.campoEsposa.length + ' salidas)');
+  }
+
+  if (d.hospedaje && (d.hospedaje.nombre || d.hospedaje.dir || d.hospedaje.tel)) {
     if (d.hospedaje.nombre) v.hosp_nombre = String(d.hospedaje.nombre);
     if (d.hospedaje.dir) v.hosp_dir = String(d.hospedaje.dir);
     if (d.hospedaje.tel) v.hosp_tel = String(d.hospedaje.tel);
@@ -2530,12 +2861,19 @@ function aplicarDatosEscaneados(d){
     log.push('• Cuentas de Mantenimiento');
   }
 
-  save();
-  renderWeeks(); calcCumplSemVis(); renderActTable(); renderPrecTable();
-  renderFinRows(); renderMantRows(); renderAnalisis(v); renderReunion(v); renderActividades(v);
+  if (typeof save === 'function') save();
+  if (typeof renderWeeks === 'function') renderWeeks();
+  if (typeof calcCumplSemVis === 'function') calcCumplSemVis();
+  if (typeof renderActTable === 'function') renderActTable();
+  if (typeof renderPrecTable === 'function') renderPrecTable();
+  if (typeof renderFinRows === 'function') renderFinRows();
+  if (typeof renderMantRows === 'function') renderMantRows();
+  if (typeof renderAnalisis === 'function') renderAnalisis(v);
+  if (typeof renderReunion === 'function') renderReunion(v);
+  if (typeof renderActividades === 'function') renderActividades(v);
 
   return log.length ? log.join('\n') : 'No se identificaron tablas claras en la foto.';
-}
+};
 </script>
 <!-- ══ FIN MÓDULO ESCÁNER ══ -->
 
