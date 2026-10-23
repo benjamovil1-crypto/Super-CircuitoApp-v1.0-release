@@ -2053,16 +2053,16 @@ actualizarWidgetNativo(); // Actualiza el widget al abrir la app por si cambió 
   };
 </script>
 
-  <!-- ══ MÓDULO ESCÁNER DE IMÁGENES (IA + COLA OFFLINE CON MÚLTIPLES MODELOS DE RESPALDO) ══ -->
+  <!-- ══ MÓDULO ESCÁNER MULTIFORMATO (FOTO, PDF, WORD, TEXTO) ══ -->
 <div class="mo" id="modal-scanner">
-  <div class="modal" style="max-width:500px">
+  <div class="modal" style="max-width:520px">
     <div class="modal-titlebar">
-      <div class="modal-title">📷 Escanear Hoja de Visita</div>
+      <div class="modal-title">📷 Importar Datos de Visita (Foto, PDF o Word)</div>
       <button class="btn btn-o btn-sm" style="padding:2px 8px" onclick="closeScannerModal()">✕</button>
     </div>
     <div class="modal-body">
       <p style="font-size:11px;color:var(--text-dim);line-height:1.5;margin-bottom:10px">
-        Sube o toma foto del programa de comidas, salidas al campo, asignaciones de reunión, asistencia o cuentas. Solo se rellenarán los datos que aparezcan en la imagen.
+        Puedes subir <strong>Foto</strong>, <strong>PDF (.pdf)</strong>, <strong>Word (.docx)</strong> o pegar el texto. Los archivos Word y el texto usan 95% menos datos y evitan saturaciones.
       </p>
 
       <div style="background:rgba(0,4,22,0.55);border:1px solid rgba(68,128,192,0.28);border-radius:6px;padding:8px;margin-bottom:10px">
@@ -2073,13 +2073,20 @@ actualizarWidgetNativo(); // Actualiza el widget al abrir la app por si cambió 
         <input type="password" id="scan-api-key" placeholder="Pega aquí tu clave AIzaSy..." onchange="saveScanKey(this.value)" style="font-size:11px;font-family:monospace"/>
       </div>
 
-      <input type="file" id="scan-file-input" accept="image/*" multiple style="display:none" onchange="handleScanFiles(this)"/>
-      <div style="display:flex;gap:6px;margin-bottom:10px">
-        <button class="btn btn-p" style="flex:1;justify-content:center" onclick="document.getElementById('scan-file-input').click()">📸 Elegir foto / Cámara</button>
+      <input type="file" id="scan-file-input" accept="image/*,.pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple style="display:none" onchange="handleScanFiles(this)"/>
+      <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+        <button class="btn btn-p" style="flex:1;justify-content:center" onclick="document.getElementById('scan-file-input').click()">📂 Subir Foto / PDF / Word (.docx)</button>
+        <button class="btn btn-o btn-sm" onclick="toggleScanTextBox()">📋 Pegar texto</button>
+      </div>
+
+      <div id="scan-text-wrap" style="display:none;margin-bottom:10px;background:rgba(0,2,16,0.6);padding:8px;border-radius:6px;border:1px solid rgba(68,128,212,0.3)">
+        <label style="font-size:10px;color:var(--aero-bright);margin-bottom:4px">Pega aquí el texto copiado de tu Word, PDF, WhatsApp o respuesta JSON de Gemini:</label>
+        <textarea id="scan-raw-text" rows="4" placeholder="Pega aquí el contenido del programa, comidas, salidas o cuentas..." style="font-size:11px;margin-bottom:6px"></textarea>
+        <button class="btn btn-s btn-sm" style="width:100%;justify-content:center" onclick="procesarTextoPegado()">✨ Rellenar desde este texto</button>
       </div>
 
       <div id="scan-preview-wrap" style="display:none;margin-bottom:10px;text-align:center;background:rgba(0,0,0,0.4);padding:8px;border-radius:6px;border:1px solid rgba(68,128,212,0.25)">
-        <div id="scan-thumbs" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;justify-content:center"></div>
+        <div id="scan-thumbs" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;justify-content:center;align-items:center;flex-wrap:wrap"></div>
         <div id="scan-count-lbl" style="font-size:10px;color:var(--aero-glow);margin-top:4px"></div>
         <div style="display:flex;gap:6px;margin-top:8px">
           <button class="btn btn-s" id="btn-run-scan" style="flex:1;justify-content:center" onclick="procesarImagenesAhora(false)">✨ Analizar y Rellenar</button>
@@ -2088,7 +2095,7 @@ actualizarWidgetNativo(); // Actualiza el widget al abrir la app por si cambió 
       </div>
 
       <div id="scan-queue-box" style="display:none;background:rgba(200,140,0,0.12);border:1px solid rgba(255,200,50,0.35);border-radius:6px;padding:9px;margin-bottom:10px">
-        <div style="font-size:10.5px;color:var(--gold);font-weight:700;margin-bottom:5px" id="scan-queue-lbl">📦 Fotos guardadas sin internet: 0</div>
+        <div style="font-size:10.5px;color:var(--gold);font-weight:700;margin-bottom:5px" id="scan-queue-lbl">📦 Archivos guardados sin internet: 0</div>
         <div style="display:flex;gap:6px">
           <button class="btn btn-p btn-sm" style="flex:1;justify-content:center" onclick="procesarColaOffline()">🔄 Procesar pendientes ahora</button>
           <button class="btn btn-d btn-sm" onclick="limpiarColaOffline()">🗑️</button>
@@ -2101,14 +2108,14 @@ actualizarWidgetNativo(); // Actualiza el widget al abrir la app por si cambió 
 </div>
 
 <script>
-window._scanImagesBase64 = [];
+window._scanItems = [];
 
-window.saveScanKey = function(val){
-  try { localStorage.setItem('sca_gemini_key', (val || '').trim()); } catch(e){}
-};
+window.saveScanKey = function(val){ try { localStorage.setItem('sca_gemini_key', (val || '').trim()); } catch(e){} };
+window.getScanKey = function(){ try { return localStorage.getItem('sca_gemini_key') || ''; } catch(e){ return ''; } };
 
-window.getScanKey = function(){
-  try { return localStorage.getItem('sca_gemini_key') || ''; } catch(e){ return ''; }
+window.toggleScanTextBox = function(){
+  var w = document.getElementById('scan-text-wrap');
+  if (w) w.style.display = (w.style.display === 'none') ? 'block' : 'none';
 };
 
 window.openScannerModal = function(){
@@ -2116,7 +2123,7 @@ window.openScannerModal = function(){
   if (!modal) return;
   var inp = document.getElementById('scan-api-key');
   if (inp) inp.value = window.getScanKey();
-  window._scanImagesBase64 = [];
+  window._scanItems = [];
   var prev = document.getElementById('scan-preview-wrap');
   if (prev) prev.style.display = 'none';
   var st = document.getElementById('scan-status');
@@ -2130,68 +2137,195 @@ window.closeScannerModal = function(){
   if (modal) modal.classList.remove('open');
 };
 
+// Compresión ligera (900px) para evitar error 503 de alta demanda
 window.comprimirImagen = function(file, callback){
   var reader = new FileReader();
   reader.onload = function(e){
     var img = new Image();
     img.onload = function(){
-      var maxW = 1280;
+      var maxW = 900;
       var w = img.width, h = img.height;
       if (w > maxW) { h = Math.round(h * (maxW / w)); w = maxW; }
       var canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
       var ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, w, h);
-      var dataUrl = canvas.toDataURL('image/jpeg', 0.78);
-      callback(dataUrl.split(',')[1], dataUrl);
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.68);
+      callback({ kind: 'inline', mime: 'image/jpeg', data: dataUrl.split(',')[1], preview: dataUrl, name: file.name });
     };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 };
 
-window.handleScanFiles = function(input){
+// Lector local de archivos Word (.docx) sin requerir librerías externas
+window.extraerTextoDocx = async function(file){
+  var buf = await file.arrayBuffer();
+  var bytes = new Uint8Array(buf);
+  var view = new DataView(buf);
+  var eocd = -1;
+  for (var i = bytes.length - 22; i >= Math.max(0, bytes.length - 65557); i--) {
+    if (view.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd === -1) throw new Error('Archivo Word (.docx) no válido.');
+  var cdEntries = view.getUint16(eocd + 10, true);
+  var cdPos = view.getUint32(eocd + 16, true);
+  var decoder = new TextDecoder('utf-8');
+
+  for (var e = 0; e < cdEntries; e++) {
+    if (view.getUint32(cdPos, true) !== 0x02014b50) break;
+    var compMethod = view.getUint16(cdPos + 10, true);
+    var compSize = view.getUint32(cdPos + 20, true);
+    var fnLen = view.getUint16(cdPos + 28, true);
+    var extraLen = view.getUint16(cdPos + 30, true);
+    var commentLen = view.getUint16(cdPos + 32, true);
+    var localOffset = view.getUint32(cdPos + 42, true);
+    var fileName = decoder.decode(bytes.subarray(cdPos + 46, cdPos + 46 + fnLen));
+    cdPos += 46 + fnLen + extraLen + commentLen;
+
+    if (fileName === 'word/document.xml') {
+      var lFnLen = view.getUint16(localOffset + 26, true);
+      var lExtraLen = view.getUint16(localOffset + 28, true);
+      var dataStart = localOffset + 30 + lFnLen + lExtraLen;
+      var compData = bytes.subarray(dataStart, dataStart + compSize);
+      var xmlText = '';
+      if (compMethod === 0) {
+        xmlText = decoder.decode(compData);
+      } else if (typeof DecompressionStream !== 'undefined') {
+        var ds = new DecompressionStream('deflate-raw');
+        var writer = ds.writable.getWriter();
+        writer.write(compData);
+        writer.close();
+        var resp = new Response(ds.readable);
+        var ab = await resp.arrayBuffer();
+        xmlText = decoder.decode(new Uint8Array(ab));
+      } else {
+        throw new Error('Tu visor no soporta descomprimir Word directo. Usa PDF o Pegar texto.');
+      }
+      return xmlText
+        .replace(/<\/w:tc>/g, ' | ')
+        .replace(/<\/w:tr>/g, '\n')
+        .replace(/<\/w:p>/g, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/\n\s*\n/g, '\n')
+        .trim();
+    }
+  }
+  throw new Error('No se encontró texto dentro del archivo Word.');
+};
+
+window.handleScanFiles = async function(input){
   var files = input.files;
   if (!files || !files.length) return;
-  window._scanImagesBase64 = [];
+  window._scanItems = [];
   var thumbs = document.getElementById('scan-thumbs');
   if (thumbs) thumbs.innerHTML = '';
-  var total = files.length, cargadas = 0;
+  var total = files.length;
 
   for (var i = 0; i < total; i++) {
-    window.comprimirImagen(files[i], function(b64, fullUrl){
-      window._scanImagesBase64.push(b64);
+    var f = files[i];
+    var fname = (f.name || '').toLowerCase();
+
+    if (fname.endsWith('.docx')) {
+      try {
+        var txtDocx = await window.extraerTextoDocx(f);
+        window._scanItems.push({ kind: 'text', text: txtDocx, name: f.name });
+        if (thumbs) {
+          var badgeW = document.createElement('div');
+          badgeW.style.cssText = 'padding:6px 10px;background:rgba(30,95,168,0.4);border:1px solid rgba(138,205,255,0.5);border-radius:5px;font-size:10px;color:#fff';
+          badgeW.textContent = '📘 ' + f.name;
+          thumbs.appendChild(badgeW);
+        }
+      } catch (err) {
+        window.mostrarEstadoScan('⚠️ ' + err.message, 'var(--gold)');
+      }
+    } else if (fname.endsWith('.txt')) {
+      var txtPlain = await f.text();
+      window._scanItems.push({ kind: 'text', text: txtPlain, name: f.name });
       if (thumbs) {
-        var im = document.createElement('img');
-        im.src = fullUrl;
-        im.style.cssText = 'height:64px;border-radius:4px;border:1px solid rgba(138,205,255,0.5)';
-        thumbs.appendChild(im);
+        var badgeT = document.createElement('div');
+        badgeT.style.cssText = 'padding:6px 10px;background:rgba(30,95,168,0.4);border:1px solid rgba(138,205,255,0.5);border-radius:5px;font-size:10px;color:#fff';
+        badgeT.textContent = '📄 ' + f.name;
+        thumbs.appendChild(badgeT);
       }
-      cargadas++;
-      if (cargadas === total) {
-        var pw = document.getElementById('scan-preview-wrap');
-        if (pw) pw.style.display = 'block';
-        var cl = document.getElementById('scan-count-lbl');
-        if (cl) cl.textContent = total + ' imagen(es) lista(s)';
-      }
-    });
+    } else if (fname.endsWith('.pdf') || f.type === 'application/pdf') {
+      await new Promise(function(resolve){
+        var r = new FileReader();
+        r.onload = function(ev){
+          var b64 = ev.target.result.split(',')[1];
+          window._scanItems.push({ kind: 'inline', mime: 'application/pdf', data: b64, name: f.name });
+          if (thumbs) {
+            var badgeP = document.createElement('div');
+            badgeP.style.cssText = 'padding:6px 10px;background:rgba(180,40,40,0.4);border:1px solid rgba(255,140,140,0.5);border-radius:5px;font-size:10px;color:#fff';
+            badgeP.textContent = '📕 ' + f.name;
+            thumbs.appendChild(badgeP);
+          }
+          resolve();
+        };
+        r.readAsDataURL(f);
+      });
+    } else {
+      await new Promise(function(resolve){
+        window.comprimirImagen(f, function(item){
+          window._scanItems.push(item);
+          if (thumbs) {
+            var im = document.createElement('img');
+            im.src = item.preview;
+            im.style.cssText = 'height:64px;border-radius:4px;border:1px solid rgba(138,205,255,0.5)';
+            thumbs.appendChild(im);
+          }
+          resolve();
+        });
+      });
+    }
+  }
+
+  if (window._scanItems.length) {
+    var pw = document.getElementById('scan-preview-wrap');
+    if (pw) pw.style.display = 'block';
+    var cl = document.getElementById('scan-count-lbl');
+    if (cl) cl.textContent = window._scanItems.length + ' archivo(s) listo(s) para procesar';
   }
   input.value = '';
 };
 
+window.procesarTextoPegado = async function(){
+  var area = document.getElementById('scan-raw-text');
+  var raw = area ? area.value.trim() : '';
+  if (!raw) {
+    window.mostrarEstadoScan('⚠️ Pega primero el texto en el recuadro.', 'var(--gold)');
+    return;
+  }
+  // Si el usuario pegó directamente un bloque JSON (por ejemplo, generado en Gemini), se rellena sin llamar al servidor
+  if (raw.indexOf('{') !== -1 && raw.indexOf('}') !== -1) {
+    try {
+      var limpio = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+      var ini = limpio.indexOf('{'), fin = limpio.lastIndexOf('}');
+      var obj = JSON.parse(limpio.substring(ini, fin + 1));
+      var res = window.aplicarDatosEscaneados(obj);
+      window.mostrarEstadoScan('✅ ¡Datos rellenados directamente sin usar servidor!\n' + res, 'var(--green)');
+      area.value = '';
+      return;
+    } catch (e) {}
+  }
+  window._scanItems = [{ kind: 'text', text: raw, name: 'Texto pegado' }];
+  await window.procesarImagenesAhora(false);
+};
+
 window.guardarEnColaOffline = function(){
   var v = (typeof gv === 'function') ? gv() : null;
-  if (!v || !window._scanImagesBase64.length) return;
+  if (!v || !window._scanItems.length) return;
   if (!v.scans_pendientes) v.scans_pendientes = [];
-  for (var i = 0; i < window._scanImagesBase64.length; i++) {
-    v.scans_pendientes.push(window._scanImagesBase64[i]);
+  for (var i = 0; i < window._scanItems.length; i++) {
+    var it = window._scanItems[i];
+    v.scans_pendientes.push({ kind: it.kind, mime: it.mime || '', data: it.data || '', text: it.text || '', name: it.name || '' });
   }
-  window._scanImagesBase64 = [];
+  window._scanItems = [];
   if (typeof save === 'function') save();
   var pw = document.getElementById('scan-preview-wrap');
   if (pw) pw.style.display = 'none';
   window.actualizarVistaCola();
-  window.mostrarEstadoScan('📦 Foto(s) guardada(s) en la visita. Cuando tengas internet, toca "Procesar pendientes ahora".', 'var(--gold)');
+  window.mostrarEstadoScan('📦 Guardado en la visita. Cuando quieras procesarlo, toca "Procesar pendientes ahora".', 'var(--gold)');
 };
 
 window.actualizarVistaCola = function(){
@@ -2203,7 +2337,7 @@ window.actualizarVistaCola = function(){
     return;
   }
   if (box) box.style.display = 'block';
-  if (lbl) lbl.textContent = '📦 Fotos guardadas sin internet: ' + v.scans_pendientes.length;
+  if (lbl) lbl.textContent = '📦 Archivos guardados sin internet: ' + v.scans_pendientes.length;
 };
 
 window.limpiarColaOffline = function(){
@@ -2217,7 +2351,10 @@ window.limpiarColaOffline = function(){
 window.procesarColaOffline = async function(){
   var v = (typeof gv === 'function') ? gv() : null;
   if (!v || !v.scans_pendientes || !v.scans_pendientes.length) return;
-  window._scanImagesBase64 = v.scans_pendientes.slice();
+  window._scanItems = v.scans_pendientes.map(function(x){
+    if (typeof x === 'string') return { kind: 'inline', mime: 'image/jpeg', data: x };
+    return x;
+  });
   var exito = await window.procesarImagenesAhora(true);
   if (exito) {
     v.scans_pendientes = [];
@@ -2238,12 +2375,12 @@ window.procesarImagenesAhora = async function(desdeCola){
   var inpKey = document.getElementById('scan-api-key');
   var apiKey = inpKey ? inpKey.value.trim() : window.getScanKey();
   if (!apiKey) {
-    window.mostrarEstadoScan('⚠️ Primero pega tu clave gratuita de Gemini API en el recuadro de arriba. Si no tienes internet ahorita, toca "📥 Guardar sin internet".', 'var(--gold)');
+    window.mostrarEstadoScan('⚠️ Primero pega tu clave gratuita de Gemini API en el recuadro de arriba.', 'var(--gold)');
     return false;
   }
   window.saveScanKey(apiKey);
-  if (!window._scanImagesBase64.length) {
-    window.mostrarEstadoScan('⚠️ Selecciona al menos una foto primero.', 'var(--gold)');
+  if (!window._scanItems.length) {
+    window.mostrarEstadoScan('⚠️ Selecciona al menos una foto, PDF, Word o pega texto primero.', 'var(--gold)');
     return false;
   }
   if (!navigator.onLine) {
@@ -2252,9 +2389,7 @@ window.procesarImagenesAhora = async function(desdeCola){
     return false;
   }
 
-  window.mostrarEstadoScan('⏳ Analizando imagen y extrayendo datos de la visita...', 'var(--aero-bright)');
-
-  var promptSistema = 'Extrae todos los datos visibles en la imagen para rellenar el registro de visita a la congregacion. Devuelve UNICAMENTE un objeto JSON valido (sin bloques markdown) con las claves que aparezcan en la imagen (omite o deja null las que no aparezcan):\n' +
+  var promptSistema = 'Extrae todos los datos visibles en el documento o imagen para rellenar el registro de visita a la congregacion. Devuelve UNICAMENTE un objeto JSON valido (sin bloques markdown) con las claves que aparezcan (omite o deja null las que no aparezcan):\n' +
   '{\n' +
   '  "alimentos": [{"dia":"Martes|Miércoles|Jueves|Viernes|Sábado|Domingo","desayuno":"","comida":"","cena":""}],\n' +
   '  "campo": [{"dia":"","lugar":"","hora":"HH:MM","publicador":"","actividad":""}],\n' +
@@ -2271,50 +2406,88 @@ window.procesarImagenesAhora = async function(desdeCola){
   '}';
 
   var parts = [{ text: promptSistema }];
-  for (var i = 0; i < window._scanImagesBase64.length; i++) {
-    parts.push({ inline_data: { mime_type: 'image/jpeg', data: window._scanImagesBase64[i] } });
+  for (var i = 0; i < window._scanItems.length; i++) {
+    var it = window._scanItems[i];
+    if (it.kind === 'text') {
+      parts.push({ text: '\n--- CONTENIDO DEL DOCUMENTO (' + (it.name || '') + ') ---\n' + it.text });
+    } else {
+      parts.push({ inline_data: { mime_type: it.mime || 'image/jpeg', data: it.data } });
+    }
   }
 
-  // Lista amplia con varios modelos de respaldo para evitar saturación
-  var modelos = ['gemini-3.0-flash', 'gemini-flash-latest', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+  // Prioriza modelos Lite y 2.5 (que casi nunca se saturan) y consulta la lista viva de tu cuenta
+  var modelos = [
+    'gemini-2.5-flash-lite',
+    'gemini-2.5-flash',
+    'gemini-3.0-flash',
+    'gemini-3-flash-preview',
+    'gemini-2.5-pro'
+  ];
+
+  try {
+    var listResp = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(apiKey));
+    if (listResp.ok) {
+      var listData = await listResp.json();
+      if (listData && listData.models) {
+        for (var k = 0; k < listData.models.length; k++) {
+          var mod = listData.models[k];
+          var name = (mod.name || '').replace('models/', '');
+          var metodos = mod.supportedGenerationMethods || [];
+          if (name.indexOf('gemini') !== -1 && metodos.indexOf('generateContent') !== -1 && name.indexOf('tts') === -1 && name.indexOf('image') === -1 && name.indexOf('embedding') === -1) {
+            if (name.indexOf('lite') !== -1 && modelos.indexOf(name) === -1) {
+              modelos.unshift(name);
+            } else if (modelos.indexOf(name) === -1) {
+              modelos.push(name);
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {}
+
   var respuestaJson = null;
-  var ultimoError = '';
+  var erroresDetalle = [];
 
   for (var m = 0; m < modelos.length; m++) {
+    var modActual = modelos[m];
+    window.mostrarEstadoScan('⏳ Probando con modelo ' + modActual + ' (' + (m + 1) + '/' + modelos.length + ')...', 'var(--aero-bright)');
     try {
-      var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + modelos[m] + ':generateContent?key=' + encodeURIComponent(apiKey);
+      var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + modActual + ':generateContent?key=' + encodeURIComponent(apiKey);
       var resp = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: parts }],
-          generationConfig: { responseMimeType: 'application/json', temperature: 0.1 }
+          generationConfig: { temperature: 0.1 }
         })
       });
       if (!resp.ok) {
         var errData = await resp.json().catch(function(){ return {}; });
-        ultimoError = (errData.error && errData.error.message) ? errData.error.message : ('HTTP ' + resp.status);
+        var msgErr = (errData.error && errData.error.message) ? errData.error.message : ('HTTP ' + resp.status);
+        erroresDetalle.push(modActual + ': ' + msgErr);
         continue;
       }
       var resData = await resp.json();
       var rawText = resData.candidates && resData.candidates[0] && resData.candidates[0].content && resData.candidates[0].content.parts[0].text;
       if (rawText) {
         var limpio = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        var ini = limpio.indexOf('{'), fin = limpio.lastIndexOf('}');
+        if (ini !== -1 && fin !== -1) limpio = limpio.substring(ini, fin + 1);
         respuestaJson = JSON.parse(limpio);
         break;
       }
     } catch (e) {
-      ultimoError = e.message || String(e);
+      erroresDetalle.push(modActual + ': ' + (e.message || String(e)));
     }
   }
 
   if (!respuestaJson) {
-    window.mostrarEstadoScan('❌ Servidores saturados temporalmente. Inténtalo de nuevo en unos segundos o guárdala sin internet.', 'var(--danger)');
+    window.mostrarEstadoScan('❌ No se pudo procesar. Detalle real:\n' + erroresDetalle.slice(0, 3).join('\n'), 'var(--danger)');
     return false;
   }
 
   var resumenAplicado = window.aplicarDatosEscaneados(respuestaJson);
-  window._scanImagesBase64 = [];
+  window._scanItems = [];
   var pw = document.getElementById('scan-preview-wrap');
   if (pw) pw.style.display = 'none';
   window.mostrarEstadoScan('✅ ¡Datos rellenados con éxito!\n' + resumenAplicado, 'var(--green)');
@@ -2464,27 +2637,10 @@ window.aplicarDatosEscaneados = function(d){
   if (typeof renderReunion === 'function') renderReunion(v);
   if (typeof renderActividades === 'function') renderActividades(v);
 
-  return log.length ? log.join('\n') : 'No se identificaron tablas claras en la foto.';
+  return log.length ? log.join('\n') : 'No se identificaron tablas claras en el documento.';
 };
-
-// Inyectar el botón de escanear al lado de Guardar en la visita
-(function initScannerButton(){
-  var checkInterval = setInterval(function(){
-    var btnGuardar = document.querySelector('#page-visita button[onclick="saveVisita()"]');
-    if (btnGuardar && !document.getElementById('btn-open-scanner')) {
-      var btnScan = document.createElement('button');
-      btnScan.id = 'btn-open-scanner';
-      btnScan.className = 'btn btn-warn btn-sm';
-      btnScan.innerHTML = '📷 Escanear';
-      btnScan.style.marginRight = '4px';
-      btnScan.onclick = function(){ window.openScannerModal(); };
-      btnGuardar.parentNode.insertBefore(btnScan, btnGuardar);
-    }
-  }, 1000);
-})();
 </script>
 <!-- ══ FIN MÓDULO ESCÁNER ══ -->
-
-  
+     
 </body>
   </html>
