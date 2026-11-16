@@ -2641,6 +2641,192 @@ window.aplicarDatosEscaneados = function(d){
 };
 </script>
 <!-- ══ FIN MÓDULO ESCÁNER ══ -->
+<!-- ══ MÓDULO DE DICTADO POR VOZ Y CONEXIÓN CON WIDGET ══ -->
+<div class="mo" id="modal-dictado">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-titlebar">
+      <div class="modal-title">🎙️ Dictar Datos a la Visita</div>
+      <button class="btn btn-o btn-sm" style="padding:2px 8px" onclick="cerrarModalDictado()">✕</button>
+    </div>
+    <div class="modal-body" style="text-align:center">
+      <div id="dict-cong- actual" style="font-size:11px;color:var(--aero-glow);font-weight:700;margin-bottom:8px"></div>
+      
+      <button id="btn-mic-toggle" onclick="alternarGrabacionVoz()" style="width:74px;height:74px;border-radius:50%;border:2px solid rgba(138,205,255,0.6);background:radial-gradient(circle,rgba(58,128,218,0.9),rgba(18,58,148,0.95));color:#fff;font-size:30px;cursor:pointer;box-shadow:0 0 20px rgba(78,158,255,0.5);margin:6px auto 10px;display:flex;align-items:center;justify-content:center">
+        🎙️
+      </button>
+      <div id="dict-estado-mic" style="font-size:11px;color:var(--text-dim);margin-bottom:10px">
+        Toca el micrófono para hablar o usa el micrófono de tu teclado abajo
+      </div>
+
+      <textarea id="dict-texto" rows="4" placeholder="Ej: Comida el jueves con la familia López, salida al campo el viernes a las 9 am en el Salón con el hermano Pedro, asistencia del martes 75..." style="font-size:12px;margin-bottom:10px"></textarea>
+
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-s" style="flex:1;justify-content:center" onclick="enviarDictadoAGemini()">✨ Registrar datos</button>
+        <button class="btn btn-o btn-sm" onclick="document.getElementById('dict-texto').value=''">🧹 Limpiar</button>
+      </div>
+      <div id="dict-resultado" style="display:none;margin-top:10px;font-size:11px;padding:8px;border-radius:6px;background:rgba(13,48,128,0.35);border:1px solid rgba(88,168,255,0.3);color:#fff;text-align:left;white-space:pre-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+window._recognition = null;
+window._escuchandoVoz = false;
+
+// 1. Poner botón "🎙️ Dictar" en la pantalla de Inicio y dentro de la Visita
+(function inyectarBotonesDictado(){
+  var phHome = document.querySelector('#page-home .ph');
+  if (phHome && !document.getElementById('btn-home-dictar')) {
+    var btnH = document.createElement('button');
+    btnH.id = 'btn-home-dictar';
+    btnH.className = 'btn btn-warn btn-sm';
+    btnH.innerHTML = '🎙️ Dictar';
+    btnH.style.marginRight = '5px';
+    btnH.onclick = function(){ window.abrirDictadoDesdeWidget(); };
+    var btnNueva = phHome.querySelector('button');
+    if (btnNueva) phHome.insertBefore(btnH, btnNueva);
+  }
+
+  var btnGuardar = document.querySelector('#page-visita button[onclick="saveVisita()"]');
+  if (btnGuardar && !document.getElementById('btn-visita-dictar')) {
+    var btnV = document.createElement('button');
+    btnV.id = 'btn-visita-dictar';
+    btnV.className = 'btn btn-p btn-sm';
+    btnV.innerHTML = '🎙️ Dictar';
+    btnV.onclick = function(){ window.abrirModalDictado(true); };
+    btnGuardar.parentNode.insertBefore(btnV, btnGuardar);
+  }
+})();
+
+// 2. Función que abre automáticamente la visita "En curso" cuando vienes desde el Widget o Inicio
+window.abrirDictadoDesdeWidget = function(){
+  if (typeof gv === 'function' && gv()) {
+    window.abrirModalDictado(true);
+    return;
+  }
+  var cong = data.congregaciones.find(function(c){ return c.enCurso; }) || data.congregaciones[0];
+  if (!cong) {
+    alert('Primero crea o selecciona una congregación.');
+    return;
+  }
+  if (!cong.visitas || !cong.visitas.length) {
+    var nvVisita = emptyVisita();
+    cong.visitas.push(nvVisita);
+    save();
+  }
+  var ultimaVisita = cong.visitas[cong.visitas.length - 1];
+  openVisita(cong.id, ultimaVisita.id);
+  setTimeout(function(){ window.abrirModalDictado(true); }, 250);
+};
+
+window.abrirModalDictado = function(autoEscuchar){
+  var c = data.congregaciones.find(function(x){ return x.id === cCid; });
+  var v = (typeof gv === 'function') ? gv() : null;
+  var lbl = document.getElementById('dict-cong-actual');
+  if (lbl && c && v) lbl.textContent = '📍 ' + c.nombre + ' · Visita del ' + v.fecha;
+  var res = document.getElementById('dict-resultado');
+  if (res) res.style.display = 'none';
+  document.getElementById('modal-dictado').classList.add('open');
+  if (autoEscuchar) {
+    setTimeout(function(){ window.iniciarGrabacionVoz(); }, 300);
+  }
+};
+
+window.cerrarModalDictado = function(){
+  window.detenerGrabacionVoz();
+  document.getElementById('modal-dictado').classList.remove('open');
+};
+
+window.alternarGrabacionVoz = function(){
+  if (window._escuchandoVoz) window.detenerGrabacionVoz();
+  else window.iniciarGrabacionVoz();
+};
+
+window.iniciarGrabacionVoz = function(){
+  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var est = document.getElementById('dict-estado-mic');
+  var btn = document.getElementById('btn-mic-toggle');
+
+  if (!SpeechRec) {
+    if (est) est.textContent = '⌨️ Toca el cuadro de abajo y usa el micrófono de tu teclado para dictar.';
+    var area = document.getElementById('dict-texto');
+    if (area) area.focus();
+    return;
+  }
+
+  try {
+    if (!window._recognition) {
+      var rec = new SpeechRec();
+      rec.lang = 'es-MX';
+      rec.continuous = false;
+      rec.interimResults = false;
+
+      rec.onstart = function(){
+        window._escuchandoVoz = true;
+        if (btn) { btn.style.background = 'radial-gradient(circle,#ff5050,#b01010)'; btn.textContent = '⏹️'; }
+        if (est) { est.style.color = 'var(--gold)'; est.textContent = '🔴 Escuchando... Habla ahora'; }
+      };
+
+      rec.onresult = function(ev){
+        var texto = ev.results[0][0].transcript;
+        var area = document.getElementById('dict-texto');
+        if (area) area.value = (area.value ? area.value + '. ' : '') + texto;
+      };
+
+      rec.onerror = function(){
+        window.detenerGrabacionVoz();
+        if (est) est.textContent = '💡 Si el micrófono directo está bloqueado en el APK, toca el cuadro de texto y usa el micrófono de tu teclado.';
+      };
+
+      rec.onend = function(){
+        window.detenerGrabacionVoz();
+      };
+      window._recognition = rec;
+    }
+    window._recognition.start();
+  } catch (e) {
+    window.detenerGrabacionVoz();
+  }
+};
+
+window.detenerGrabacionVoz = function(){
+  window._escuchandoVoz = false;
+  var btn = document.getElementById('btn-mic-toggle');
+  var est = document.getElementById('dict-estado-mic');
+  if (btn) { btn.style.background = 'radial-gradient(circle,rgba(58,128,218,0.9),rgba(18,58,148,0.95))'; btn.textContent = '🎙️'; }
+  if (est) { est.style.color = 'var(--text-dim)'; est.textContent = 'Toca el micrófono para agregar más voz o presiona Registrar datos'; }
+  try { if (window._recognition) window._recognition.stop(); } catch(e){}
+};
+
+window.enviarDictadoAGemini = async function(){
+  window.detenerGrabacionVoz();
+  var area = document.getElementById('dict-texto');
+  var raw = area ? area.value.trim() : '';
+  var boxRes = document.getElementById('dict-resultado');
+  if (!raw) return;
+
+  if (boxRes) { boxRes.style.display = 'block'; boxRes.style.color = 'var(--aero-bright)'; boxRes.textContent = '⏳ Registrando datos dictados...'; }
+
+  var areaScan = document.getElementById('scan-raw-text');
+  if (areaScan) {
+    areaScan.value = raw;
+    window._scanItems = [{ kind: 'text', text: raw, name: 'Dictado por voz' }];
+    var ok = await window.procesarImagenesAhora(false);
+    var stScan = document.getElementById('scan-status');
+    if (boxRes && stScan) {
+      boxRes.style.color = ok ? 'var(--green)' : 'var(--danger)';
+      boxRes.textContent = stScan.textContent;
+    }
+    if (ok && area) area.value = '';
+  }
+};
+
+// 3. Si el widget nativo abre la app con ?dictar=1, abre el micrófono al instante
+if (window.location.search.indexOf('dictar=1') !== -1 || window.location.hash.indexOf('dictar') !== -1) {
+  setTimeout(function(){ window.abrirDictadoDesdeWidget(); }, 600);
+}
+</script>
+<!-- ══ FIN MÓDULO DE DICTADO ══ -->
      
 </body>
   </html>
