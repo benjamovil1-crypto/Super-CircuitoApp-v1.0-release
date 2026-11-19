@@ -2719,7 +2719,7 @@ window.procesarImagenesAhora = async function(desdeCola){
   var diasNom = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
   var diaHoyNom = diasNom[new Date().getDay()];
 
-  var promptSistema = 'Hoy es ' + diaHoyNom + ' ' + hoyIso + '. Extrae todos los datos visibles o dictados para rellenar el registro de visita a la congregacion. Si el texto dice "hoy" usa ' + hoyIso + ' y si dice "mañana" calcula la fecha siguiente. Devuelve UNICAMENTE un objeto JSON valido (sin bloques markdown) con las claves que aparezcan (omite o deja null las que no aparezcan). En las listas por mes (asistencia eb/rp, predicacion, precursores, finanzas y mantenimiento) incluye SOLO los meses que traigan datos; NO incluyas meses vacios ni casillas en blanco:\n' +
+  var promptSistema = 'Hoy es ' + diaHoyNom + ' ' + hoyIso + '. Extrae todos los datos visibles o dictados para rellenar el registro de visita a la congregacion. Si el texto dice "hoy" usa ' + hoyIso + ' y si dice "mañana" calcula la fecha siguiente. Devuelve UNICAMENTE un objeto JSON valido (sin bloques markdown) con las claves que aparezcan (omite o deja null las que no aparezcan). En las listas por mes (asistencia eb/rp, predicacion, precursores, finanzas y mantenimiento) incluye SOLO los meses que traigan datos; NO incluyas meses vacios ni casillas en blanco: Usa siempre formato 24 horas (ej. 16:00 para las 4 pm). Si el usuario menciona cualquier cita, pastoreo o salida adicional con hora para hoy o un dia especifico, incluyelo TAMBIEN en "actividades_programadas" para activar la alarma.\n'  +
   '{\n' +
   '  "actividades_programadas": [{"dia":"YYYY-MM-DD","hora":"HH:MM","label":"","conQuien":""}],\n' +
   '  "alimentos": [{"dia":"Martes|Miércoles|Jueves|Viernes|Sábado|Domingo","desayuno":"","comida":"","cena":""}],\n' +
@@ -2865,18 +2865,20 @@ window.aplicarDatosEscaneados = function(d){
     log.push('• Alimentos (' + d.alimentos.length + ' días)');
   }
 
-  if (d.campo && d.campo.length) {
-    v.campo = d.campo.map(function(c){
-      return { dia: c.dia||'', lugar: c.lugar||'', hora: c.hora||'', publicador: c.publicador||'', actividad: c.actividad||'' };
+    if (d.campo && d.campo.length) {
+    if (!v.campo) v.campo = [];
+    d.campo.forEach(function(c){
+      v.campo.push({ dia: c.dia||'', lugar: c.lugar||'', hora: (typeof fixHora==='function'?fixHora(c.hora):c.hora)||'', publicador: c.publicador||'', actividad: c.actividad||'' });
     });
-    log.push('• Servicio del campo (' + d.campo.length + ' salidas)');
+    log.push('• Servicio del campo (+' + d.campo.length + ' agregadas)');
   }
 
   if (d.campoEsposa && d.campoEsposa.length) {
-    v.campoEsposa = d.campoEsposa.map(function(c){
-      return { dia: c.dia||'', lugar: c.lugar||'', hora: c.hora||'', publicador: c.publicador||'', actividad: c.actividad||'' };
+    if (!v.campoEsposa) v.campoEsposa = [];
+    d.campoEsposa.forEach(function(c){
+      v.campoEsposa.push({ dia: c.dia||'', lugar: c.lugar||'', hora: (typeof fixHora==='function'?fixHora(c.hora):c.hora)||'', publicador: c.publicador||'', actividad: c.actividad||'' });
     });
-    log.push('• Campo esposa (' + d.campoEsposa.length + ' salidas)');
+    log.push('• Campo esposa (+' + d.campoEsposa.length + ' agregadas)');
   }
 
   if (d.hospedaje && (d.hospedaje.nombre || d.hospedaje.dir || d.hospedaje.tel)) {
@@ -2896,10 +2898,11 @@ window.aplicarDatosEscaneados = function(d){
     if (vm.can3) v.reu_vm_can3 = String(vm.can3);
     if (vm.oracion) v.reu_vm_oracion = vm.oracion;
     if (vm.asignaciones && vm.asignaciones.length) {
-      v.asig_vm = vm.asignaciones.map(function(a){
-        return { nombre: a.nombre||'', tema: a.tema||'', tiempo: a.tiempo||'', hora: '' };
+      if (!v.asig_vm) v.asig_vm = [];
+      vm.asignaciones.forEach(function(a){
+        v.asig_vm.push({ nombre: a.nombre||'', tema: a.tema||'', tiempo: a.tiempo||'', hora: '' });
       });
-      log.push('• Reunión VMC (' + vm.asignaciones.length + ' asignaciones)');
+      log.push('• Reunión VMC (+' + vm.asignaciones.length + ' asignaciones)');
     }
   }
 
@@ -2912,12 +2915,14 @@ window.aplicarDatosEscaneados = function(d){
     if (rp.can2) v.reu_rp_can2 = String(rp.can2);
     if (rp.oracion) v.reu_rp_oracion = rp.oracion;
     if (rp.asignaciones && rp.asignaciones.length) {
-      v.asig_rp = rp.asignaciones.map(function(a){
-        return { nombre: a.nombre||'', tema: a.tema||'', tiempo: a.tiempo||'', hora: '' };
+      if (!v.asig_rp) v.asig_rp = [];
+      rp.asignaciones.forEach(function(a){
+        v.asig_rp.push({ nombre: a.nombre||'', tema: a.tema||'', tiempo: a.tiempo||'', hora: '' });
       });
-      log.push('• Reunión Pública (' + rp.asignaciones.length + ' asignaciones)');
+      log.push('• Reunión Pública (+' + rp.asignaciones.length + ' asignaciones)');
     }
   }
+
 
     if (d.actividades_programadas && d.actividades_programadas.length) {
     if (!v.act_prog) v.act_prog = [];
@@ -3135,51 +3140,73 @@ window.alternarGrabacionVoz = function(){
   else window.iniciarGrabacionVoz();
 };
 
-window.iniciarGrabacionVoz = function(){
-  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+window.iniciarGrabacionVoz = async function(){
   var est = document.getElementById('dict-estado-mic');
   var btn = document.getElementById('btn-mic-toggle');
+  var area = document.getElementById('dict-texto');
 
-  if (!SpeechRec) {
-    if (est) est.textContent = '⌨️ Toca el cuadro de abajo y usa el micrófono de tu teclado para dictar.';
-    var area = document.getElementById('dict-texto');
-    if (area) area.focus();
-    return;
+  // 1. Micrófono NATIVO de Android (Capacitor SpeechRecognition)
+  var SR = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.SpeechRecognition;
+  if (SR) {
+    try {
+      var perm = await SR.requestPermissions();
+      if (perm && perm.speechRecognition !== 'granted') {
+        if (est) est.textContent = '⚠️ Permiso de micrófono denegado. Actívalo en Ajustes de Android.';
+        return;
+      }
+      window._escuchandoVoz = true;
+      if (btn) { btn.style.background = 'radial-gradient(circle,#ff5050,#b01010)'; btn.textContent = '⏹️'; }
+      if (est) { est.style.color = 'var(--gold)'; est.textContent = '🔴 Escuchando... Habla ahora'; }
+
+      var res = await SR.start({ language: 'es-MX', maxResults: 1, prompt: 'Dicta los datos de la visita', partialResults: false, popup: true });
+      if (res && res.matches && res.matches.length && area) {
+        area.value = (area.value ? area.value + '. ' : '') + res.matches[0];
+      }
+      window.detenerGrabacionVoz();
+      return;
+    } catch (e) {
+      window.detenerGrabacionVoz();
+      if (est) est.textContent = '⚠️ Error de micrófono: ' + (e.message || e);
+      return;
+    }
   }
 
+  // 2. Respaldo para navegador web
+  var SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRec) {
+    if (est) est.textContent = '⚠️ Falta instalar el plugin de micrófono en el APK.';
+    return;
+  }
   try {
     if (!window._recognition) {
       var rec = new SpeechRec();
-      rec.lang = 'es-MX';
-      rec.continuous = false;
-      rec.interimResults = false;
-
+      rec.lang = 'es-MX'; rec.continuous = false; rec.interimResults = false;
       rec.onstart = function(){
         window._escuchandoVoz = true;
         if (btn) { btn.style.background = 'radial-gradient(circle,#ff5050,#b01010)'; btn.textContent = '⏹️'; }
         if (est) { est.style.color = 'var(--gold)'; est.textContent = '🔴 Escuchando... Habla ahora'; }
       };
-
       rec.onresult = function(ev){
         var texto = ev.results[0][0].transcript;
-        var area = document.getElementById('dict-texto');
         if (area) area.value = (area.value ? area.value + '. ' : '') + texto;
       };
-
-      rec.onerror = function(){
-        window.detenerGrabacionVoz();
-        if (est) est.textContent = '💡 Si el micrófono directo está bloqueado en el APK, toca el cuadro de texto y usa el micrófono de tu teclado.';
-      };
-
-      rec.onend = function(){
-        window.detenerGrabacionVoz();
-      };
+      rec.onerror = function(){ window.detenerGrabacionVoz(); };
+      rec.onend = function(){ window.detenerGrabacionVoz(); };
       window._recognition = rec;
     }
     window._recognition.start();
-  } catch (e) {
-    window.detenerGrabacionVoz();
-  }
+  } catch (e) { window.detenerGrabacionVoz(); }
+};
+
+window.detenerGrabacionVoz = function(){
+  window._escuchandoVoz = false;
+  var btn = document.getElementById('btn-mic-toggle');
+  var est = document.getElementById('dict-estado-mic');
+  if (btn) { btn.style.background = 'radial-gradient(circle,rgba(58,128,218,0.9),rgba(18,58,148,0.95))'; btn.textContent = '🎙️'; }
+  if (est) { est.style.color = 'var(--text-dim)'; est.textContent = 'Toca el micrófono para hablar o presiona Registrar datos'; }
+  var SR = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.SpeechRecognition;
+  if (SR) { try { SR.stop(); } catch(e){} }
+  try { if (window._recognition) window._recognition.stop(); } catch(e){}
 };
 
 window.detenerGrabacionVoz = function(){
