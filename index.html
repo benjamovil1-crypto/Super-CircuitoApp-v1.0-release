@@ -1952,7 +1952,7 @@ function renderActProg(v){
   if(!v.act_prog||!v.act_prog.length){list.innerHTML='<div style="font-size:10.5px;color:var(--text-dim);padding:5px 0">Sin actividades programadas.</div>';return;}
   v.act_prog.forEach((a,i)=>{
     const div=document.createElement('div');div.className='act-prog';
-    div.innerHTML=`<div class="act-prog-head"><span class="act-prog-bell">${a.done?'✅':'🔔'}</span><input type="date" class="act-prog-time" value="${a.dia||''}" onchange="setAP(${i},'dia',this.value)" style="width:122px;padding:2px 5px;font-size:10.5px"/><input type="time" class="act-prog-time" value="${a.hora||'09:00'}" onchange="setAP(${i},'hora',this.value)" style="width:78px;padding:2px 5px;font-size:11px"/><span class="act-status ${a.done?'done':'pending'}">${a.done?'Hecho':'Pendiente'}</span></div><input type="text" class="act-prog-label" value="${a.label||''}" placeholder="¿Qué se va a hacer?" onchange="setAP(${i},'label',this.value)" style="width:100%;padding:3px 5px;font-size:11px;margin-bottom:4px"/><input type="text" value="${a.conQuien||''}" placeholder="¿Con quién?" onchange="setAP(${i},'conQuien',this.value)" style="width:100%;padding:3px 5px;font-size:11px;margin-bottom:6px"/><div style="display:flex;gap:5px"><button class="btn btn-s btn-sm" onclick="toggleAP(${i})">${a.done?'↩ Marcar pendiente':'✅ Marcar hecho'}</button><button class="btn btn-d btn-sm" onclick="delAP(${i})">✕</button></div>`;
+    div.innerHTML=`<div class="act-prog-head" style="flex-wrap:wrap"><span class="act-prog-bell">${a.done?'✅':'🔔'}</span><input type="date" class="act-prog-time" value="${a.dia||''}" onchange="setAP(${i},'dia',this.value)" style="flex:1;min-width:110px;padding:2px 5px;font-size:10.5px"/><input type="time" class="act-prog-time" value="${a.hora||'09:00'}" onchange="setAP(${i},'hora',this.value)" style="width:76px;padding:2px 5px;font-size:11px"/><span class="act-status ${a.done?'done':'pending'}" style="margin-left:auto">${a.done?'Hecho':'Pendiente'}</span></div><input type="text" class="act-prog-label" value="${a.label||''}" placeholder="¿Qué se va a hacer?" onchange="setAP(${i},'label',this.value)" style="width:100%;padding:3px 5px;font-size:11px;margin-bottom:4px"/><input type="text" value="${a.conQuien||''}" placeholder="¿Con quién?" onchange="setAP(${i},'conQuien',this.value)" style="width:100%;padding:3px 5px;font-size:11px;margin-bottom:6px"/><div style="display:flex;gap:5px"><button class="btn btn-s btn-sm" onclick="toggleAP(${i})">${a.done?'↩ Marcar pendiente':'✅ Marcar hecho'}</button><button class="btn btn-d btn-sm" onclick="delAP(${i})">✕</button></div>`;
     list.appendChild(div);
   });
 }
@@ -2698,12 +2698,13 @@ window.mostrarEstadoScan = function(txt, color){
 
 window.procesarImagenesAhora = async function(desdeCola){
   var inpKey = document.getElementById('scan-api-key');
-  var apiKey = inpKey ? inpKey.value.trim() : window.getScanKey();
+  var apiKey = (inpKey && inpKey.value.trim()) ? inpKey.value.trim() : window.getScanKey();
   if (!apiKey) {
-    window.mostrarEstadoScan('⚠️ Primero pega tu clave gratuita de Gemini API en el recuadro de arriba.', 'var(--gold)');
+    window.mostrarEstadoScan('⚠️ No hay clave guardada. Abre primero "📷 Escanear" y pega tu clave gratuita de Gemini API una sola vez.', 'var(--gold)');
     return false;
   }
   window.saveScanKey(apiKey);
+  if (inpKey && !inpKey.value.trim()) inpKey.value = apiKey;
   if (!window._scanItems.length) {
     window.mostrarEstadoScan('⚠️ Selecciona al menos una foto, PDF, Word o pega texto primero.', 'var(--gold)');
     return false;
@@ -2714,8 +2715,13 @@ window.procesarImagenesAhora = async function(desdeCola){
     return false;
   }
 
-  var promptSistema = 'Extrae todos los datos visibles en el documento o imagen para rellenar el registro de visita a la congregacion. Devuelve UNICAMENTE un objeto JSON valido (sin bloques markdown) con las claves que aparezcan (omite o deja null las que no aparezcan). En las listas por mes (asistencia eb/rp, predicacion, precursores, finanzas y mantenimiento) incluye SOLO los meses que traigan datos; NO incluyas meses vacios ni casillas en blanco:\n' +
+  var hoyIso = (typeof fechaLocal === 'function') ? fechaLocal() : new Date().toISOString().slice(0, 10);
+  var diasNom = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  var diaHoyNom = diasNom[new Date().getDay()];
+
+  var promptSistema = 'Hoy es ' + diaHoyNom + ' ' + hoyIso + '. Extrae todos los datos visibles o dictados para rellenar el registro de visita a la congregacion. Si el texto dice "hoy" usa ' + hoyIso + ' y si dice "mañana" calcula la fecha siguiente. Devuelve UNICAMENTE un objeto JSON valido (sin bloques markdown) con las claves que aparezcan (omite o deja null las que no aparezcan). En las listas por mes (asistencia eb/rp, predicacion, precursores, finanzas y mantenimiento) incluye SOLO los meses que traigan datos; NO incluyas meses vacios ni casillas en blanco:\n' +
   '{\n' +
+  '  "actividades_programadas": [{"dia":"YYYY-MM-DD","hora":"HH:MM","label":"","conQuien":""}],\n' +
   '  "alimentos": [{"dia":"Martes|Miércoles|Jueves|Viernes|Sábado|Domingo","desayuno":"","comida":"","cena":""}],\n' +
   '  "campo": [{"dia":"","lugar":"","hora":"HH:MM","publicador":"","actividad":""}],\n' +
   '  "campoEsposa": [{"dia":"","lugar":"","hora":"HH:MM","publicador":"","actividad":""}],\n' +
@@ -2731,6 +2737,7 @@ window.procesarImagenesAhora = async function(desdeCola){
   '}';
 
   var parts = [{ text: promptSistema }];
+
   for (var i = 0; i < window._scanItems.length; i++) {
     var it = window._scanItems[i];
     if (it.kind === 'text') {
@@ -2910,6 +2917,40 @@ window.aplicarDatosEscaneados = function(d){
       });
       log.push('• Reunión Pública (' + rp.asignaciones.length + ' asignaciones)');
     }
+  }
+
+    if (d.actividades_programadas && d.actividades_programadas.length) {
+    if (!v.act_prog) v.act_prog = [];
+    var baseIdx = v.act_prog.length;
+    d.actividades_programadas.forEach(function(a, idx){
+      v.act_prog.push({
+        id: Date.now() + Math.floor(Math.random() * 1000) + idx,
+        dia: a.dia || ((typeof fechaLocal === 'function') ? fechaLocal() : ''),
+        hora: a.hora || '09:00',
+        label: a.label || 'Actividad',
+        conQuien: a.conQuien || '',
+        done: false
+      });
+      if (typeof reprogramarAP === 'function') reprogramarAP(v, baseIdx + idx);
+    });
+    log.push('• Actividades programadas (' + d.actividades_programadas.length + ')');
+  }
+
+    if (d.actividades_programadas && d.actividades_programadas.length) {
+    if (!v.act_prog) v.act_prog = [];
+    var baseIdx = v.act_prog.length;
+    d.actividades_programadas.forEach(function(a, idx){
+      v.act_prog.push({
+        id: Date.now() + Math.floor(Math.random() * 1000) + idx,
+        dia: a.dia || ((typeof fechaLocal === 'function') ? fechaLocal() : ''),
+        hora: a.hora || '09:00',
+        label: a.label || 'Actividad',
+        conQuien: a.conQuien || '',
+        done: false
+      });
+      if (typeof reprogramarAP === 'function') reprogramarAP(v, baseIdx + idx);
+    });
+    log.push('• Actividades programadas (' + d.actividades_programadas.length + ')');
   }
 
   if (d.pastoreo && d.pastoreo.length) {
