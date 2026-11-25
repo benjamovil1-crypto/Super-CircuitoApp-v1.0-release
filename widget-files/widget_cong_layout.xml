@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_cong_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#121212">
+
+    <TextView
+        android:id="@+id/tv_cong_4x6_titulo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📍 Congregación"
+        android:textColor="#4DA3E8"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="1.5dp"
+        android:background="#264888"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:id="@+id/tv_cong_4x6_publicadores"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="👥 Publicadores: —"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/tv_cong_4x6_precursores"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🏃 Precursores: —"
+        android:textColor="#5CE875"
+        android:textSize="15sp"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/tv_cong_4x6_cursos"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📚 Total de cursos: —"
+        android:textColor="#FFD060"
+        android:textSize="15sp"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/tv_cong_4x6_irregulares"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="⚠️ Irregulares: —"
+        android:textColor="#FF8A65"
+        android:textSize="15sp"
+        android:layout_marginBottom="12dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="1.5dp"
+        android:background="#264888"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📊 Asistencias:"
+        android:textColor="#4DA3E8"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginBottom="6dp" />
+
+    <TextView
+        android:id="@+id/tv_cong_4x6_rvmc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="RVMC: —"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:paddingStart="12dp"
+        android:layout_marginBottom="6dp" />
+
+    <TextView
+        android:id="@+id/tv_cong_4x6_rp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="R.P.: —"
+        android:textColor="#5CE875"
+        android:textSize="15sp"
+        android:paddingStart="12dp"
+        android:layout_marginBottom="12dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="1.5dp"
+        android:background="#264888"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🗓️ Horarios de Reuniones"
+        android:textColor="#4DA3E8"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/tv_cong_4x6_hor_sem"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📅 Entresemana: —"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:layout_marginBottom="7dp" />
+
+    <TextView
+        android:id="@+id/tv_cong_4x6_hor_fin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="🏛️ Fin de Semana: —"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:layout_marginBottom="7dp" />
+
+    <TextView
+        android:id="@+id/tv_cong_4x6_hor_prec"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="📖 Precursores: —"
+        android:textColor="#FFD060"
+        android:textSize="14sp"
+        android:layout_marginBottom="7dp" />
+
+    <TextView
+        android:id="@+id/tv_cong_4x6_hor_nomb"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="👔 Nombrados: —"
+        android:textColor="#B0BEC5"
+        android:textSize="14sp" />
+
+</LinearLayout>
