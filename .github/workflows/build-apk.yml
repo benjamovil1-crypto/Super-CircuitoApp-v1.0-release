@@ -111,10 +111,13 @@ jobs:
           mkdir -p android/app/src/main/res/xml
           mkdir -p android/app/src/main/java/com/benjamovil/supercircuitoapp
           
-          echo "Copiando archivos del widget..."
+                    echo "Copiando archivos del widget..."
           cp widget-files/widget_layout.xml android/app/src/main/res/layout/
+          cp widget-files/widget_cong_layout.xml android/app/src/main/res/layout/
           cp widget-files/circuito_widget_info.xml android/app/src/main/res/xml/
+          cp widget-files/cong_widget_info.xml android/app/src/main/res/xml/
           cp widget-files/WidgetProvider.java android/app/src/main/java/com/benjamovil/supercircuitoapp/
+          cp widget-files/CongWidgetProvider.java android/app/src/main/java/com/benjamovil/supercircuitoapp/
           cp widget-files/MainActivity.java android/app/src/main/java/com/benjamovil/supercircuitoapp/
           
           echo "Registrando en AndroidManifest.xml de forma segura..."
@@ -123,18 +126,29 @@ jobs:
           const file = 'android/app/src/main/AndroidManifest.xml';
           if(fs.existsSync(file)){
             let content = fs.readFileSync(file, 'utf8');
+            let added = '';
             if(!content.includes('.WidgetProvider')) {
-              const receiver = `
+              added += `
               <receiver android:name=".WidgetProvider" android:exported="true">
                   <intent-filter>
                       <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                   </intent-filter>
                   <meta-data android:name="android.appwidget.provider" android:resource="@xml/circuito_widget_info" />
-              </receiver>
-          </application>`;
-              content = content.replace('</application>', receiver);
+              </receiver>`;
+            }
+            if(!content.includes('.CongWidgetProvider')) {
+              added += `
+              <receiver android:name=".CongWidgetProvider" android:exported="true">
+                  <intent-filter>
+                      <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                  </intent-filter>
+                  <meta-data android:name="android.appwidget.provider" android:resource="@xml/cong_widget_info" />
+              </receiver>`;
+            }
+            if(added){
+              content = content.replace('</application>', added + '\n</application>');
               fs.writeFileSync(file, content);
-              console.log('✅ Widget registrado con éxito en el Manifest');
+              console.log('✅ Widgets registrados con éxito en el Manifest');
             }
           }
           EOF
