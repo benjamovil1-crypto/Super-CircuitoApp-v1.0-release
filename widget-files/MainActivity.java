@@ -28,16 +28,18 @@ public class MainActivity extends BridgeActivity {
 
     private void actualizarWidget() {
         try {
-            Intent intent = new Intent(getApplicationContext(), WidgetProvider.class);
-            intent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
-
             AppWidgetManager widgetManager = AppWidgetManager.getInstance(getApplicationContext());
-            ComponentName widgetComponent = new ComponentName(getApplicationContext(), WidgetProvider.class);
-            int[] widgetIds = widgetManager.getAppWidgetIds(widgetComponent);
+            Class<?>[] providers = new Class<?>[]{ WidgetProvider.class, CongWidgetProvider.class };
 
-            if (widgetIds != null && widgetIds.length > 0) {
-                intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds);
-                sendBroadcast(intent);
+            for (Class<?> cls : providers) {
+                ComponentName widgetComponent = new ComponentName(getApplicationContext(), cls);
+                int[] widgetIds = widgetManager.getAppWidgetIds(widgetComponent);
+                if (widgetIds != null && widgetIds.length > 0) {
+                    Intent intent = new Intent(getApplicationContext(), cls);
+                    intent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+                    intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds);
+                    sendBroadcast(intent);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
