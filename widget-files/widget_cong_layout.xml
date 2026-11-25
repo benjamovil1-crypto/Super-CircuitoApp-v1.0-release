@@ -115,18 +115,18 @@
         android:id="@+id/tv_cong_4x6_hor_sem"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="📅 Entresemana: —"
+        android:text="📅 1: —"
         android:textColor="#FFFFFF"
-        android:textSize="14sp"
+        android:textSize="12sp"
         android:layout_marginBottom="7dp" />
 
     <TextView
         android:id="@+id/tv_cong_4x6_hor_fin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="🏛️ Fin de Semana: —"
+        android:text="🏛️ 2: —"
         android:textColor="#FFFFFF"
-        android:textSize="14sp"
+        android:textSize="12sp"
         android:layout_marginBottom="7dp" />
 
     <TextView
@@ -135,7 +135,7 @@
         android:layout_height="wrap_content"
         android:text="📖 Precursores: —"
         android:textColor="#FFD060"
-        android:textSize="14sp"
+        android:textSize="12sp"
         android:layout_marginBottom="7dp" />
 
     <TextView
@@ -144,6 +144,6 @@
         android:layout_height="wrap_content"
         android:text="👔 Nombrados: —"
         android:textColor="#B0BEC5"
-        android:textSize="14sp" />
+        android:textSize="12sp" />
 
 </LinearLayout>
